@@ -43,39 +43,67 @@ export default function HomePage() {
       <TopNav />
       <LandingHero />
 
+      {/* ── Cómo funciona ─────────────────────────────────── */}
       <section className="section">
         <div className="container">
           <div style={styles.sectionHead}>
             <span className="eyebrow">Cómo funciona</span>
             <h2 className="serif" style={styles.h2}>
-              Tan simple que no necesita manual.
+              Tan simple que no
+              <br />
+              necesita manual.
             </h2>
-            <p className="muted" style={styles.lead}>
-              Tres pasos. Un QR. Y un evento que se documenta solo mientras tus invitados disfrutan.
-            </p>
           </div>
-          <div style={styles.stepGrid}>
-            {howItWorks.map((item) => (
-              <article key={item.step} className="card glass" style={styles.stepCard}>
-                <div style={styles.stepNumber}>{item.step}</div>
-                <h3 style={styles.stepTitle}>{item.title}</h3>
-                <p className="muted" style={styles.stepText}>
-                  {item.text}
-                </p>
-              </article>
+
+          <div style={styles.stepList}>
+            {howItWorks.map((item, i) => (
+              <div
+                key={item.step}
+                style={{
+                  ...styles.stepRow,
+                  borderBottom:
+                    i < howItWorks.length - 1 ? "1px solid rgba(0,0,0,0.07)" : "none",
+                }}
+              >
+                <span style={styles.stepNum}>0{item.step}</span>
+                <div style={styles.stepBody}>
+                  <h3 style={styles.stepTitle}>{item.title}</h3>
+                  <p className="muted" style={styles.stepText}>
+                    {item.text}
+                  </p>
+                </div>
+              </div>
             ))}
           </div>
         </div>
       </section>
 
+      {/* ── Features alternas ─────────────────────────────── */}
       <section className="section">
-        <div className="container" style={styles.featureRow}>
-          {featuredSlides.map((slide) => (
-            <article key={slide.title} className="card glass" style={styles.featureSlide}>
-              <div style={{ ...styles.featureImage, backgroundImage: `url(${slide.image})` }} />
-              <div style={styles.featureCopy}>
-                <span className="eyebrow">{slide.title}</span>
-                <p className="muted" style={styles.featureText}>
+        <div className="container" style={styles.featureList}>
+          {featuredSlides.map((slide, i) => (
+            <article key={slide.title} className="card glass feature-card" style={styles.featureCard}>
+              <div
+                className="feature-img"
+                style={{
+                  backgroundImage: `url(${slide.image})`,
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                  filter: "grayscale(1) brightness(0.5) contrast(1.22)",
+                  order: i % 2 === 0 ? 0 : 1,
+                }}
+              />
+              <div
+                className="feature-body"
+                style={{
+                  ...styles.featureBody,
+                  order: i % 2 === 0 ? 1 : 0,
+                }}
+              >
+                <h2 className="serif" style={styles.featureTitle}>
+                  {slide.title}
+                </h2>
+                <p className="muted" style={styles.featureDesc}>
                   {slide.text}
                 </p>
               </div>
@@ -84,6 +112,7 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* ── Tipos de evento ───────────────────────────────── */}
       <section className="section">
         <div className="container">
           <div style={styles.sectionHead}>
@@ -110,24 +139,30 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="section" id="demo">
+      {/* ── Demo CTA ──────────────────────────────────────── */}
+      <section className="section" id="demo" style={styles.demoSection}>
         <div className="container">
-          <div className="card glass" style={styles.demo}>
-            <div style={styles.demoCopy}>
-              <span className="eyebrow">Demostración</span>
+          <div style={styles.demoCta}>
+            <div style={styles.demoLeft}>
+              <span className="eyebrow" style={{ color: "rgba(255,255,255,0.5)" }}>
+                Demostración
+              </span>
               <h3 className="serif" style={styles.demoTitle}>
-                Vívelo antes de crearlo.
+                Vívelo antes
+                <br />
+                de crearlo.
               </h3>
-              <p className="muted" style={styles.demoText}>
-                Abre la demo y experimenta el flujo completo: escaneas, capturas el momento y ves tu foto
-                aparecer en la galería del evento. En segundos, como debería ser siempre.
+              <p style={styles.demoText}>
+                Abre la demo y experimenta el flujo completo: escaneas, capturas el momento
+                y ves tu foto aparecer en la galería del evento. En segundos, como debería
+                ser siempre.
               </p>
             </div>
             <div style={styles.demoActions}>
-              <Link className="btn btn-primary" href="/event/demo-nilo-cam">
+              <Link className="btn btn-primary" href="/event/demo-nilo-cam" style={styles.demoBtnPrimary}>
                 Abrir landing demo
               </Link>
-              <Link className="btn btn-secondary" href="/admin">
+              <Link className="btn btn-ghost" href="/admin" style={styles.demoBtnSecondary}>
                 Ir al admin
               </Link>
             </div>
@@ -145,7 +180,7 @@ const styles: Record<string, React.CSSProperties> = {
     display: "grid",
     gap: 14,
     maxWidth: 820,
-    marginBottom: 24,
+    marginBottom: 40,
   },
   h2: {
     fontSize: "clamp(38px, 4.4vw, 70px)",
@@ -153,72 +188,77 @@ const styles: Record<string, React.CSSProperties> = {
     margin: 0,
     letterSpacing: "-0.05em",
   },
-  lead: {
-    fontSize: 18,
-    lineHeight: 1.7,
-    margin: 0,
-  },
-  stepGrid: {
+
+  /* Steps */
+  stepList: {
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-    gap: 16,
+    gap: 0,
   },
-  stepCard: {
-    padding: 22,
-    borderRadius: 28,
-    minHeight: 230,
+  stepRow: {
     display: "grid",
-    gap: 12,
+    gridTemplateColumns: "minmax(72px, 96px) 1fr",
+    gap: 40,
+    padding: "44px 0",
+    alignItems: "start",
   },
-  stepNumber: {
-    width: "fit-content",
-    padding: "8px 10px",
-    borderRadius: 999,
-    background: "rgba(0,0,0,0.04)",
+  stepNum: {
+    fontSize: "clamp(52px, 5vw, 80px)",
     fontWeight: 800,
-    letterSpacing: "0.14em",
-    fontSize: 12,
+    letterSpacing: "-0.06em",
+    lineHeight: 1,
+    color: "rgba(0,0,0,0.08)",
+    paddingTop: 4,
+  },
+  stepBody: {
+    display: "grid",
+    gap: 10,
   },
   stepTitle: {
     margin: 0,
-    fontSize: "clamp(24px, 2vw, 30px)",
-    lineHeight: 1.02,
+    fontSize: "clamp(26px, 2.8vw, 42px)",
+    lineHeight: 1,
     letterSpacing: "-0.04em",
   },
   stepText: {
     margin: 0,
-    fontSize: 15,
-    lineHeight: 1.65,
+    fontSize: 17,
+    lineHeight: 1.75,
+    maxWidth: 560,
   },
-  featureRow: {
+
+  /* Feature alternating */
+  featureList: {
     display: "grid",
     gap: 16,
-    gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
   },
-  featureSlide: {
+  featureCard: {
+    borderRadius: 36,
     overflow: "hidden",
-    borderRadius: 34,
-    padding: 16,
+    minHeight: 480,
     display: "grid",
-    gap: 14,
+    gridTemplateColumns: "55% 45%",
   },
-  featureImage: {
-    minHeight: 300,
-    borderRadius: 26,
-    backgroundSize: "cover",
-    backgroundPosition: "center",
-    filter: "grayscale(1) brightness(0.55) contrast(1.2)",
-    boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.08)",
+  featureBody: {
+    padding: "52px 48px",
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "center",
+    gap: 18,
   },
-  featureCopy: {
-    display: "grid",
-    gap: 8,
-  },
-  featureText: {
-    fontSize: 17,
-    lineHeight: 1.7,
+  featureTitle: {
     margin: 0,
+    fontSize: "clamp(32px, 3.5vw, 54px)",
+    lineHeight: 0.94,
+    letterSpacing: "-0.05em",
   },
+  featureDesc: {
+    margin: 0,
+    fontSize: 18,
+    lineHeight: 1.75,
+    maxWidth: 400,
+  },
+
+  /* Event type cards */
   cards: {
     display: "grid",
     gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
@@ -232,18 +272,10 @@ const styles: Record<string, React.CSSProperties> = {
     alignContent: "space-between",
     background: "linear-gradient(180deg, rgba(255,255,255,0.94), rgba(255,255,255,0.78))",
   },
-  card1: {
-    minHeight: 210,
-  },
-  card2: {
-    minHeight: 195,
-  },
-  card3: {
-    minHeight: 225,
-  },
-  card4: {
-    minHeight: 205,
-  },
+  card1: { minHeight: 210 },
+  card2: { minHeight: 195 },
+  card3: { minHeight: 225 },
+  card4: { minHeight: 205 },
   cardIndex: {
     width: "fit-content",
     padding: "7px 10px",
@@ -264,36 +296,54 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 15,
     lineHeight: 1.6,
   },
-  demo: {
-    padding: 28,
-    borderRadius: 36,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 20,
-    flexWrap: "wrap",
-    background:
-      "linear-gradient(135deg, rgba(255,255,255,0.96), rgba(255,255,255,0.78)), radial-gradient(circle at top right, rgba(0,0,0,0.06), transparent 40%)",
+
+  /* Demo CTA section */
+  demoSection: {
+    background: "#0b0b0f",
+    paddingTop: 88,
+    paddingBottom: 88,
   },
-  demoCopy: {
+  demoCta: {
+    display: "flex",
+    alignItems: "flex-end",
+    justifyContent: "space-between",
+    gap: 40,
+    flexWrap: "wrap",
+  },
+  demoLeft: {
     display: "grid",
-    gap: 14,
+    gap: 18,
     maxWidth: 760,
   },
   demoTitle: {
     margin: 0,
-    fontSize: "clamp(32px, 3.7vw, 54px)",
-    lineHeight: 0.96,
-    letterSpacing: "-0.04em",
+    fontSize: "clamp(52px, 7vw, 104px)",
+    lineHeight: 0.88,
+    letterSpacing: "-0.05em",
+    color: "#ffffff",
   },
   demoText: {
     fontSize: 18,
-    lineHeight: 1.7,
+    lineHeight: 1.75,
     margin: 0,
+    color: "rgba(255,255,255,0.55)",
+    maxWidth: 520,
   },
   demoActions: {
     display: "flex",
+    flexDirection: "column",
     gap: 12,
-    flexWrap: "wrap",
+    flexShrink: 0,
+  },
+  demoBtnPrimary: {
+    background: "#ffffff",
+    color: "#0b0b0f",
+    minWidth: 200,
+  },
+  demoBtnSecondary: {
+    background: "transparent",
+    border: "1px solid rgba(255,255,255,0.15)",
+    color: "rgba(255,255,255,0.7)",
+    minWidth: 200,
   },
 };

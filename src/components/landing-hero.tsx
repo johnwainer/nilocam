@@ -4,32 +4,82 @@ import { APP_NAME } from "@/lib/constants";
 const slides = [
   {
     title: "Tu evento tiene su propia pantalla.",
-    subtitle: "Un QR abre una landing personalizada, lista para recibir fotos desde el primer segundo.",
+    subtitle:
+      "Un QR abre una landing personalizada, lista para recibir fotos desde el primer segundo.",
+    image:
+      "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=1400&q=80",
   },
   {
     title: "Cada foto, vista por todos.",
     subtitle: "Lo que captura un invitado aparece en la galería al instante, sin esperar.",
+    image:
+      "https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&w=1200&q=80",
   },
   {
     title: "Funciona en cualquier teléfono.",
     subtitle: "iPhone, Android, cualquier browser moderno. Sin descargar nada, sin registrarse.",
+    image:
+      "https://images.unsplash.com/photo-1504196606672-aef5c9cefc92?auto=format&fit=crop&w=1200&q=80",
   },
 ];
 
+function BentoSlide({
+  slide,
+  index,
+  className,
+}: {
+  slide: (typeof slides)[0];
+  index: number;
+  className?: string;
+}) {
+  return (
+    <article className={`card lh-bento-slide${className ? ` ${className}` : ""}`}>
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          backgroundImage: `url(${slide.image})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          filter: "grayscale(1) brightness(0.34) contrast(1.18)",
+        }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          background: "linear-gradient(180deg, transparent 20%, rgba(0,0,0,0.88) 100%)",
+        }}
+      />
+      <div style={s.slideInner}>
+        <span style={s.kicker}>0{index + 1}</span>
+        <h2 style={index === 0 ? s.mainTitle : s.sideTitle}>{slide.title}</h2>
+        <p style={index === 0 ? s.mainText : s.sideText}>{slide.subtitle}</p>
+      </div>
+    </article>
+  );
+}
+
 export function LandingHero() {
   return (
-    <section className="section landing-hero-section" style={styles.section}>
-      <div className="container landing-hero-wrap" style={styles.wrap}>
-        <div className="landing-hero-copy" style={styles.copy}>
-          <span className="pill">Sin app · Sin registro · Solo el QR</span>
-          <h1 className="serif" style={styles.title}>
-            La galería viva de tu evento.
+    <section className="section lh-section">
+      <div className="container">
+        {/* Centered headline block */}
+        <div className="lh-copy">
+          <span className="pill" style={{ margin: "0 auto", width: "fit-content" }}>
+            Sin app · Sin registro · Solo el QR
+          </span>
+          <h1 className="serif" style={s.title}>
+            La galería viva
+            <br />
+            de tu evento.
           </h1>
-          <p className="muted" style={styles.lead}>
-            {APP_NAME} convierte un código QR en una experiencia inmersiva: los invitados capturan el momento
-            y sus fotos aparecen en pantalla grande, en tiempo real, mientras todo sucede.
+          <p className="muted" style={s.lead}>
+            {APP_NAME} convierte un código QR en una experiencia inmersiva: los invitados
+            capturan el momento y sus fotos aparecen en pantalla grande, en tiempo real,
+            mientras todo sucede.
           </p>
-          <div className="landing-hero-actions" style={styles.actions}>
+          <div style={s.actions}>
             <Link href="/auth" className="btn btn-primary">
               Entrar al panel
             </Link>
@@ -37,66 +87,36 @@ export function LandingHero() {
               Abrir demo
             </Link>
           </div>
-
-          <div className="landing-hero-stats" style={styles.statsRow}>
-            <div className="card" style={styles.stat}>
-              <strong>Sin fricción</strong>
-              <span className="muted">el invitado entiende todo al instante</span>
-            </div>
-            <div className="card" style={styles.stat}>
-              <strong>En vivo</strong>
-              <span className="muted">fotos que aparecen al segundo</span>
-            </div>
-            <div className="card" style={styles.stat}>
-              <strong>Tu marca</strong>
-              <span className="muted">landing 100% personalizable</span>
-            </div>
-          </div>
         </div>
 
-        <div className="landing-hero-visual" style={styles.visual}>
-          <div className="card glass landing-hero-canvas" style={styles.heroCanvas}>
-            <article className="card landing-hero-main" style={{ ...styles.heroMain, ...styles.heroMainBg }}>
-              <div style={styles.slideKicker}>01</div>
-              <h2 style={styles.heroMainTitle}>{slides[0].title}</h2>
-              <p style={styles.heroMainText}>{slides[0].subtitle}</p>
-            </article>
+        {/* Bento showcase */}
+        <div className="lh-bento">
+          <BentoSlide slide={slides[0]} index={0} className="lh-bento-main" />
+          <BentoSlide slide={slides[1]} index={1} className="lh-bento-side" />
+          <BentoSlide slide={slides[2]} index={2} className="lh-bento-side" />
+        </div>
 
-            <div className="landing-hero-side-stack" style={styles.sideStack}>
-              <article className="card landing-hero-side" style={{ ...styles.sideSlide, ...styles.slide2Bg }}>
-                <div style={styles.slideKicker}>02</div>
-                <h2 style={styles.sideTitle}>{slides[1].title}</h2>
-                <p style={styles.sideText}>{slides[1].subtitle}</p>
-              </article>
-
-              <article className="card landing-hero-side" style={{ ...styles.sideSlide, ...styles.slide3Bg }}>
-                <div style={styles.slideKicker}>03</div>
-                <h2 style={styles.sideTitle}>{slides[2].title}</h2>
-                <p style={styles.sideText}>{slides[2].subtitle}</p>
-              </article>
-            </div>
+        {/* Stats strip */}
+        <div className="lh-stats">
+          <div style={s.statItem}>
+            <strong style={s.statLabel}>Sin fricción</strong>
+            <span className="muted" style={s.statSub}>
+              el invitado entiende todo al instante
+            </span>
           </div>
-
-          <div className="card landing-hero-device" style={styles.device}>
-            <div style={styles.deviceTop}>
-              <span className="pulse-dot" />
-              <span>Transmitiendo en vivo</span>
-            </div>
-            <div className="landing-hero-device-grid" style={styles.deviceGrid}>
-              {["A", "B", "C"].map((item) => (
-                <div key={item} className="landing-hero-tile" style={styles.tile}>
-                  <div style={styles.tileLabel}>Evento</div>
-                </div>
-              ))}
-            </div>
-            <div style={styles.deviceCtas}>
-              <button className="btn btn-primary" style={{ width: "100%" }}>
-                Tomar foto
-              </button>
-              <button className="btn btn-secondary" style={{ width: "100%" }}>
-                Subir foto
-              </button>
-            </div>
+          <div className="lh-stat-div" />
+          <div style={s.statItem}>
+            <strong style={s.statLabel}>En vivo</strong>
+            <span className="muted" style={s.statSub}>
+              fotos que aparecen al segundo
+            </span>
+          </div>
+          <div className="lh-stat-div" />
+          <div style={s.statItem}>
+            <strong style={s.statLabel}>Tu marca</strong>
+            <span className="muted" style={s.statSub}>
+              landing 100% personalizable
+            </span>
           </div>
         </div>
       </div>
@@ -104,189 +124,89 @@ export function LandingHero() {
   );
 }
 
-const styles: Record<string, React.CSSProperties> = {
-  section: {
-    paddingTop: 12,
-    paddingBottom: 20,
-    minHeight: "calc(100vh - 88px)",
-    display: "flex",
-    alignItems: "center",
-  },
-  wrap: {
-    display: "grid",
-    gap: 32,
-    gridTemplateColumns: "minmax(0, 0.92fr) minmax(0, 1.08fr)",
-    alignItems: "center",
-  },
-  copy: {
-    display: "grid",
-    gap: 18,
-    maxWidth: 720,
-  },
+const s: Record<string, React.CSSProperties> = {
   title: {
-    fontSize: "clamp(58px, 7vw, 108px)",
-    lineHeight: 0.9,
+    fontSize: "clamp(72px, 10vw, 148px)",
+    lineHeight: 0.88,
     margin: 0,
     letterSpacing: "-0.05em",
   },
   lead: {
     fontSize: "clamp(18px, 1.5vw, 21px)",
-    lineHeight: 1.7,
-    maxWidth: 640,
-    margin: 0,
+    lineHeight: 1.65,
+    maxWidth: 580,
+    margin: "0 auto",
   },
   actions: {
     display: "flex",
     gap: 12,
+    justifyContent: "center",
     flexWrap: "wrap",
     marginTop: 4,
   },
-  statsRow: {
-    display: "grid",
-    gap: 12,
-    gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-    marginTop: 8,
-  },
-  stat: {
-    padding: 18,
-    borderRadius: 24,
-    display: "grid",
-    gap: 8,
-    minHeight: 112,
-  },
-  visual: {
-    display: "grid",
-    gap: 16,
-  },
-  heroCanvas: {
-    padding: 16,
-    borderRadius: 36,
-    display: "grid",
-    gap: 16,
-    gridTemplateColumns: "1.3fr 0.7fr",
-    background: "linear-gradient(180deg, rgba(255,255,255,0.98), rgba(255,255,255,0.88))",
-  },
-  heroMain: {
-    minHeight: 640,
-    borderRadius: 30,
+  slideInner: {
+    position: "relative",
+    zIndex: 1,
+    height: "100%",
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "flex-end",
     padding: 28,
-    display: "grid",
-    alignContent: "end",
-    gap: 14,
-    backgroundSize: "cover",
-    backgroundPosition: "center",
-    overflow: "hidden",
-    position: "relative",
-  },
-  heroMainBg: {
-    background:
-      "linear-gradient(180deg, rgba(0,0,0,0.18), rgba(0,0,0,0.9)), url(https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=1400&q=80)",
-  },
-  heroMainTitle: {
-    margin: 0,
-    color: "#fff",
-    fontSize: "clamp(42px, 4.8vw, 76px)",
-    lineHeight: 0.94,
-    letterSpacing: "-0.05em",
-    maxWidth: 560,
-  },
-  heroMainText: {
-    margin: 0,
-    color: "rgba(255,255,255,0.9)",
-    lineHeight: 1.65,
-    maxWidth: 470,
-    fontSize: 18,
-  },
-  sideStack: {
-    display: "grid",
-    gap: 16,
-  },
-  sideSlide: {
-    minHeight: 312,
-    borderRadius: 28,
-    padding: 22,
-    display: "grid",
-    alignContent: "end",
     gap: 10,
-    backgroundSize: "cover",
-    backgroundPosition: "center",
-    overflow: "hidden",
-    position: "relative",
   },
-  slide2Bg: {
-    background:
-      "linear-gradient(180deg, rgba(0,0,0,0.14), rgba(0,0,0,0.9)), url(https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&w=1200&q=80)",
-  },
-  slide3Bg: {
-    background:
-      "linear-gradient(180deg, rgba(0,0,0,0.14), rgba(0,0,0,0.9)), url(https://images.unsplash.com/photo-1504196606672-aef5c9cefc92?auto=format&fit=crop&w=1200&q=80)",
-  },
-  slideKicker: {
+  kicker: {
     display: "inline-flex",
     width: "fit-content",
-    padding: "8px 10px",
+    padding: "7px 10px",
     borderRadius: 999,
-    background: "rgba(255,255,255,0.18)",
+    background: "rgba(255,255,255,0.15)",
     color: "#fff",
     fontSize: 12,
     fontWeight: 700,
     letterSpacing: "0.16em",
   },
+  mainTitle: {
+    margin: 0,
+    color: "#fff",
+    fontSize: "clamp(36px, 4vw, 68px)",
+    lineHeight: 0.93,
+    letterSpacing: "-0.05em",
+    maxWidth: 520,
+  },
+  mainText: {
+    margin: 0,
+    color: "rgba(255,255,255,0.82)",
+    lineHeight: 1.65,
+    maxWidth: 460,
+    fontSize: 17,
+  },
   sideTitle: {
     margin: 0,
     color: "#fff",
-    fontSize: "clamp(24px, 2.4vw, 36px)",
-    lineHeight: 0.96,
+    fontSize: "clamp(22px, 2.2vw, 32px)",
+    lineHeight: 0.95,
     letterSpacing: "-0.04em",
-    maxWidth: 380,
+    maxWidth: 340,
   },
   sideText: {
     margin: 0,
-    color: "rgba(255,255,255,0.88)",
+    color: "rgba(255,255,255,0.8)",
     lineHeight: 1.6,
-    maxWidth: 360,
+    fontSize: 15,
+    maxWidth: 320,
   },
-  device: {
-    padding: 20,
-    borderRadius: 32,
-    background: "rgba(255,255,255,0.92)",
+  statItem: {
     display: "grid",
-    gap: 18,
+    gap: 6,
+    padding: "22px 32px",
   },
-  deviceTop: {
-    display: "flex",
-    alignItems: "center",
-    gap: 10,
-    color: "var(--muted)",
+  statLabel: {
+    fontSize: 18,
+    lineHeight: 1,
+    letterSpacing: "-0.03em",
+  },
+  statSub: {
     fontSize: 14,
-  },
-  deviceGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-    gap: 12,
-  },
-  tile: {
-    aspectRatio: "3 / 4",
-    borderRadius: 22,
-    background:
-      "linear-gradient(180deg, rgba(0,0,0,0.2), rgba(0,0,0,0.88)), url(https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=800&q=80)",
-    backgroundSize: "cover",
-    backgroundPosition: "center",
-    display: "flex",
-    alignItems: "end",
-    padding: 14,
-    filter: "grayscale(1)",
-    boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.06)",
-  },
-  tileLabel: {
-    color: "#fff",
-    fontSize: 12,
-    fontWeight: 700,
-    letterSpacing: "0.14em",
-    textTransform: "uppercase",
-  },
-  deviceCtas: {
-    display: "grid",
-    gap: 10,
+    lineHeight: 1.5,
   },
 };
