@@ -123,7 +123,7 @@ const styles: Record<string, React.CSSProperties> = {
     gap: 14,
   },
   featureImage: {
-    minHeight: 340,
+    minHeight: 300,
     borderRadius: 26,
     backgroundSize: "cover",
     backgroundPosition: "center",
@@ -146,23 +146,23 @@ const styles: Record<string, React.CSSProperties> = {
   },
   card: {
     borderRadius: 28,
-    minHeight: 210,
+    minHeight: 180,
     padding: 20,
     display: "grid",
     alignContent: "space-between",
     background: "linear-gradient(180deg, rgba(255,255,255,0.94), rgba(255,255,255,0.78))",
   },
   card1: {
-    minHeight: 240,
+    minHeight: 210,
   },
   card2: {
-    minHeight: 220,
+    minHeight: 195,
   },
   card3: {
-    minHeight: 260,
+    minHeight: 225,
   },
   card4: {
-    minHeight: 230,
+    minHeight: 205,
   },
   cardIndex: {
     width: "fit-content",
@@ -175,13 +175,13 @@ const styles: Record<string, React.CSSProperties> = {
   },
   cardTitle: {
     margin: 0,
-    fontSize: 28,
-    lineHeight: 0.98,
+    fontSize: "clamp(22px, 2vw, 28px)",
+    lineHeight: 1.02,
     letterSpacing: "-0.04em",
   },
   cardText: {
     margin: 0,
-    fontSize: 16,
+    fontSize: 15,
     lineHeight: 1.6,
   },
   demo: {
@@ -202,8 +202,8 @@ const styles: Record<string, React.CSSProperties> = {
   },
   demoTitle: {
     margin: 0,
-    fontSize: "clamp(34px, 4vw, 60px)",
-    lineHeight: 0.94,
+    fontSize: "clamp(32px, 3.7vw, 54px)",
+    lineHeight: 0.96,
     letterSpacing: "-0.04em",
   },
   demoText: {

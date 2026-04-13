@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
-import { siteUrl } from "@/lib/utils";
 
 const supabase = createSupabaseBrowserClient();
 
@@ -14,10 +13,14 @@ export function AdminLogin() {
   const sendLink = async () => {
     setIsSending(true);
     setMessage(null);
+    const redirectBase =
+      typeof window !== "undefined" && window.location.origin
+        ? window.location.origin
+        : "https://nilocam.vercel.app";
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: siteUrl("/auth/callback?next=/admin"),
+        emailRedirectTo: `${redirectBase}/auth/callback?next=/admin`,
       },
     });
     setIsSending(false);
