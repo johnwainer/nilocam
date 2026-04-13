@@ -46,23 +46,36 @@ export function GalleryDisplay({
     return () => { document.body.style.overflow = ""; };
   }, []);
 
-  // ── Realtime: new approved photos join the rotation ──────────────────────
+  // ── Realtime: new/approved photos join the rotation immediately ─────────
   useEffect(() => {
+    const addPhoto = (row: PhotoRecord) => {
+      if (row.moderation_status !== "approved") return;
+      const withUrl = { ...row, public_url: publicStorageUrl(row.storage_path) };
+      setPhotos((prev) => {
+        if (prev.some((p) => p.id === withUrl.id)) return prev;
+        // Insert right after current position so it appears on the next slide,
+        // not after a full cycle of potentially many existing photos.
+        const insertAt = curRef.current + 1;
+        const next = [...prev];
+        next.splice(insertAt, 0, withUrl);
+        return next;
+      });
+    };
+
     const channel = supabase
       .channel(`display-${event.id}`)
-      .on(
-        "postgres_changes",
+      // New photo uploaded and already approved (auto-moderation)
+      .on("postgres_changes",
         { event: "INSERT", schema: "public", table: "photos", filter: `event_id=eq.${event.id}` },
-        (payload) => {
-          const row = payload.new as PhotoRecord;
-          if (row.moderation_status !== "approved") return;
-          setPhotos((cur) => {
-            if (cur.some((p) => p.id === row.id)) return cur;
-            return [...cur, { ...row, public_url: publicStorageUrl(row.storage_path) }];
-          });
-        }
+        (payload) => addPhoto(payload.new as PhotoRecord)
+      )
+      // Photo manually approved in admin (status UPDATE → "approved")
+      .on("postgres_changes",
+        { event: "UPDATE", schema: "public", table: "photos", filter: `event_id=eq.${event.id}` },
+        (payload) => addPhoto(payload.new as PhotoRecord)
       )
       .subscribe();
+
     return () => { supabase.removeChannel(channel); };
   }, [event.id]);
 
