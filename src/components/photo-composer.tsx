@@ -29,6 +29,8 @@ const FILTER_CSS: Record<FilterKey, string> = {
   dramatic: "contrast(1.4) brightness(0.86) saturate(1.1)",
 };
 
+const MAX_FILES = 10;
+
 type ComposerProps = {
   event: EventRecord;
   onUploaded?: (photo: PhotoRecord) => void;
@@ -41,13 +43,15 @@ const LS_NAME_KEY = "nilo-guest-name";
 
 export function PhotoComposer({ event, onUploaded, compact, accentColor }: ComposerProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [file, setFile] = useState<File | null>(null);
+  const [files, setFiles] = useState<File[]>([]);
+  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
+  const [activeIndex, setActiveIndex] = useState(0);
   const [name, setName] = useState("");
   const [filter, setFilter] = useState<FilterKey>("none");
   const [template, setTemplate] = useState<TemplateKey>("clean");
   const [isSaving, setIsSaving] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<{ done: number; total: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [acceptedTerms, setAcceptedTerms] = useState(true);
   const uploadRef = useRef<HTMLInputElement | null>(null);
   const cameraRef = useRef<HTMLInputElement | null>(null);
@@ -61,39 +65,61 @@ export function PhotoComposer({ event, onUploaded, compact, accentColor }: Compo
   }, []);
 
   const limitLabel = useMemo(() => formatBytes(event.max_upload_mb * 1024 * 1024), [event.max_upload_mb]);
+  const activeUrl = previewUrls[activeIndex] ?? null;
 
   const openPicker = (kind: "camera" | "upload") => {
     if (kind === "camera") cameraRef.current?.click();
     else uploadRef.current?.click();
   };
 
-  const onFile = (selected: File | null) => {
-    if (!selected) return;
-    if (selected.size > event.max_upload_mb * 1024 * 1024) {
-      setError(`La foto supera el límite del evento (${limitLabel}).`);
+  const onFilesSelected = (selected: FileList | null) => {
+    if (!selected || selected.length === 0) return;
+    const maxBytes = event.max_upload_mb * 1024 * 1024;
+    const valid: File[] = [];
+    const oversized: number[] = [];
+
+    for (let i = 0; i < Math.min(selected.length, MAX_FILES); i++) {
+      if (selected[i].size > maxBytes) oversized.push(i);
+      else valid.push(selected[i]);
+    }
+
+    if (valid.length === 0) {
+      setError(`Las fotos superan el límite del evento (${limitLabel}).`);
       return;
     }
-    setError(null);
-    setFile(selected);
-    setPreviewUrl(URL.createObjectURL(selected));
+
+    // Clean up any previous object URLs
+    previewUrls.forEach((u) => URL.revokeObjectURL(u));
+
+    const urls = valid.map((f) => URL.createObjectURL(f));
+    setFiles(valid);
+    setPreviewUrls(urls);
+    setActiveIndex(0);
     setIsOpen(true);
+    setError(
+      oversized.length > 0
+        ? `${oversized.length} foto${oversized.length > 1 ? "s" : ""} se omitieron por superar el límite (${limitLabel}).`
+        : null
+    );
   };
 
   const reset = () => {
-    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    previewUrls.forEach((u) => URL.revokeObjectURL(u));
     setIsOpen(false);
-    setFile(null);
-    setPreviewUrl(null);
+    setFiles([]);
+    setPreviewUrls([]);
+    setActiveIndex(0);
     // keep name — user shouldn't have to type it again
     setFilter("none");
     setTemplate("clean");
     setIsSaving(false);
+    setUploadProgress(null);
     setError(null);
     setAcceptedTerms(true);
   };
 
   const submit = async () => {
-    if (!file) return;
+    if (files.length === 0) return;
     if (event.landing_config.showTerms && !acceptedTerms) {
       setError("Debes aceptar los términos para continuar.");
       return;
@@ -101,7 +127,6 @@ export function PhotoComposer({ event, onUploaded, compact, accentColor }: Compo
     setIsSaving(true);
     setError(null);
 
-    // Persist name to localStorage so it pre-fills next visit
     const trimmedName = name.trim();
     try {
       if (trimmedName) localStorage.setItem(LS_NAME_KEY, trimmedName);
@@ -109,61 +134,77 @@ export function PhotoComposer({ event, onUploaded, compact, accentColor }: Compo
 
     const isAnon = !trimmedName;
 
-    try {
-      const wm = event.landing_config.watermarkUrl
-        ? {
-            url: event.landing_config.watermarkUrl,
-            position: event.landing_config.watermarkPosition ?? ("bottom-right" as const),
-            size: event.landing_config.watermarkSize ?? 18,
-            opacity: event.landing_config.watermarkOpacity ?? 0.7,
-          }
-        : undefined;
+    const wm = event.landing_config.watermarkUrl
+      ? {
+          url: event.landing_config.watermarkUrl,
+          position: event.landing_config.watermarkPosition ?? ("bottom-right" as const),
+          size: event.landing_config.watermarkSize ?? 18,
+          opacity: event.landing_config.watermarkOpacity ?? 0.7,
+        }
+      : undefined;
 
-      const editedBlob = await renderEditedImage(file, {
-        filter,
-        template,
-        title: event.title,
-        subtitle: event.subtitle ?? event.landing_config.heroSubtitle,
-        watermark: wm,
-      });
+    let errorCount = 0;
+    setUploadProgress({ done: 0, total: files.length });
 
-      const path = `${event.id}/${crypto.randomUUID()}.jpg`;
-      const { error: uploadError } = await supabase.storage
-        .from(EVENT_BUCKET)
-        .upload(path, editedBlob, { contentType: "image/jpeg", upsert: false, cacheControl: "3600" });
-      if (uploadError) throw uploadError;
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      try {
+        const editedBlob = await renderEditedImage(file, {
+          filter,
+          template,
+          title: event.title,
+          subtitle: event.subtitle ?? event.landing_config.heroSubtitle,
+          watermark: wm,
+        });
 
-      const moderationStatus = event.moderation_mode === "auto" ? "approved" : "pending";
-      const storageUrl = publicStorageUrl(path);
+        const path = `${event.id}/${crypto.randomUUID()}.jpg`;
+        const { error: uploadError } = await supabase.storage
+          .from(EVENT_BUCKET)
+          .upload(path, editedBlob, { contentType: "image/jpeg", upsert: false, cacheControl: "3600" });
+        if (uploadError) throw uploadError;
 
-      const { data, error: insertError } = await supabase
-        .from("photos")
-        .insert({
-          event_id: event.id,
-          storage_path: path,
-          original_name: file.name,
-          uploaded_by_name: isAnon ? null : trimmedName,
-          uploaded_by_email: null,
-          is_anonymous: isAnon,
-          moderation_status: moderationStatus,
-          filter_name: filter,
-          template_key: template,
-          size_bytes: editedBlob.size,
-        })
-        .select("*")
-        .single();
-      if (insertError) throw insertError;
+        const moderationStatus = event.moderation_mode === "auto" ? "approved" : "pending";
+        const storageUrl = publicStorageUrl(path);
 
-      onUploaded?.({ ...data, public_url: storageUrl } as PhotoRecord);
-      reset();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "No pudimos subir tu foto.");
-    } finally {
+        const { data, error: insertError } = await supabase
+          .from("photos")
+          .insert({
+            event_id: event.id,
+            storage_path: path,
+            original_name: file.name,
+            uploaded_by_name: isAnon ? null : trimmedName,
+            uploaded_by_email: null,
+            is_anonymous: isAnon,
+            moderation_status: moderationStatus,
+            filter_name: filter,
+            template_key: template,
+            size_bytes: editedBlob.size,
+          })
+          .select("*")
+          .single();
+        if (insertError) throw insertError;
+
+        onUploaded?.({ ...data, public_url: storageUrl } as PhotoRecord);
+      } catch {
+        errorCount++;
+      }
+      setUploadProgress({ done: i + 1, total: files.length });
+    }
+
+    if (errorCount > 0) {
+      setError(
+        errorCount === files.length
+          ? "No pudimos subir ninguna foto. Intenta de nuevo."
+          : `${errorCount} foto${errorCount > 1 ? "s" : ""} no se pudieron subir.`
+      );
       setIsSaving(false);
+      setUploadProgress(null);
+    } else {
+      reset();
     }
   };
 
-  // ── Action buttons (shared between compact and card mode) ──────────────────
+  // ── Action buttons ──────────────────────────────────────────────────────────
   const actionButtons = (
     <div style={styles.actions}>
       <button
@@ -181,6 +222,30 @@ export function PhotoComposer({ event, onUploaded, compact, accentColor }: Compo
     </div>
   );
 
+  const publishLabel = (() => {
+    if (!isSaving) {
+      return files.length > 1
+        ? `Publicar ${files.length} fotos →`
+        : "Publicar foto →";
+    }
+    if (uploadProgress) {
+      return (
+        <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
+          <span style={styles.spinner} />
+          {files.length > 1
+            ? `Subiendo ${uploadProgress.done + 1} de ${uploadProgress.total}…`
+            : "Subiendo…"}
+        </span>
+      );
+    }
+    return (
+      <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
+        <span style={styles.spinner} />
+        Procesando…
+      </span>
+    );
+  })();
+
   return (
     <>
       {/* ── Trigger UI ──────────────────────────────────────────────────── */}
@@ -196,7 +261,7 @@ export function PhotoComposer({ event, onUploaded, compact, accentColor }: Compo
               Tu foto, en la pantalla del evento
             </strong>
             <p style={{ margin: 0, lineHeight: 1.65, color: "rgba(255,255,255,0.6)", fontSize: 15 }}>
-              Toma una foto o sube una de tu galería. Aplica filtros y publícala en segundos.
+              Toma una foto o sube hasta {MAX_FILES} de tu galería. Aplica filtros y publícalas en segundos.
             </p>
           </div>
           {actionButtons}
@@ -205,29 +270,86 @@ export function PhotoComposer({ event, onUploaded, compact, accentColor }: Compo
       )}
 
       {/* ── Hidden inputs ───────────────────────────────────────────────── */}
-      <input ref={cameraRef} type="file" accept="image/*" capture="environment"
-        onChange={(e) => onFile(e.target.files?.[0] ?? null)} className="sr-only" />
-      <input ref={uploadRef} type="file" accept="image/*"
-        onChange={(e) => onFile(e.target.files?.[0] ?? null)} className="sr-only" />
+      {/* Camera: single capture only */}
+      <input
+        ref={cameraRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        onChange={(e) => onFilesSelected(e.target.files)}
+        className="sr-only"
+      />
+      {/* Gallery: multiple, up to MAX_FILES */}
+      <input
+        ref={uploadRef}
+        type="file"
+        accept="image/*"
+        multiple
+        onChange={(e) => onFilesSelected(e.target.files)}
+        className="sr-only"
+      />
 
       {/* ── Editor modal ────────────────────────────────────────────────── */}
-      {isOpen && file && previewUrl ? (
+      {isOpen && files.length > 0 && activeUrl ? (
         <div className="pc-backdrop">
           <div className="card glass pc-modal">
             {/* Header */}
             <div style={styles.modalHead}>
-              <h3 style={{ fontSize: "clamp(18px, 4vw, 24px)", margin: 0, color: "#fff", fontWeight: 700, letterSpacing: "-0.02em" }}>
-                Elige tu estilo
-              </h3>
+              <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                <h3 style={{ fontSize: "clamp(18px, 4vw, 24px)", margin: 0, color: "#fff", fontWeight: 700, letterSpacing: "-0.02em" }}>
+                  Elige tu estilo
+                </h3>
+                {files.length > 1 && (
+                  <span style={{ fontSize: 13, color: "rgba(255,255,255,0.45)", fontWeight: 500 }}>
+                    El filtro y marco se aplican a las {files.length} fotos
+                  </span>
+                )}
+              </div>
               <button style={styles.btnClose} onClick={reset} aria-label="Cerrar">✕</button>
             </div>
+
+            {/* Multi-photo strip — only when more than one file */}
+            {files.length > 1 && (
+              <div style={styles.multiStrip}>
+                {previewUrls.map((url, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => setActiveIndex(i)}
+                    style={{
+                      ...styles.multiThumbBtn,
+                      outline: activeIndex === i ? "2.5px solid #ffffff" : "2.5px solid transparent",
+                      outlineOffset: 2,
+                      opacity: activeIndex === i ? 1 : 0.55,
+                    }}
+                    aria-label={`Foto ${i + 1}`}
+                  >
+                    <div style={styles.multiThumbWrap}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={url}
+                        alt=""
+                        style={{ width: "100%", height: "100%", objectFit: "cover", filter: FILTER_CSS[filter] }}
+                      />
+                    </div>
+                    <span style={{
+                      fontSize: 10,
+                      color: activeIndex === i ? "#fff" : "rgba(255,255,255,0.45)",
+                      fontWeight: activeIndex === i ? 700 : 500,
+                    }}>
+                      {i + 1}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
 
             <div className="pc-editor-grid">
               {/* ── Preview + Filter strip ── */}
               <div style={styles.previewPane}>
                 <div style={styles.previewImageWrap}>
                   <Image
-                    src={previewUrl}
+                    src={activeUrl}
                     alt="Vista previa"
                     fill
                     unoptimized
@@ -250,7 +372,7 @@ export function PhotoComposer({ event, onUploaded, compact, accentColor }: Compo
 
                 {/* Filter thumbnail strip */}
                 <div style={styles.filterScrollOuter}>
-                  <div style={styles.filterScroll}>
+                  <div className="pc-filter-scroll" style={styles.filterScroll}>
                     {FILTERS.map((f) => {
                       const active = filter === (f.key as FilterKey);
                       return (
@@ -267,7 +389,7 @@ export function PhotoComposer({ event, onUploaded, compact, accentColor }: Compo
                             outlineOffset: 2,
                           }}>
                             <Image
-                              src={previewUrl}
+                              src={activeUrl}
                               alt={f.label}
                               fill
                               unoptimized
@@ -338,12 +460,7 @@ export function PhotoComposer({ event, onUploaded, compact, accentColor }: Compo
                   disabled={isSaving}
                   type="button"
                 >
-                  {isSaving ? (
-                    <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
-                      <span style={styles.spinner} />
-                      Subiendo…
-                    </span>
-                  ) : "Publicar foto →"}
+                  {publishLabel}
                 </button>
 
                 {event.moderation_mode === "manual" ? (
@@ -378,7 +495,6 @@ function TemplateOverlay({ template }: { template: TemplateKey }) {
     <>
       <div style={{ ...base, inset: 5, border: "1.5px solid rgba(255,255,255,0.2)", borderRadius: 7 }} />
       <div style={{ ...base, inset: 9, border: "2px solid rgba(212,163,115,0.85)", borderRadius: 4 }} />
-      {/* Corners */}
       {([
         { top: 13, left: 13 },
         { top: 13, right: 13 },
@@ -403,7 +519,6 @@ function TemplateOverlay({ template }: { template: TemplateKey }) {
 
   if (template === "polaroid") return (
     <>
-      {/* White mat strips — thin on top/sides, thick on bottom */}
       <div style={{ ...base, inset: "0 0 auto 0", height: "4%", background: "#fafaf8" }} />
       <div style={{ ...base, inset: "auto 0 0 0", height: "15%", background: "#fafaf8" }} />
       <div style={{ ...base, inset: "4% auto 15% 0", width: "4%", background: "#fafaf8" }} />
@@ -563,7 +678,7 @@ const styles: Record<string, React.CSSProperties> = {
   modalHead: {
     display: "flex",
     justifyContent: "space-between",
-    alignItems: "center",
+    alignItems: "flex-start",
     gap: 12,
     marginBottom: 4,
   },
@@ -580,6 +695,34 @@ const styles: Record<string, React.CSSProperties> = {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
+  },
+  // Multi-photo strip
+  multiStrip: {
+    display: "flex",
+    gap: 8,
+    overflowX: "auto",
+    padding: "10px 0 6px",
+    scrollbarWidth: "none" as const,
+  },
+  multiThumbBtn: {
+    display: "flex",
+    flexDirection: "column" as const,
+    alignItems: "center",
+    gap: 4,
+    background: "none",
+    border: "none",
+    cursor: "pointer",
+    padding: 0,
+    flexShrink: 0,
+    transition: "opacity 150ms ease",
+    borderRadius: 10,
+  },
+  multiThumbWrap: {
+    width: 52,
+    height: 66,
+    borderRadius: 8,
+    overflow: "hidden",
+    background: "rgba(255,255,255,0.06)",
   },
   previewPane: {
     borderRadius: 20,
@@ -617,7 +760,7 @@ const styles: Record<string, React.CSSProperties> = {
     display: "flex",
     gap: 8,
     overflowX: "auto",
-    scrollbarWidth: "none",
+    scrollbarWidth: "none" as const,
     paddingBottom: 2,
   },
   filterThumbBtn: {
