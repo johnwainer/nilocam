@@ -11,17 +11,8 @@ export type WatermarkConfig = {
   opacity: number; // 0.1–1.0
 };
 
-export async function fileToImageBitmap(file: File) {
-  const url = URL.createObjectURL(file);
-  try {
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.src = url;
-    await img.decode();
-    return img;
-  } finally {
-    URL.revokeObjectURL(url);
-  }
+export async function fileToImageBitmap(file: File): Promise<ImageBitmap> {
+  return createImageBitmap(file);
 }
 
 async function canvasToBlob(canvas: HTMLCanvasElement, quality: number) {
@@ -68,12 +59,14 @@ function roundRect(
 /** Draw img to cover the given area (clipped to that area) */
 function drawCover(
   ctx: CanvasRenderingContext2D,
-  img: HTMLImageElement,
+  img: ImageBitmap | HTMLImageElement,
   ax: number, ay: number, aw: number, ah: number
 ) {
-  const scale = Math.max(aw / img.naturalWidth, ah / img.naturalHeight);
-  const dw = Math.round(img.naturalWidth * scale);
-  const dh = Math.round(img.naturalHeight * scale);
+  const iw = img instanceof ImageBitmap ? img.width : img.naturalWidth;
+  const ih = img instanceof ImageBitmap ? img.height : img.naturalHeight;
+  const scale = Math.max(aw / iw, ah / ih);
+  const dw = Math.round(iw * scale);
+  const dh = Math.round(ih * scale);
   const dx = ax + Math.round((aw - dw) / 2);
   const dy = ay + Math.round((ah - dh) / 2);
   ctx.drawImage(img, dx, dy, dw, dh);
