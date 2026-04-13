@@ -1,22 +1,19 @@
-import { BrandMark } from "@/components/brand-mark";
-import { LinkButton } from "@/components/button";
+import Link from "next/link";
 
 export default function NotFound() {
   return (
-    <main className="mx-auto grid min-h-screen max-w-2xl place-items-center px-4 text-center">
-      <div className="panel rounded-[34px] p-8">
-        <div className="flex justify-center">
-          <BrandMark />
-        </div>
-        <h1 className="mt-6 text-4xl font-semibold text-black">Evento no encontrado</h1>
-        <p className="mt-3 text-sm leading-7 text-[var(--app-muted)]">
-          Revisamos el enlace y no encontramos un evento con ese QR o slug.
+    <main className="container section">
+      <div className="card glass" style={{ padding: 32, borderRadius: 28 }}>
+        <span className="eyebrow">404</span>
+        <h1 className="serif" style={{ fontSize: 54, margin: "10px 0 14px" }}>
+          Esa página no existe
+        </h1>
+        <p className="muted" style={{ fontSize: 18, lineHeight: 1.7 }}>
+          Tal vez el QR apunta a otro evento o el slug cambió.
         </p>
-        <div className="mt-6 flex justify-center">
-          <LinkButton href="/" tone="primary">
-            Volver al inicio
-          </LinkButton>
-        </div>
+        <Link className="btn btn-primary" href="/">
+          Volver al inicio
+        </Link>
       </div>
     </main>
   );
