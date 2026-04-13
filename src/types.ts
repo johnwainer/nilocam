@@ -55,6 +55,8 @@ export type EventLandingConfig = {
   watermarkPosition?: WatermarkPosition;
   watermarkSize?: number;     // 5–40 (% of output image width)
   watermarkOpacity?: number;  // 0.1–1.0
+  // Active design template key
+  templateKey?: string;
   // Filter & template policy
   // "allow"  → guest chooses freely (default)
   // "none"   → no filter/template applied, picker hidden
@@ -97,6 +99,13 @@ export type PhotoRecord = {
   filter_name: string | null;
   template_key: string | null;
   created_at: string;
+};
+
+export type LandingTemplatePreset = {
+  key: string;
+  name: string;
+  description: string;
+  theme: LandingTheme;
 };
 
 export type EventTypePreset = {

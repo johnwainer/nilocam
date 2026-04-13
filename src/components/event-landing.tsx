@@ -6,7 +6,6 @@ import { formatDate } from "@/lib/utils";
 import { PhotoComposer } from "@/components/photo-composer";
 import { RealtimeGallery } from "@/components/realtime-gallery";
 
-/** Returns true if hex color is too dark to use as button background on a dark landing */
 function isDark(hex: string): boolean {
   const h = hex.replace("#", "");
   if (h.length < 6) return true;
@@ -41,108 +40,260 @@ export function EventLanding({
 }) {
   const [livePhotos, setLivePhotos] = useState<PhotoRecord[]>([]);
 
-  const theme = event.landing_config.theme;
-  const sections = event.landing_config.sections;
+  const cfg = event.landing_config;
+  const theme = cfg.theme;
+  const sections = cfg.sections;
   const coverUrl = theme.heroImage ?? event.cover_image_url ?? "";
-  const hasGallery = sections.includes("gallery");
-  const accentDark = isDark(theme.accent);
-  const accentColor = accentDark ? "#ffffff" : theme.accent;
-  const accentTextColor = accentDark ? "#060a18" : "#ffffff";
 
-  // Show gallery only when there are photos
-  const hasPhotos = initialPhotos.length > 0 || livePhotos.length > 0;
+  // Derived flags
+  const showCtas       = sections.includes("ctas");
+  const showHowItWorks = sections.includes("how-it-works");
+  const showGallery    = sections.includes("gallery");
+  const showEventInfo  = sections.includes("event-info");
+  const showPrivacy    = sections.includes("privacy");
+  const showSupport    = sections.includes("support");
+
+  const hasPhotos     = initialPhotos.length > 0 || livePhotos.length > 0;
+  const darkPage      = isDark(theme.background);
+  const accentIsDark  = isDark(theme.accent);
+  const accentColor   = accentIsDark ? "#ffffff" : theme.accent;
+
+  // Text helpers based on page brightness
+  const textPrimary   = theme.text;
+  const textMuted     = theme.muted;
+  const borderColor   = theme.border;
 
   return (
     <main
-      className="dark-theme"
-      style={{ background: `linear-gradient(180deg, ${theme.background} 0%, #050816 100%)`, color: "#f0ede8", minHeight: "100vh" }}
+      className={darkPage ? "dark-theme" : ""}
+      style={{ background: theme.background, color: textPrimary, minHeight: "100vh" }}
     >
-      {/* ── HERO — full screen, upload buttons embedded ─────────────── */}
+      {/* ── HERO ──────────────────────────────────────────────────────── */}
       <section style={s.heroSection}>
-        {/* Background */}
         {coverUrl ? (
           <div style={{
             ...s.heroBg,
-            backgroundImage: `linear-gradient(180deg, rgba(5,8,22,0.18) 0%, rgba(5,8,22,0.65) 50%, rgba(5,8,22,0.97) 100%), url(${coverUrl})`,
+            backgroundImage: `linear-gradient(180deg, rgba(5,8,22,0.18) 0%, rgba(5,8,22,0.65) 55%, ${theme.background} 100%), url(${coverUrl})`,
           }} />
         ) : (
-          <div style={{ ...s.heroBg, background: `radial-gradient(ellipse at 50% 20%, ${theme.accent}28 0%, transparent 65%)` }} />
+          <div style={{
+            ...s.heroBg,
+            background: `radial-gradient(ellipse at 50% 20%, ${theme.accent}30 0%, transparent 65%), ${theme.background}`,
+          }} />
         )}
 
         <div className="container" style={s.heroInner}>
-          {/* Event badge */}
+          {/* Event type badge */}
           <div style={s.heroTop}>
             <span style={{
               ...s.badge,
               background: `${theme.accent}22`,
               border: `1px solid ${theme.accent}55`,
-              color: accentDark ? "rgba(255,255,255,0.7)" : theme.accent,
+              color: accentIsDark ? "rgba(255,255,255,0.75)" : theme.accent,
             }}>
               {event.event_type_key.replaceAll("-", " ")}
             </span>
           </div>
 
-          {/* Title block */}
+          {/* Title + subtitle */}
           <div style={s.heroCopy}>
-            <h1 style={s.heroTitle}>
-              {event.landing_config.heroTitle}
-            </h1>
-
-            {event.landing_config.heroSubtitle ? (
-              <p style={s.heroSubtitle}>{event.landing_config.heroSubtitle}</p>
-            ) : null}
-
-            {/* Date / venue chips */}
-            {(event.event_date || event.venue_name) ? (
+            <h1 style={s.heroTitle}>{cfg.heroTitle}</h1>
+            {cfg.heroSubtitle && (
+              <p style={s.heroSubtitle}>{cfg.heroSubtitle}</p>
+            )}
+            {(event.event_date || event.venue_name) && (
               <div style={s.metaRow}>
-                {event.event_date ? (
+                {event.event_date && (
                   <span style={s.metaChip}>
-                    <CalendarIcon />
-                    {formatDate(event.event_date)}
+                    <CalendarIcon />{formatDate(event.event_date)}
                   </span>
-                ) : null}
-                {event.venue_name ? (
+                )}
+                {event.venue_name && (
                   <span style={s.metaChip}>
-                    <PinIcon />
-                    {event.venue_name}{event.venue_city ? `, ${event.venue_city}` : ""}
+                    <PinIcon />{event.venue_name}{event.venue_city ? `, ${event.venue_city}` : ""}
                   </span>
-                ) : null}
+                )}
               </div>
-            ) : null}
+            )}
           </div>
 
-          {/* ── Action area — upload buttons live here ── */}
-          <div style={s.heroActions}>
-            <p style={s.uploadPrompt}>
-              Comparte tu foto y aparecerá aquí en segundos
-            </p>
-            <PhotoComposer
-              event={event}
-              compact
-              accentColor={accentColor}
-              onUploaded={(photo) => {
-                if (photo.moderation_status === "approved") {
-                  setLivePhotos((prev) => [photo, ...prev]);
-                }
-              }}
-            />
-            {hasGallery && hasPhotos ? (
-              <a style={s.scrollDown} href="#gallery">
-                Ver fotos del evento ↓
-              </a>
-            ) : null}
-          </div>
+          {/* ── CTAs — upload buttons ── */}
+          {showCtas && event.allow_guest_upload && (
+            <div style={s.heroActions}>
+              <p style={s.uploadPrompt}>Comparte tu foto y aparecerá aquí en segundos</p>
+              <PhotoComposer
+                event={event}
+                compact
+                accentColor={accentColor}
+                onUploaded={(photo) => {
+                  if (photo.moderation_status === "approved") {
+                    setLivePhotos((prev) => [photo, ...prev]);
+                  }
+                }}
+              />
+              {showGallery && hasPhotos && (
+                <a style={s.scrollDown} href="#gallery">Ver fotos del evento ↓</a>
+              )}
+            </div>
+          )}
         </div>
       </section>
 
-      {/* ── GALLERY — only when there are photos ─────────────────────── */}
-      {hasGallery && hasPhotos ? (
-        <RealtimeGallery
-          event={event}
-          initialPhotos={initialPhotos}
-          additionalPhotos={livePhotos}
-        />
-      ) : null}
+      {/* ── CÓMO FUNCIONA ─────────────────────────────────────────────── */}
+      {showHowItWorks && (
+        <section style={{ background: theme.surface, padding: "64px 0" }}>
+          <div className="container">
+            <div style={{ textAlign: "center", marginBottom: 44 }}>
+              <span style={{
+                display: "block",
+                fontSize: 11,
+                fontWeight: 700,
+                letterSpacing: "0.18em",
+                textTransform: "uppercase",
+                color: textMuted,
+                marginBottom: 12,
+              }}>
+                Cómo funciona
+              </span>
+              <h2 style={{ fontSize: "clamp(26px, 5vw, 42px)", fontWeight: 700, margin: 0, letterSpacing: "-0.03em", color: textPrimary }}>
+                Participa en segundos
+              </h2>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 16 }}>
+              {[
+                { n: "01", title: "Escanea el QR", desc: "Apunta la cámara al código del evento, no necesitas instalar nada." },
+                { n: "02", title: "Toma o sube", desc: "Captura el momento o elige una foto de tu galería. Aplica filtros si quieres." },
+                { n: "03", title: "Aparece en vivo", desc: "Tu foto llega a la pantalla del evento en segundos, visible para todos." },
+              ].map((step) => (
+                <div key={step.n} style={{
+                  padding: 28,
+                  borderRadius: 20,
+                  background: theme.surfaceSoft,
+                  border: `1px solid ${borderColor}`,
+                }}>
+                  <div style={{
+                    fontSize: 11,
+                    fontWeight: 800,
+                    letterSpacing: "0.12em",
+                    color: accentColor,
+                    marginBottom: 14,
+                    fontVariantNumeric: "tabular-nums",
+                  }}>
+                    {step.n}
+                  </div>
+                  <h3 style={{ fontSize: 18, fontWeight: 700, margin: "0 0 8px", color: textPrimary, letterSpacing: "-0.02em" }}>
+                    {step.title}
+                  </h3>
+                  <p style={{ margin: 0, fontSize: 14, lineHeight: 1.65, color: textMuted }}>
+                    {step.desc}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ── GALLERY — always dark regardless of theme ─────────────────── */}
+      {showGallery && hasPhotos && (
+        <div style={{ background: "#050816" }}>
+          <RealtimeGallery
+            event={event}
+            initialPhotos={initialPhotos}
+            additionalPhotos={livePhotos}
+          />
+        </div>
+      )}
+
+      {/* ── DATOS DEL EVENTO ──────────────────────────────────────────── */}
+      {showEventInfo && (event.event_date || event.venue_name || event.subtitle) && (
+        <section style={{ background: theme.surface, padding: "52px 0" }}>
+          <div className="container">
+            <div style={{ display: "flex", gap: 40, flexWrap: "wrap", alignItems: "center", justifyContent: "space-between" }}>
+              <div>
+                <span style={{
+                  display: "block",
+                  fontSize: 11,
+                  fontWeight: 700,
+                  letterSpacing: "0.18em",
+                  textTransform: "uppercase",
+                  color: textMuted,
+                  marginBottom: 10,
+                }}>
+                  Detalles del evento
+                </span>
+                <h2 style={{ fontSize: "clamp(22px, 4vw, 36px)", fontWeight: 700, margin: 0, letterSpacing: "-0.025em", color: textPrimary }}>
+                  {event.title}
+                </h2>
+                {event.subtitle && (
+                  <p style={{ margin: "8px 0 0", fontSize: 15, color: textMuted, lineHeight: 1.6 }}>
+                    {event.subtitle}
+                  </p>
+                )}
+              </div>
+              <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+                {event.event_date && (
+                  <div style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 8,
+                    padding: "12px 18px",
+                    borderRadius: 999,
+                    background: theme.surfaceSoft,
+                    border: `1px solid ${borderColor}`,
+                    fontSize: 14,
+                    fontWeight: 600,
+                    color: textPrimary,
+                  }}>
+                    <CalendarIcon />
+                    {formatDate(event.event_date)}
+                  </div>
+                )}
+                {event.venue_name && (
+                  <div style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 8,
+                    padding: "12px 18px",
+                    borderRadius: 999,
+                    background: theme.surfaceSoft,
+                    border: `1px solid ${borderColor}`,
+                    fontSize: 14,
+                    fontWeight: 600,
+                    color: textPrimary,
+                  }}>
+                    <PinIcon />
+                    {event.venue_name}{event.venue_city ? `, ${event.venue_city}` : ""}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ── PRIVACIDAD ────────────────────────────────────────────────── */}
+      {showPrivacy && cfg.privacyCopy && (
+        <section style={{ padding: "36px 0", borderTop: `1px solid ${borderColor}` }}>
+          <div className="container">
+            <p style={{ margin: 0, fontSize: 13, lineHeight: 1.75, color: textMuted, maxWidth: 640 }}>
+              {cfg.privacyCopy}
+            </p>
+          </div>
+        </section>
+      )}
+
+      {/* ── SOPORTE ───────────────────────────────────────────────────── */}
+      {showSupport && (
+        <section style={{ padding: "32px 0", borderTop: `1px solid ${borderColor}` }}>
+          <div className="container">
+            <p style={{ margin: 0, fontSize: 12, color: textMuted, opacity: 0.6 }}>
+              Powered by <strong>Nilo Cam</strong> · ¿Necesitas ayuda?{" "}
+              <a href="mailto:hola@nilocam.com" style={{ color: textMuted }}>hola@nilocam.com</a>
+            </p>
+          </div>
+        </section>
+      )}
     </main>
   );
 }
@@ -169,12 +320,9 @@ const s: Record<string, React.CSSProperties> = {
     flex: 1,
     paddingTop: "max(64px, env(safe-area-inset-top, 64px))",
     paddingBottom: 48,
-    gap: 0,
     minHeight: "100svh",
   },
-  heroTop: {
-    paddingBottom: 20,
-  },
+  heroTop: { paddingBottom: 20 },
   badge: {
     display: "inline-flex",
     alignItems: "center",
@@ -183,7 +331,7 @@ const s: Record<string, React.CSSProperties> = {
     fontSize: 11,
     fontWeight: 700,
     letterSpacing: "0.14em",
-    textTransform: "uppercase",
+    textTransform: "uppercase" as const,
     width: "fit-content",
   },
   heroCopy: {
@@ -208,12 +356,7 @@ const s: Record<string, React.CSSProperties> = {
     color: "rgba(255,255,255,0.6)",
     maxWidth: 520,
   },
-  metaRow: {
-    display: "flex",
-    gap: 8,
-    flexWrap: "wrap",
-    paddingTop: 4,
-  },
+  metaRow: { display: "flex", gap: 8, flexWrap: "wrap" as const, paddingTop: 4 },
   metaChip: {
     display: "inline-flex",
     alignItems: "center",
@@ -248,6 +391,5 @@ const s: Record<string, React.CSSProperties> = {
     color: "rgba(255,255,255,0.45)",
     textDecoration: "none",
     fontWeight: 500,
-    letterSpacing: "0.02em",
   },
 };
