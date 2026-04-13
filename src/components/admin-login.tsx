@@ -6,7 +6,7 @@ import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 
 const supabase = createSupabaseBrowserClient();
 
-type Mode = "login" | "signup" | "reset";
+type Mode = "login" | "access" | "reset";
 
 const modeCopy: Record<Mode, { title: string; text: string; primary: string }> = {
   login: {
@@ -14,10 +14,10 @@ const modeCopy: Record<Mode, { title: string; text: string; primary: string }> =
     text: "Accede con tu correo y contraseña para gestionar eventos, moderación y URLs del QR.",
     primary: "Entrar",
   },
-  signup: {
-    title: "Crea tu cuenta",
-    text: "Regístrate con correo y contraseña. Tu perfil queda guardado en la base de datos de la app.",
-    primary: "Crear cuenta",
+  access: {
+    title: "Crear o reparar acceso",
+    text: "Si ya existe tu usuario en la base, definimos la contraseña y dejamos la cuenta lista sin confirmaciones.",
+    primary: "Crear acceso",
   },
   reset: {
     title: "Recupera tu contraseña",
@@ -67,16 +67,30 @@ export function AdminLogin() {
         return;
       }
 
-      if (mode === "signup") {
-        const { data, error } = await supabase.auth.signUp({
+      if (mode === "access") {
+        const response = await fetch("/api/auth/bootstrap", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email,
+            password,
+            displayName,
+          }),
+        });
+
+        const payload = (await response.json().catch(() => null)) as
+          | { ok: true; message?: string }
+          | { ok: false; message?: string }
+          | null;
+
+        if (!response.ok || !payload?.ok) {
+          setMessage(payload?.message || "No pudimos crear el acceso.");
+          return;
+        }
+
+        const { error } = await supabase.auth.signInWithPassword({
           email,
           password,
-          options: {
-            emailRedirectTo: `${origin}/auth/callback?next=/admin`,
-            data: {
-              full_name: displayName || email.split("@")[0] || "",
-            },
-          },
         });
 
         if (error) {
@@ -84,15 +98,8 @@ export function AdminLogin() {
           return;
         }
 
-        if (data.session) {
-          router.push("/admin");
-          router.refresh();
-          return;
-        }
-
-        setMessage("Cuenta creada. Revisa tu correo para confirmar el acceso y luego vuelve a iniciar sesión.");
-        setMode("login");
-        setPassword("");
+        router.push("/admin");
+        router.refresh();
         return;
       }
 
@@ -140,9 +147,9 @@ export function AdminLogin() {
           </div>
         </div>
 
-        <div className="card glass" style={styles.formCard}>
+          <div className="card glass" style={styles.formCard}>
           <div style={styles.tabs}>
-            {(["login", "signup", "reset"] as Mode[]).map((item) => (
+            {(["login", "access", "reset"] as Mode[]).map((item) => (
               <button
                 key={item}
                 type="button"
@@ -151,11 +158,11 @@ export function AdminLogin() {
                 onClick={() => {
                   setMode(item);
                   setMessage(null);
-                  if (item !== "signup") setDisplayName("");
+                  if (item !== "access") setDisplayName("");
                   if (item === "login") resetForm();
                 }}
               >
-                {item === "login" ? "Entrar" : item === "signup" ? "Crear cuenta" : "Recuperar"}
+                {item === "login" ? "Entrar" : item === "access" ? "Crear acceso" : "Recuperar"}
               </button>
             ))}
           </div>
@@ -170,7 +177,7 @@ export function AdminLogin() {
           </div>
 
           <form onSubmit={submit} style={styles.form}>
-            {mode === "signup" ? (
+            {mode === "access" ? (
               <label>
                 <span className="label">Nombre visible</span>
                 <input
@@ -206,16 +213,17 @@ export function AdminLogin() {
                   placeholder="••••••••"
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
-                  autoComplete={mode === "signup" ? "new-password" : "current-password"}
+                  autoComplete={mode === "access" ? "new-password" : "current-password"}
                   minLength={8}
                   required
                 />
               </label>
             ) : null}
 
-            {mode === "signup" ? (
+            {mode === "access" ? (
               <p className="muted" style={styles.note}>
-                Al registrarte aceptas que tu cuenta quede guardada en Supabase y se use para administrar eventos.
+                No pedimos confirmación por email. Si tu usuario ya existe en `profiles`, creamos o reparamos el
+                acceso y entras enseguida.
               </p>
             ) : null}
 
@@ -230,16 +238,16 @@ export function AdminLogin() {
                 Volver a entrar
               </button>
             ) : null}
-            {mode !== "signup" ? (
+            {mode !== "access" ? (
               <button
                 type="button"
                 className="btn btn-secondary"
                 onClick={() => {
-                  setMode("signup");
+                  setMode("access");
                   setMessage(null);
                 }}
               >
-                Crear cuenta
+                Crear acceso
               </button>
             ) : null}
           </div>
