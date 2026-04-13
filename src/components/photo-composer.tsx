@@ -67,6 +67,21 @@ export function PhotoComposer({ event, onUploaded, compact, accentColor }: Compo
   const limitLabel = useMemo(() => formatBytes(event.max_upload_mb * 1024 * 1024), [event.max_upload_mb]);
   const activeUrl = previewUrls[activeIndex] ?? null;
 
+  // Policy derived from event config
+  const filtersMode   = event.landing_config.filtersMode   ?? "allow";
+  const templatesMode = event.landing_config.templatesMode ?? "allow";
+  // Effective values sent to canvas renderer
+  const effectiveFilter: FilterKey =
+    filtersMode === "none"   ? "none" :
+    filtersMode === "forced" ? ((event.landing_config.forcedFilter ?? "none") as FilterKey) :
+    filter;
+  const effectiveTemplate: TemplateKey =
+    templatesMode === "none"   ? "clean" :
+    templatesMode === "forced" ? ((event.landing_config.forcedTemplate ?? "clean") as TemplateKey) :
+    template;
+  const showFilterPicker   = filtersMode   === "allow";
+  const showTemplatePicker = templatesMode === "allow";
+
   const openPicker = (kind: "camera" | "upload") => {
     if (kind === "camera") cameraRef.current?.click();
     else uploadRef.current?.click();
@@ -150,8 +165,8 @@ export function PhotoComposer({ event, onUploaded, compact, accentColor }: Compo
       const file = files[i];
       try {
         const editedBlob = await renderEditedImage(file, {
-          filter,
-          template,
+          filter: effectiveFilter,
+          template: effectiveTemplate,
           title: event.title,
           subtitle: event.subtitle ?? event.landing_config.heroSubtitle,
           watermark: wm,
@@ -176,8 +191,8 @@ export function PhotoComposer({ event, onUploaded, compact, accentColor }: Compo
             uploaded_by_email: null,
             is_anonymous: isAnon,
             moderation_status: moderationStatus,
-            filter_name: filter,
-            template_key: template,
+            filter_name: effectiveFilter,
+            template_key: effectiveTemplate,
             size_bytes: editedBlob.size,
           })
           .select("*")
@@ -329,7 +344,7 @@ export function PhotoComposer({ event, onUploaded, compact, accentColor }: Compo
                       <img
                         src={url}
                         alt=""
-                        style={{ width: "100%", height: "100%", objectFit: "cover", filter: FILTER_CSS[filter] }}
+                        style={{ width: "100%", height: "100%", objectFit: "cover", filter: FILTER_CSS[effectiveFilter] }}
                       />
                     </div>
                     <span style={{
@@ -354,81 +369,85 @@ export function PhotoComposer({ event, onUploaded, compact, accentColor }: Compo
                     fill
                     unoptimized
                     sizes="(max-width: 640px) 100vw, 48vw"
-                    style={{ objectFit: "cover", filter: FILTER_CSS[filter], transition: "filter 200ms ease" }}
+                    style={{ objectFit: "cover", filter: FILTER_CSS[effectiveFilter], transition: "filter 200ms ease" }}
                   />
 
                   {/* ── Template overlays ── */}
-                  <TemplateOverlay template={template} />
+                  <TemplateOverlay template={effectiveTemplate} />
 
                   {/* ── Watermark preview ── */}
                   <WatermarkPreview event={event} />
 
                   {/* Filter + template name badge */}
                   <div style={styles.filterNameBadge}>
-                    {FILTERS.find(f => f.key === filter)?.label ?? "Original"}
-                    {template !== "clean" ? ` · ${TEMPLATES.find(t => t.key === template)?.label}` : ""}
+                    {FILTERS.find(f => f.key === effectiveFilter)?.label ?? "Original"}
+                    {effectiveTemplate !== "clean" ? ` · ${TEMPLATES.find(t => t.key === effectiveTemplate)?.label}` : ""}
                   </div>
                 </div>
 
-                {/* Filter thumbnail strip */}
-                <div style={styles.filterScrollOuter}>
-                  <div className="pc-filter-scroll" style={styles.filterScroll}>
-                    {FILTERS.map((f) => {
-                      const active = filter === (f.key as FilterKey);
-                      return (
-                        <button
-                          key={f.key}
-                          type="button"
-                          onClick={() => setFilter(f.key as FilterKey)}
-                          style={styles.filterThumbBtn}
-                          aria-label={f.label}
-                        >
-                          <div style={{
-                            ...styles.filterThumbImg,
-                            outline: active ? "2.5px solid #ffffff" : "2.5px solid transparent",
-                            outlineOffset: 2,
-                          }}>
-                            <Image
-                              src={activeUrl}
-                              alt={f.label}
-                              fill
-                              unoptimized
-                              sizes="60px"
-                              style={{ objectFit: "cover", filter: FILTER_CSS[f.key as FilterKey] }}
-                            />
-                          </div>
-                          <span style={{
-                            ...styles.filterThumbLabel,
-                            color: active ? "#ffffff" : "rgba(255,255,255,0.5)",
-                            fontWeight: active ? 700 : 500,
-                          }}>
-                            {f.label}
-                          </span>
-                        </button>
-                      );
-                    })}
+                {/* Filter thumbnail strip — only when guest can choose */}
+                {showFilterPicker && (
+                  <div style={styles.filterScrollOuter}>
+                    <div className="pc-filter-scroll" style={styles.filterScroll}>
+                      {FILTERS.map((f) => {
+                        const active = filter === (f.key as FilterKey);
+                        return (
+                          <button
+                            key={f.key}
+                            type="button"
+                            onClick={() => setFilter(f.key as FilterKey)}
+                            style={styles.filterThumbBtn}
+                            aria-label={f.label}
+                          >
+                            <div style={{
+                              ...styles.filterThumbImg,
+                              outline: active ? "2.5px solid #ffffff" : "2.5px solid transparent",
+                              outlineOffset: 2,
+                            }}>
+                              <Image
+                                src={activeUrl}
+                                alt={f.label}
+                                fill
+                                unoptimized
+                                sizes="60px"
+                                style={{ objectFit: "cover", filter: FILTER_CSS[f.key as FilterKey] }}
+                              />
+                            </div>
+                            <span style={{
+                              ...styles.filterThumbLabel,
+                              color: active ? "#ffffff" : "rgba(255,255,255,0.5)",
+                              fontWeight: active ? 700 : 500,
+                            }}>
+                              {f.label}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
 
               {/* ── Form ── */}
               <div style={styles.formPane}>
-                {/* Template */}
-                <div>
-                  <div style={styles.formLabel}>Marco</div>
-                  <div style={styles.chips}>
-                    {TEMPLATES.map((item) => (
-                      <button
-                        key={item.key}
-                        style={template === item.key ? styles.chipActive : styles.chip}
-                        onClick={() => setTemplate(item.key as TemplateKey)}
-                        type="button"
-                      >
-                        {item.label}
-                      </button>
-                    ))}
+                {/* Template — only when guest can choose */}
+                {showTemplatePicker && (
+                  <div>
+                    <div style={styles.formLabel}>Marco</div>
+                    <div style={styles.chips}>
+                      {TEMPLATES.map((item) => (
+                        <button
+                          key={item.key}
+                          style={template === item.key ? styles.chipActive : styles.chip}
+                          onClick={() => setTemplate(item.key as TemplateKey)}
+                          type="button"
+                        >
+                          {item.label}
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
 
                 {/* Name — optional, persisted to localStorage */}
                 {event.landing_config.showNameField ? (

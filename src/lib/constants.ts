@@ -125,6 +125,10 @@ export const DEFAULT_LANDING_CONFIG: EventLandingConfig = {
   showNameField: true,
   showAnonymousToggle: true,
   showTerms: true,
+  filtersMode: "allow",
+  forcedFilter: null,
+  templatesMode: "allow",
+  forcedTemplate: null,
   theme: {
     background: "#0b0f19",
     surface: "#111827",

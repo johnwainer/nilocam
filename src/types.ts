@@ -55,6 +55,14 @@ export type EventLandingConfig = {
   watermarkPosition?: WatermarkPosition;
   watermarkSize?: number;     // 5–40 (% of output image width)
   watermarkOpacity?: number;  // 0.1–1.0
+  // Filter & template policy
+  // "allow"  → guest chooses freely (default)
+  // "none"   → no filter/template applied, picker hidden
+  // "forced" → a specific value is applied to everyone, picker hidden
+  filtersMode?: "allow" | "none" | "forced";
+  forcedFilter?: string | null;
+  templatesMode?: "allow" | "none" | "forced";
+  forcedTemplate?: string | null;
 };
 
 export type EventRecord = {

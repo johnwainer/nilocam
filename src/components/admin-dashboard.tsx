@@ -10,8 +10,11 @@ import {
   DEFAULT_LANDING_CONFIG,
   EVENT_BUCKET,
   EVENT_TYPES,
+  FILTERS,
+  TEMPLATES,
   eventTypePresetFromKey,
 } from "@/lib/constants";
+import type { FilterKey, TemplateKey } from "@/lib/image-tools";
 import { formatBytes, formatDate, publicStorageUrl, siteUrl, toSlug } from "@/lib/utils";
 import type { EventRecord, EventTypeKey, PhotoRecord, WatermarkPosition } from "@/types";
 
@@ -917,6 +920,110 @@ export function AdminDashboard({
                     )}
                   </div>
 
+                  {/* Filtros y marcos */}
+                  <div style={s.formSection}>
+                    <span className="eyebrow" style={s.sectionEyebrow}>
+                      Filtros y marcos
+                    </span>
+                    <p style={s.fieldHint}>
+                      Controla si los invitados pueden elegir filtros y marcos, si se deshabilitan o si aplicas uno fijo a todas las fotos.
+                    </p>
+
+                    {/* Filters mode */}
+                    <div style={s.field}>
+                      <span className="label">Filtros de color</span>
+                      <div style={s.modeChips}>
+                        {([
+                          { v: "allow",  label: "Invitado elige" },
+                          { v: "none",   label: "Sin filtros" },
+                          { v: "forced", label: "Fijar filtro" },
+                        ] as { v: "allow" | "none" | "forced"; label: string }[]).map(({ v, label }) => {
+                          const active = (selected.landing_config.filtersMode ?? "allow") === v;
+                          return (
+                            <button
+                              key={v}
+                              type="button"
+                              style={active ? s.modeChipActive : s.modeChip}
+                              onClick={() => updateLanding("filtersMode", v)}
+                            >
+                              {label}
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      {(selected.landing_config.filtersMode ?? "allow") === "forced" && (
+                        <div style={{ marginTop: 12 }}>
+                          <span className="label" style={{ marginBottom: 10, display: "block" }}>
+                            Filtro para todos
+                          </span>
+                          <div style={s.filterGrid}>
+                            {FILTERS.map((f) => {
+                              const active = (selected.landing_config.forcedFilter ?? "none") === f.key;
+                              return (
+                                <button
+                                  key={f.key}
+                                  type="button"
+                                  style={active ? s.filterChipActive : s.filterChip}
+                                  onClick={() => updateLanding("forcedFilter", f.key)}
+                                >
+                                  {f.label}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Templates mode */}
+                    <div style={s.field}>
+                      <span className="label">Marcos decorativos</span>
+                      <div style={s.modeChips}>
+                        {([
+                          { v: "allow",  label: "Invitado elige" },
+                          { v: "none",   label: "Sin marcos" },
+                          { v: "forced", label: "Fijar marco" },
+                        ] as { v: "allow" | "none" | "forced"; label: string }[]).map(({ v, label }) => {
+                          const active = (selected.landing_config.templatesMode ?? "allow") === v;
+                          return (
+                            <button
+                              key={v}
+                              type="button"
+                              style={active ? s.modeChipActive : s.modeChip}
+                              onClick={() => updateLanding("templatesMode", v)}
+                            >
+                              {label}
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      {(selected.landing_config.templatesMode ?? "allow") === "forced" && (
+                        <div style={{ marginTop: 12 }}>
+                          <span className="label" style={{ marginBottom: 10, display: "block" }}>
+                            Marco para todos
+                          </span>
+                          <div style={s.filterGrid}>
+                            {TEMPLATES.map((t) => {
+                              const active = (selected.landing_config.forcedTemplate ?? "clean") === t.key;
+                              return (
+                                <button
+                                  key={t.key}
+                                  type="button"
+                                  style={active ? s.filterChipActive : s.filterChip}
+                                  onClick={() => updateLanding("forcedTemplate", t.key)}
+                                >
+                                  {t.label}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
                   {/* Contenido */}
                   <div style={s.formSection}>
                     <span className="eyebrow" style={s.sectionEyebrow}>
@@ -1673,6 +1780,56 @@ const s: Record<string, React.CSSProperties> = {
     fontSize: 11,
     color: "var(--muted)",
     marginTop: 4,
+  },
+  // Filter/template mode chips
+  modeChips: {
+    display: "flex",
+    gap: 8,
+    flexWrap: "wrap" as const,
+  },
+  modeChip: {
+    padding: "10px 16px",
+    borderRadius: 999,
+    border: "1px solid rgba(0,0,0,0.1)",
+    background: "rgba(0,0,0,0.03)",
+    color: "var(--text)",
+    fontSize: 13,
+    fontWeight: 600,
+    cursor: "pointer",
+  },
+  modeChipActive: {
+    padding: "10px 16px",
+    borderRadius: 999,
+    border: "1px solid rgba(0,0,0,0.5)",
+    background: "#111111",
+    color: "#ffffff",
+    fontSize: 13,
+    fontWeight: 700,
+    cursor: "pointer",
+  },
+  filterGrid: {
+    display: "flex",
+    flexWrap: "wrap" as const,
+    gap: 8,
+  },
+  filterChip: {
+    padding: "8px 14px",
+    borderRadius: 999,
+    border: "1px solid rgba(0,0,0,0.1)",
+    background: "rgba(0,0,0,0.03)",
+    color: "var(--muted)",
+    fontSize: 13,
+    cursor: "pointer",
+  },
+  filterChipActive: {
+    padding: "8px 14px",
+    borderRadius: 999,
+    border: "1px solid rgba(212,163,115,0.7)",
+    background: "rgba(212,163,115,0.12)",
+    color: "#111",
+    fontSize: 13,
+    fontWeight: 700,
+    cursor: "pointer",
   },
   dangerBtn: {
     padding: "9px 16px",
