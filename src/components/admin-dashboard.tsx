@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Image from "next/image";
 import { QRCodeCard } from "@/components/qr-code-card";
 import { Button } from "@/components/button";
 import { BrandMark } from "@/components/brand-mark";
@@ -123,7 +124,7 @@ export function AdminDashboard({ initialStore }: Props) {
   return (
     <div className="mx-auto grid min-h-screen max-w-[1560px] gap-8 px-4 py-5 sm:px-6 lg:grid-cols-[0.72fr_1.28fr] lg:px-10">
       <aside className="space-y-5">
-        <div className="panel rounded-[34px] p-5">
+        <div className="panel reveal rounded-[34px] p-5">
           <BrandMark compact />
           <div className="mt-5 flex items-center justify-between gap-3">
             <div>
@@ -137,13 +138,13 @@ export function AdminDashboard({ initialStore }: Props) {
           </div>
         </div>
 
-        <div className="panel rounded-[34px] p-5">
+        <div className="panel reveal reveal-delay-1 rounded-[34px] p-5">
           <p className="text-xs uppercase tracking-[0.24em] text-[var(--app-muted)]">Eventos</p>
-          <div className="mt-4 space-y-3">
+          <div className="mt-4 flex gap-3 overflow-x-auto pb-2 snap-scroll snap-x snap-mandatory">
             {store.events.map((event) => (
               <button
                 key={event.id}
-                className={`w-full rounded-[24px] border px-4 py-4 text-left transition ${
+                className={`min-w-[240px] snap-start rounded-[24px] border px-4 py-4 text-left transition ${
                   selectedEvent?.slug === event.slug
                     ? "border-black bg-black text-white"
                     : "border-[var(--app-border)] bg-white hover:bg-black/3"
@@ -168,14 +169,17 @@ export function AdminDashboard({ initialStore }: Props) {
           </div>
         </div>
 
-        <div className="panel rounded-[34px] p-5">
+        <div className="panel reveal reveal-delay-2 rounded-[34px] p-5">
           <div className="flex items-center gap-2 text-sm font-semibold text-black">
             <Sparkles className="h-4 w-4" />
             Tipos iniciales
           </div>
-          <div className="mt-3 grid grid-cols-2 gap-2">
+          <div className="mt-3 flex gap-2 overflow-x-auto pb-2 snap-scroll snap-x snap-mandatory">
             {getEventTypes().map((type) => (
-              <div key={type.key} className="rounded-2xl border border-[var(--app-border)] bg-black/3 p-3">
+              <div
+                key={type.key}
+                className="min-w-[180px] snap-start rounded-2xl border border-[var(--app-border)] bg-black/3 p-3"
+              >
                 <p className="text-xs font-semibold text-black">{type.label}</p>
                 <p className="mt-1 text-[11px] leading-5 text-[var(--app-muted)]">
                   {clampText(type.description, 74)}
@@ -187,7 +191,7 @@ export function AdminDashboard({ initialStore }: Props) {
       </aside>
 
       <section className="space-y-6">
-        <div className="panel rounded-[34px] p-5 sm:p-6">
+        <div className="panel reveal rounded-[34px] p-5 sm:p-6">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div className="max-w-2xl">
               <p className="text-xs uppercase tracking-[0.24em] text-[var(--app-muted)]">Constructor visual</p>
@@ -220,7 +224,7 @@ export function AdminDashboard({ initialStore }: Props) {
 
         <div className="grid gap-6 xl:grid-cols-[1fr_0.78fr]">
           <div className="space-y-6">
-            <div className="panel rounded-[34px] p-5 sm:p-6">
+            <div className="panel reveal reveal-delay-1 rounded-[34px] p-5 sm:p-6">
               <h2 className="text-sm font-semibold text-black">Datos del evento</h2>
               <div className="mt-5 grid gap-3 md:grid-cols-2">
                 <input
@@ -298,7 +302,7 @@ export function AdminDashboard({ initialStore }: Props) {
               </div>
             </div>
 
-            <div className="panel rounded-[34px] p-5 sm:p-6">
+            <div className="panel reveal reveal-delay-2 rounded-[34px] p-5 sm:p-6">
               <h2 className="text-sm font-semibold text-black">Constructor del landing</h2>
               <p className="mt-2 text-xs text-[var(--app-muted)]">
                 Reordena, oculta o muestra secciones para adaptar cada evento.
@@ -339,6 +343,7 @@ export function AdminDashboard({ initialStore }: Props) {
           </div>
 
           <div className="space-y-6">
+          <div className="reveal reveal-delay-1">
             <QRCodeCard
               url={draft.publicUrl}
               label={draft.qrLabel}
@@ -346,8 +351,9 @@ export function AdminDashboard({ initialStore }: Props) {
                 navigator.clipboard.writeText(value).then(() => setCopyMessage("URL del QR copiada"))
               }
             />
+          </div>
 
-            <div className="panel rounded-[34px] p-5 sm:p-6">
+            <div className="panel reveal reveal-delay-2 rounded-[34px] p-5 sm:p-6">
               <h2 className="text-sm font-semibold text-black">Resumen</h2>
               <div className="mt-5 grid gap-3 text-sm text-black">
                 <div className="rounded-2xl border border-[var(--app-border)] bg-black/3 p-4">
@@ -369,7 +375,7 @@ export function AdminDashboard({ initialStore }: Props) {
               </div>
             </div>
 
-            <div className="panel rounded-[34px] p-5 sm:p-6">
+            <div className="panel reveal reveal-delay-3 rounded-[34px] p-5 sm:p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-semibold text-black">Fotos actuales</p>
@@ -383,7 +389,9 @@ export function AdminDashboard({ initialStore }: Props) {
               <div className="mt-5 space-y-3">
                 {selectedPhotos.slice(0, 4).map((photo) => (
                   <div key={photo.id} className="flex gap-3 rounded-[24px] border border-[var(--app-border)] bg-white p-3">
-                    <img src={photo.src} alt="" className="h-16 w-16 rounded-2xl object-cover" />
+                    <div className="relative h-16 w-16 overflow-hidden rounded-2xl">
+                      <Image src={photo.src} alt="" fill unoptimized className="object-cover" sizes="64px" />
+                    </div>
                     <div className="min-w-0">
                       <p className="truncate text-sm font-semibold text-black">{photo.authorName}</p>
                       <p className="text-xs text-[var(--app-muted)]">

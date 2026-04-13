@@ -56,7 +56,7 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-white">
       <section className="mx-auto flex min-h-[100svh] w-full max-w-[1560px] flex-col justify-between px-4 py-4 sm:px-6 lg:px-10">
-        <header className="panel rounded-[32px] px-5 py-4">
+        <header className="panel reveal rounded-[32px] px-5 py-4">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <BrandMark />
             <div className="flex flex-wrap items-center gap-2 text-xs text-[var(--app-muted)]">
@@ -74,7 +74,7 @@ export default function Home() {
         </header>
 
         <div className="grid flex-1 gap-6 py-6 lg:grid-cols-[1.08fr_0.92fr] lg:py-8">
-          <section className="panel flex flex-col justify-between rounded-[40px] p-7 sm:p-10 lg:p-12">
+          <section className="panel reveal reveal-delay-1 flex flex-col justify-between rounded-[40px] p-7 sm:p-10 lg:p-12">
             <div>
               <div className="inline-flex items-center gap-2 rounded-full border border-[var(--app-border)] bg-black/3 px-4 py-2 text-xs uppercase tracking-[0.26em] text-[var(--app-muted)]">
                 <Sparkles className="h-3.5 w-3.5" />
@@ -117,7 +117,7 @@ export default function Home() {
           </section>
 
           <aside className="flex flex-col gap-6">
-            <div className="panel rounded-[40px] p-7 sm:p-10">
+            <div className="panel reveal reveal-delay-2 rounded-[40px] p-7 sm:p-10">
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <p className="text-xs uppercase tracking-[0.24em] text-[var(--app-muted)]">
@@ -160,11 +160,11 @@ export default function Home() {
                 </div>
                 <ChevronRight className="h-5 w-5 text-black/40" />
               </div>
-              <div className="mt-5 flex gap-3 overflow-x-auto pb-2 [scrollbar-width:none]">
+              <div className="snap-scroll mt-5 flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory">
                 {eventTypes.map((type) => (
                   <div
                     key={type}
-                    className="min-w-[150px] shrink-0 rounded-[24px] border border-[var(--app-border)] bg-black/3 px-4 py-3 text-sm font-medium text-black"
+                    className="min-w-[150px] snap-start shrink-0 rounded-[24px] border border-[var(--app-border)] bg-black/3 px-4 py-3 text-sm font-medium text-black"
                   >
                     {type}
                   </div>
@@ -172,7 +172,7 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="panel-strong rounded-[40px] p-7 sm:p-10">
+            <div className="panel-strong reveal reveal-delay-3 rounded-[40px] p-7 sm:p-10">
               <p className="text-xs uppercase tracking-[0.24em] text-white/60">Enfoque</p>
               <p className="mt-3 text-2xl font-semibold leading-tight">
                 Blanco, negro, aire visual y ritmo editorial.
@@ -185,7 +185,7 @@ export default function Home() {
           </aside>
         </div>
 
-        <section className="panel rounded-[40px] p-6 sm:p-8 lg:p-10">
+        <section className="panel reveal reveal-delay-4 rounded-[40px] p-6 sm:p-8 lg:p-10">
           <div className="flex items-end justify-between gap-4">
             <div>
               <p className="text-xs uppercase tracking-[0.24em] text-[var(--app-muted)]">Slider</p>
@@ -196,11 +196,11 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="mt-6 flex gap-4 overflow-x-auto pb-3 [scrollbar-width:none]">
+          <div className="snap-scroll mt-6 flex gap-4 overflow-x-auto pb-3 snap-x snap-mandatory">
             {storyCards.map((card, index) => (
               <article
                 key={card.title}
-                className={`min-w-[280px] shrink-0 rounded-[32px] border border-[var(--app-border)] p-6 ${
+                className={`min-w-[280px] snap-start shrink-0 rounded-[32px] border border-[var(--app-border)] p-6 ${
                   index % 2 === 0 ? "bg-white" : "bg-black/3"
                 }`}
               >

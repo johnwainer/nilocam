@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import NextImage from "next/image";
 import { Button } from "@/components/button";
 import type { PhotoFilter, PhotoTemplate } from "@/lib/types";
 import { cx } from "@/lib/utils";
@@ -50,7 +51,7 @@ export function PhotoEditor({ file, onCancel, onSave }: Props) {
   );
 
   async function handleSave() {
-    const img = new Image();
+    const img = new window.Image();
     img.crossOrigin = "anonymous";
     img.src = previewUrl;
 
@@ -103,7 +104,7 @@ export function PhotoEditor({ file, onCancel, onSave }: Props) {
 
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-black/35 px-4 py-6 backdrop-blur-sm">
-      <div className="panel w-full max-w-5xl overflow-hidden rounded-[32px]">
+      <div className="panel reveal w-full max-w-5xl overflow-hidden rounded-[32px]">
         <div className="flex items-center justify-between border-b border-[var(--app-border)] px-5 py-4">
           <div>
             <p className="text-sm font-semibold text-black">Editar foto</p>
@@ -117,12 +118,15 @@ export function PhotoEditor({ file, onCancel, onSave }: Props) {
 
         <div className="grid gap-0 lg:grid-cols-[1.2fr_0.8fr]">
           <div className="bg-black/3 p-4">
-            <div className="overflow-hidden rounded-[28px] border border-[var(--app-border)] bg-white">
-              <img
+            <div className="relative h-[58vh] overflow-hidden rounded-[28px] border border-[var(--app-border)] bg-white">
+              <NextImage
                 src={previewUrl}
                 alt="Vista previa"
-                className="h-[58vh] w-full object-cover"
+                fill
+                unoptimized
+                className="object-cover"
                 style={{ filter: selectedFilter.style }}
+                sizes="(max-width: 1024px) 100vw, 60vw"
               />
             </div>
             <canvas ref={canvasRef} className="hidden" />

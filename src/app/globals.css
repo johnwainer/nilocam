@@ -69,3 +69,44 @@ a {
   background-size: 34px 34px;
 }
 
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.985);
+    filter: blur(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+.reveal {
+  animation: rise-in 760ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.reveal-delay-1 {
+  animation-delay: 90ms;
+}
+
+.reveal-delay-2 {
+  animation-delay: 170ms;
+}
+
+.reveal-delay-3 {
+  animation-delay: 250ms;
+}
+
+.reveal-delay-4 {
+  animation-delay: 330ms;
+}
+
+.snap-scroll {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.snap-scroll::-webkit-scrollbar {
+  display: none;
+}

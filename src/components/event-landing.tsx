@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import Image from "next/image";
 import type { EventRecord, PhotoFilter, PhotoRecord, PhotoTemplate } from "@/lib/types";
 import { Button, LinkButton } from "@/components/button";
 import { PhotoEditor } from "@/components/photo-editor";
@@ -113,7 +114,7 @@ export function EventLanding({ initialEvent, initialPhotos }: Props) {
       <div className="absolute inset-0 grid-noise opacity-70" />
 
       <section className="relative mx-auto max-w-[1560px] px-4 py-5 sm:px-6 lg:px-10">
-        <div className="panel rounded-[32px] px-5 py-4">
+        <div className="panel reveal rounded-[32px] px-5 py-4">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <BrandMark compact />
             <div className="flex flex-wrap items-center gap-2 text-xs text-[var(--app-muted)]">
@@ -136,7 +137,7 @@ export function EventLanding({ initialEvent, initialPhotos }: Props) {
 
       <section className="relative mx-auto grid max-w-[1560px] gap-8 px-4 pb-8 pt-2 sm:px-6 lg:grid-cols-[1.08fr_0.92fr] lg:px-10">
         <div className="space-y-6">
-          <div className="panel rounded-[40px] p-6 sm:p-8 lg:p-10">
+          <div className="panel reveal reveal-delay-1 rounded-[40px] p-6 sm:p-8 lg:p-10">
             <div className="inline-flex rounded-full border border-[var(--app-border)] bg-black/3 px-4 py-2 text-xs uppercase tracking-[0.22em] text-[var(--app-muted)]">
               Evento {event.eventType.replace("_", " ")}
             </div>
@@ -180,7 +181,7 @@ export function EventLanding({ initialEvent, initialPhotos }: Props) {
           </div>
 
           {sectionEnabled("instructions") && (
-            <div className="panel rounded-[36px] p-6 sm:p-8">
+            <div className="panel reveal reveal-delay-2 rounded-[36px] p-6 sm:p-8">
               <p className="text-xs uppercase tracking-[0.22em] text-[var(--app-muted)]">Cómo funciona</p>
               <div className="mt-6 grid gap-4 md:grid-cols-3">
                 {[
@@ -200,7 +201,7 @@ export function EventLanding({ initialEvent, initialPhotos }: Props) {
           )}
 
           {featuredPhoto && (
-            <div className="panel overflow-hidden rounded-[36px]">
+            <div className="panel reveal reveal-delay-3 overflow-hidden rounded-[36px]">
               <div className="flex items-center justify-between border-b border-[var(--app-border)] px-5 py-4">
                 <div>
                   <p className="text-sm font-semibold text-black">Foto destacada</p>
@@ -213,7 +214,16 @@ export function EventLanding({ initialEvent, initialPhotos }: Props) {
                 </span>
               </div>
               <div className="grid gap-0 md:grid-cols-[1.25fr_0.75fr]">
-                <img src={featuredPhoto.src} alt="Destacada" className="h-96 w-full object-cover" />
+                <div className="relative h-96 w-full">
+                  <Image
+                    src={featuredPhoto.src}
+                    alt="Destacada"
+                    fill
+                    unoptimized
+                    className="object-cover"
+                    sizes="(max-width: 768px) 100vw, 60vw"
+                  />
+                </div>
                 <div className="p-5 lg:p-6">
                   <div className="rounded-[28px] border border-[var(--app-border)] bg-white p-5">
                     <p className="text-xs uppercase tracking-[0.22em] text-[var(--app-muted)]">Autor</p>
@@ -258,7 +268,7 @@ export function EventLanding({ initialEvent, initialPhotos }: Props) {
         </div>
 
         <div className="space-y-6">
-          <div className="panel rounded-[36px] p-5 sm:p-6">
+          <div className="panel reveal reveal-delay-1 rounded-[36px] p-5 sm:p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-semibold text-black">Publica una foto</p>
@@ -305,7 +315,16 @@ export function EventLanding({ initialEvent, initialPhotos }: Props) {
             <div className="mt-5 grid grid-cols-2 gap-3">
               {publishedPhotos.slice(0, 4).map((photo) => (
                 <div key={photo.id} className="overflow-hidden rounded-[26px] border border-[var(--app-border)] bg-white">
-                  <img src={photo.src} alt={photo.note} className="h-36 w-full object-cover" />
+                  <div className="relative h-36 w-full">
+                    <Image
+                      src={photo.src}
+                      alt={photo.note}
+                      fill
+                      unoptimized
+                      className="object-cover"
+                      sizes="(max-width: 768px) 50vw, 25vw"
+                    />
+                  </div>
                   <div className="space-y-1 p-3">
                     <p className="truncate text-sm font-semibold text-black">
                       {photo.anonymous ? "Anónimo" : photo.authorName}
@@ -320,7 +339,7 @@ export function EventLanding({ initialEvent, initialPhotos }: Props) {
       </section>
 
       <section id="galeria" className="relative mx-auto max-w-[1560px] px-4 pb-16 sm:px-6 lg:px-10">
-        <div className="panel rounded-[40px] p-6 sm:p-8 lg:p-10">
+        <div className="panel reveal reveal-delay-4 rounded-[40px] p-6 sm:p-8 lg:p-10">
           <div className="flex items-center justify-between gap-3">
             <div>
               <p className="text-sm font-semibold text-black">Galería del evento</p>
@@ -340,7 +359,16 @@ export function EventLanding({ initialEvent, initialPhotos }: Props) {
                 key={photo.id}
                 className="overflow-hidden rounded-[28px] border border-[var(--app-border)] bg-white"
               >
-                <img src={photo.src} alt={photo.note} className="h-56 w-full object-cover" />
+                <div className="relative h-56 w-full">
+                  <Image
+                    src={photo.src}
+                    alt={photo.note}
+                    fill
+                    unoptimized
+                    className="object-cover"
+                    sizes="(max-width: 768px) 50vw, 25vw"
+                  />
+                </div>
                 <div className="space-y-2 p-4">
                   <div className="flex items-center justify-between gap-2">
                     <p className="truncate text-sm font-semibold text-black">
