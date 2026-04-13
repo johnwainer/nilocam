@@ -638,16 +638,60 @@ img {
   to   { opacity: 0; }
 }
 
-/* Slow zoom + slight drift — loops are undesirable so we use forwards fill */
-@keyframes gdKenBurns {
-  0%   { transform: scale(1.0)   translate(  0%,    0%  ); }
-  40%  { transform: scale(1.03)  translate(-0.5%,  0.3%); }
-  100% { transform: scale(1.07)  translate(-1.1%,  0.7%); }
+/* 4 Ken Burns variants — direction cycles per slide for visual variety */
+@keyframes gdKB0 {
+  0%   { transform: scale(1.0)  translate( 0.0%,  0.0%); }
+  100% { transform: scale(1.07) translate(-1.1%,  0.7%); }
+}
+@keyframes gdKB1 {
+  0%   { transform: scale(1.0)  translate( 0.0%,  0.0%); }
+  100% { transform: scale(1.07) translate( 1.1%,  0.7%); }
+}
+@keyframes gdKB2 {
+  0%   { transform: scale(1.0)  translate( 0.0%,  0.0%); }
+  100% { transform: scale(1.07) translate( 0.0%, -1.2%); }
+}
+@keyframes gdKB3 {
+  0%   { transform: scale(1.0)  translate( 0.0%,  0.0%); }
+  100% { transform: scale(1.07) translate(-0.6%, -0.8%); }
 }
 
 @keyframes gdProgress {
   from { width: 0%; }
   to   { width: 100%; }
+}
+
+/* ─── Gallery Display — responsive for 9:16 and 16:9 ────────────────────── */
+
+/* Hide keyboard hints on devices with no fine pointer (TVs, touch screens) */
+@media (hover: none), (pointer: coarse) {
+  .gd-hints {
+    display: none !important;
+  }
+}
+
+/* Portrait / 9:16 adjustments */
+@media (orientation: portrait) {
+  .gd-top-bar {
+    padding: 20px 20px !important;
+  }
+
+  .gd-hints {
+    display: none !important;
+  }
+
+  /* Stack speed chips below nav buttons so row doesn't overflow */
+  .gd-btn-row {
+    flex-wrap: wrap !important;
+    row-gap: 10px !important;
+  }
+}
+
+/* Very wide 21:9 — just ensure comfortable padding */
+@media (min-aspect-ratio: 2/1) {
+  .gd-top-bar {
+    padding: 28px 48px !important;
+  }
 }
 
 /* ─── Admin mobile layout ────────────────────────────────────────────────── */

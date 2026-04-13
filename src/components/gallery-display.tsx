@@ -188,7 +188,7 @@ export function GalleryDisplay({
           }}
         />
       )}
-      {/* Current photo fades in + ken burns */}
+      {/* Current photo fades in + ken burns (direction cycles through 4 variants) */}
       {curUrl && (
         // eslint-disable-next-line @next/next/no-img-element
         <img
@@ -201,9 +201,16 @@ export function GalleryDisplay({
           }
           style={{
             ...s.photoBase,
-            animationName: transKey === 0 ? "gdKenBurns" : "gdFadeIn, gdKenBurns",
-            animationDuration: transKey === 0 ? `${speed + 3}s` : `1.2s, ${speed + 3}s`,
-            animationTimingFunction: transKey === 0 ? "ease-in-out" : "ease, ease-in-out",
+            objectPosition: "center 25%",
+            animationName: transKey === 0
+              ? `gdKB${cur % 4}`
+              : `gdFadeIn, gdKB${cur % 4}`,
+            animationDuration: transKey === 0
+              ? `${speed + 3}s`
+              : `1.2s, ${speed + 3}s`,
+            animationTimingFunction: transKey === 0
+              ? "ease-in-out"
+              : "ease, ease-in-out",
             animationFillMode: "forwards",
           }}
         />
@@ -228,7 +235,7 @@ export function GalleryDisplay({
         }}
       >
         {/* Top bar: event name + live pill + counter */}
-        <div style={s.topBar}>
+        <div className="gd-top-bar" style={s.topBar}>
           <div>
             <div style={s.topEyebrow}>Galería en vivo</div>
             <div style={s.topTitle}>{event.title}</div>
@@ -257,7 +264,7 @@ export function GalleryDisplay({
           </div>
 
           {/* Buttons row */}
-          <div style={s.btnRow}>
+          <div className="gd-btn-row" style={s.btnRow}>
             {/* Prev */}
             <CtrlBtn onClick={() => { goPrev(); showControls(); }} label="Anterior">
               <PrevIcon />
@@ -308,8 +315,8 @@ export function GalleryDisplay({
             </CtrlBtn>
           </div>
 
-          {/* Keyboard hints */}
-          <div style={s.hints}>
+          {/* Keyboard hints — hidden on touch/TV devices and portrait */}
+          <div className="gd-hints" style={s.hints}>
             <span>Espacio — pausar</span>
             <span>← → — navegar</span>
             <span>F — pantalla completa</span>
