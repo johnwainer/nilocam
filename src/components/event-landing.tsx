@@ -112,7 +112,7 @@ export function EventLanding({ initialEvent, initialPhotos }: Props) {
     <main className="relative min-h-screen overflow-hidden bg-white">
       <div className="absolute inset-0 grid-noise opacity-70" />
 
-      <section className="relative mx-auto max-w-7xl px-4 py-5 sm:px-6 lg:px-8">
+      <section className="relative mx-auto max-w-[1560px] px-4 py-5 sm:px-6 lg:px-10">
         <div className="panel rounded-[32px] px-5 py-4">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <BrandMark compact />
@@ -134,21 +134,21 @@ export function EventLanding({ initialEvent, initialPhotos }: Props) {
         </div>
       </section>
 
-      <section className="relative mx-auto grid max-w-7xl gap-6 px-4 pb-6 pt-2 sm:px-6 lg:grid-cols-[1.08fr_0.92fr] lg:px-8">
+      <section className="relative mx-auto grid max-w-[1560px] gap-8 px-4 pb-8 pt-2 sm:px-6 lg:grid-cols-[1.08fr_0.92fr] lg:px-10">
         <div className="space-y-6">
-          <div className="panel rounded-[38px] p-6 sm:p-8">
+          <div className="panel rounded-[40px] p-6 sm:p-8 lg:p-10">
             <div className="inline-flex rounded-full border border-[var(--app-border)] bg-black/3 px-4 py-2 text-xs uppercase tracking-[0.22em] text-[var(--app-muted)]">
               Evento {event.eventType.replace("_", " ")}
             </div>
 
-            <h1 className="mt-5 max-w-xl font-[family-name:var(--font-space-grotesk)] text-5xl font-semibold leading-[0.92] tracking-tight text-black sm:text-6xl">
+            <h1 className="mt-6 max-w-2xl font-[family-name:var(--font-space-grotesk)] text-5xl font-semibold leading-[0.92] tracking-tight text-black sm:text-6xl lg:text-[5.6rem]">
               {event.title}
             </h1>
-            <p className="mt-4 max-w-2xl text-lg leading-8 text-[var(--app-muted)]">
+            <p className="mt-5 max-w-2xl text-lg leading-8 text-[var(--app-muted)]">
               {event.description}
             </p>
 
-            <div className="mt-6 grid gap-3 sm:grid-cols-3">
+            <div className="mt-8 grid gap-3 sm:grid-cols-3">
               <Button onClick={() => openUpload("camera")} className="justify-center py-4">
                 <Camera className="h-4 w-4" />
                 {event.ctas.primary}
@@ -163,16 +163,16 @@ export function EventLanding({ initialEvent, initialPhotos }: Props) {
               </LinkButton>
             </div>
 
-            <div className="mt-6 grid gap-3 sm:grid-cols-3">
-              <div className="rounded-[24px] border border-[var(--app-border)] bg-white p-4">
+            <div className="mt-8 grid gap-3 sm:grid-cols-3">
+              <div className="rounded-[26px] border border-[var(--app-border)] bg-white p-5">
                 <p className="text-xs uppercase tracking-[0.2em] text-[var(--app-muted)]">Fecha</p>
                 <p className="mt-2 text-sm font-semibold text-black">{event.dateLabel}</p>
               </div>
-              <div className="rounded-[24px] border border-[var(--app-border)] bg-white p-4">
+              <div className="rounded-[26px] border border-[var(--app-border)] bg-white p-5">
                 <p className="text-xs uppercase tracking-[0.2em] text-[var(--app-muted)]">Lugar</p>
                 <p className="mt-2 text-sm font-semibold text-black">{event.venue}</p>
               </div>
-              <div className="rounded-[24px] border border-[var(--app-border)] bg-white p-4">
+              <div className="rounded-[26px] border border-[var(--app-border)] bg-white p-5">
                 <p className="text-xs uppercase tracking-[0.2em] text-[var(--app-muted)]">Dueño</p>
                 <p className="mt-2 text-sm font-semibold text-black">{event.organizer}</p>
               </div>
@@ -180,15 +180,15 @@ export function EventLanding({ initialEvent, initialPhotos }: Props) {
           </div>
 
           {sectionEnabled("instructions") && (
-            <div className="panel rounded-[34px] p-6">
+            <div className="panel rounded-[36px] p-6 sm:p-8">
               <p className="text-xs uppercase tracking-[0.22em] text-[var(--app-muted)]">Cómo funciona</p>
-              <div className="mt-4 grid gap-3 md:grid-cols-3">
+              <div className="mt-6 grid gap-4 md:grid-cols-3">
                 {[
                   "Abre el QR y entra al evento sin instalar nada.",
                   "Toma o sube una foto desde tu teléfono.",
                   "Edita con filtro o plantilla y publícala.",
                 ].map((item, index) => (
-                  <div key={item} className="rounded-[24px] border border-[var(--app-border)] bg-white p-4">
+                  <div key={item} className="rounded-[28px] border border-[var(--app-border)] bg-white p-5">
                     <div className="flex h-9 w-9 items-center justify-center rounded-full bg-black text-sm font-semibold text-white">
                       {index + 1}
                     </div>
@@ -200,7 +200,7 @@ export function EventLanding({ initialEvent, initialPhotos }: Props) {
           )}
 
           {featuredPhoto && (
-            <div className="panel overflow-hidden rounded-[34px]">
+            <div className="panel overflow-hidden rounded-[36px]">
               <div className="flex items-center justify-between border-b border-[var(--app-border)] px-5 py-4">
                 <div>
                   <p className="text-sm font-semibold text-black">Foto destacada</p>
@@ -212,22 +212,22 @@ export function EventLanding({ initialEvent, initialPhotos }: Props) {
                   {formatRelativeTime(featuredPhoto.createdAt)}
                 </span>
               </div>
-              <div className="grid gap-0 md:grid-cols-[1.2fr_0.8fr]">
-                <img src={featuredPhoto.src} alt="Destacada" className="h-80 w-full object-cover" />
-                <div className="p-5">
-                  <div className="rounded-[24px] border border-[var(--app-border)] bg-white p-4">
+              <div className="grid gap-0 md:grid-cols-[1.25fr_0.75fr]">
+                <img src={featuredPhoto.src} alt="Destacada" className="h-96 w-full object-cover" />
+                <div className="p-5 lg:p-6">
+                  <div className="rounded-[28px] border border-[var(--app-border)] bg-white p-5">
                     <p className="text-xs uppercase tracking-[0.22em] text-[var(--app-muted)]">Autor</p>
                     <p className="mt-2 text-sm font-semibold text-black">
                       {featuredPhoto.anonymous ? "Invitado anónimo" : featuredPhoto.authorName}
                     </p>
                     <p className="mt-3 text-sm text-[var(--app-muted)]">{featuredPhoto.note}</p>
                   </div>
-                  <div className="mt-4 grid gap-3">
-                    <Button onClick={() => openUpload("camera")}>
+                  <div className="mt-5 grid gap-3">
+                    <Button onClick={() => openUpload("camera")} className="py-4">
                       <Camera className="h-4 w-4" />
                       Subir otra foto
                     </Button>
-                    <Button tone="secondary" onClick={() => openUpload("gallery")}>
+                    <Button tone="secondary" onClick={() => openUpload("gallery")} className="py-4">
                       <ImagePlus className="h-4 w-4" />
                       Elegir desde galería
                     </Button>
@@ -258,7 +258,7 @@ export function EventLanding({ initialEvent, initialPhotos }: Props) {
         </div>
 
         <div className="space-y-6">
-          <div className="panel rounded-[34px] p-5">
+          <div className="panel rounded-[36px] p-5 sm:p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-semibold text-black">Publica una foto</p>
@@ -269,7 +269,7 @@ export function EventLanding({ initialEvent, initialPhotos }: Props) {
               </span>
             </div>
 
-            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <div className="mt-5 grid gap-3 sm:grid-cols-2">
               <Button onClick={() => openUpload("camera")} className="py-4">
                 <Camera className="h-4 w-4" />
                 Tomar foto
@@ -280,7 +280,7 @@ export function EventLanding({ initialEvent, initialPhotos }: Props) {
               </Button>
             </div>
 
-            <div className="mt-4 rounded-[24px] border border-[var(--app-border)] bg-black/3 p-4">
+            <div className="mt-5 rounded-[24px] border border-[var(--app-border)] bg-black/3 p-5">
               <div className="flex items-center gap-2 text-sm text-black">
                 <User className="h-4 w-4 text-black/60" />
                 Sin registro, con nombre opcional
@@ -291,7 +291,7 @@ export function EventLanding({ initialEvent, initialPhotos }: Props) {
             </div>
           </div>
 
-          <div className="panel rounded-[34px] p-5">
+          <div className="panel rounded-[36px] p-5 sm:p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-semibold text-black">Muro vivo</p>
@@ -302,9 +302,9 @@ export function EventLanding({ initialEvent, initialPhotos }: Props) {
               </span>
             </div>
 
-            <div className="mt-4 grid grid-cols-2 gap-3">
+            <div className="mt-5 grid grid-cols-2 gap-3">
               {publishedPhotos.slice(0, 4).map((photo) => (
-                <div key={photo.id} className="overflow-hidden rounded-[24px] border border-[var(--app-border)] bg-white">
+                <div key={photo.id} className="overflow-hidden rounded-[26px] border border-[var(--app-border)] bg-white">
                   <img src={photo.src} alt={photo.note} className="h-36 w-full object-cover" />
                   <div className="space-y-1 p-3">
                     <p className="truncate text-sm font-semibold text-black">
@@ -319,8 +319,8 @@ export function EventLanding({ initialEvent, initialPhotos }: Props) {
         </div>
       </section>
 
-      <section id="galeria" className="relative mx-auto max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">
-        <div className="panel rounded-[36px] p-6">
+      <section id="galeria" className="relative mx-auto max-w-[1560px] px-4 pb-16 sm:px-6 lg:px-10">
+        <div className="panel rounded-[40px] p-6 sm:p-8 lg:p-10">
           <div className="flex items-center justify-between gap-3">
             <div>
               <p className="text-sm font-semibold text-black">Galería del evento</p>
@@ -334,7 +334,7 @@ export function EventLanding({ initialEvent, initialPhotos }: Props) {
             </Button>
           </div>
 
-          <div className="mt-5 grid gap-4 md:grid-cols-3 xl:grid-cols-4">
+          <div className="mt-6 grid gap-4 md:grid-cols-3 xl:grid-cols-4">
             {publishedPhotos.map((photo) => (
               <article
                 key={photo.id}
@@ -357,7 +357,7 @@ export function EventLanding({ initialEvent, initialPhotos }: Props) {
           </div>
 
           {pendingPhotos.length > 0 && event.visibility === "moderated" && (
-            <div className="mt-6 rounded-[28px] border border-black/10 bg-black/3 p-4">
+            <div className="mt-6 rounded-[28px] border border-black/10 bg-black/3 p-5">
               <p className="text-sm font-semibold text-black">Pendientes de moderación</p>
               <p className="mt-1 text-xs text-[var(--app-muted)]">
                 El dueño del evento decide cuándo esas fotos se publican en el mural.

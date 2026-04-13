@@ -121,7 +121,7 @@ export function AdminDashboard({ initialStore }: Props) {
   }
 
   return (
-    <div className="mx-auto grid min-h-screen max-w-7xl gap-6 px-4 py-5 sm:px-6 lg:grid-cols-[0.75fr_1.25fr] lg:px-8">
+    <div className="mx-auto grid min-h-screen max-w-[1560px] gap-8 px-4 py-5 sm:px-6 lg:grid-cols-[0.72fr_1.28fr] lg:px-10">
       <aside className="space-y-5">
         <div className="panel rounded-[34px] p-5">
           <BrandMark compact />
@@ -154,7 +154,13 @@ export function AdminDashboard({ initialStore }: Props) {
                 }}
               >
                 <p className="text-sm font-semibold">{event.title}</p>
-                <p className={selectedEvent?.slug === event.slug ? "mt-1 text-xs text-white/70" : "mt-1 text-xs text-[var(--app-muted)]"}>
+                <p
+                  className={
+                    selectedEvent?.slug === event.slug
+                      ? "mt-1 text-xs text-white/70"
+                      : "mt-1 text-xs text-[var(--app-muted)]"
+                  }
+                >
                   {event.qrLabel}
                 </p>
               </button>
@@ -181,14 +187,14 @@ export function AdminDashboard({ initialStore }: Props) {
       </aside>
 
       <section className="space-y-6">
-        <div className="panel rounded-[34px] p-5">
+        <div className="panel rounded-[34px] p-5 sm:p-6">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div className="max-w-2xl">
               <p className="text-xs uppercase tracking-[0.24em] text-[var(--app-muted)]">Constructor visual</p>
-              <h1 className="mt-3 font-[family-name:var(--font-space-grotesk)] text-4xl font-semibold text-black">
+              <h1 className="mt-3 font-[family-name:var(--font-space-grotesk)] text-4xl font-semibold text-black lg:text-5xl">
                 {draft.title}
               </h1>
-              <p className="mt-3 text-sm leading-7 text-[var(--app-muted)]">
+              <p className="mt-4 max-w-2xl text-sm leading-7 text-[var(--app-muted)]">
                 Cada evento puede tener su landing propia, sus CTAs y su comportamiento de
                 publicación directa o moderada.
               </p>
@@ -212,11 +218,11 @@ export function AdminDashboard({ initialStore }: Props) {
           </div>
         </div>
 
-        <div className="grid gap-6 xl:grid-cols-[1fr_0.76fr]">
+        <div className="grid gap-6 xl:grid-cols-[1fr_0.78fr]">
           <div className="space-y-6">
-            <div className="panel rounded-[34px] p-5">
+            <div className="panel rounded-[34px] p-5 sm:p-6">
               <h2 className="text-sm font-semibold text-black">Datos del evento</h2>
-              <div className="mt-4 grid gap-3 md:grid-cols-2">
+              <div className="mt-5 grid gap-3 md:grid-cols-2">
                 <input
                   value={draft.title}
                   onChange={(event) => handleUpdateField("title", event.target.value)}
@@ -267,7 +273,7 @@ export function AdminDashboard({ initialStore }: Props) {
                 />
               </div>
 
-              <div className="mt-4 grid gap-3 md:grid-cols-2">
+              <div className="mt-5 grid gap-3 md:grid-cols-2">
                 <select
                   value={draft.eventType}
                   onChange={(event) => handleTypeChange(event.target.value as EventRecord["eventType"])}
@@ -292,14 +298,14 @@ export function AdminDashboard({ initialStore }: Props) {
               </div>
             </div>
 
-            <div className="panel rounded-[34px] p-5">
+            <div className="panel rounded-[34px] p-5 sm:p-6">
               <h2 className="text-sm font-semibold text-black">Constructor del landing</h2>
-              <p className="mt-1 text-xs text-[var(--app-muted)]">
+              <p className="mt-2 text-xs text-[var(--app-muted)]">
                 Reordena, oculta o muestra secciones para adaptar cada evento.
               </p>
-              <div className="mt-4 space-y-3">
+              <div className="mt-5 space-y-4">
                 {draft.landingSections.map((section, index) => (
-                  <div key={section.id} className="rounded-[24px] border border-[var(--app-border)] bg-white p-4">
+                  <div key={section.id} className="rounded-[28px] border border-[var(--app-border)] bg-white p-5">
                     <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                       <div>
                         <p className="text-sm font-semibold text-black">{section.title}</p>
@@ -341,14 +347,14 @@ export function AdminDashboard({ initialStore }: Props) {
               }
             />
 
-            <div className="panel rounded-[34px] p-5">
+            <div className="panel rounded-[34px] p-5 sm:p-6">
               <h2 className="text-sm font-semibold text-black">Resumen</h2>
-              <div className="mt-4 grid gap-3 text-sm text-black">
-                <div className="rounded-2xl border border-[var(--app-border)] bg-black/3 p-3">
+              <div className="mt-5 grid gap-3 text-sm text-black">
+                <div className="rounded-2xl border border-[var(--app-border)] bg-black/3 p-4">
                   <p className="text-xs uppercase tracking-[0.2em] text-[var(--app-muted)]">Landing</p>
                   <p className="mt-1">{draft.heroTagline}</p>
                 </div>
-                <div className="rounded-2xl border border-[var(--app-border)] bg-black/3 p-3">
+                <div className="rounded-2xl border border-[var(--app-border)] bg-black/3 p-4">
                   <p className="text-xs uppercase tracking-[0.2em] text-[var(--app-muted)]">Fotos</p>
                   <p className="mt-1">
                     {draft.visibility === "public"
@@ -356,14 +362,14 @@ export function AdminDashboard({ initialStore }: Props) {
                       : "Primero pasan por moderación"}
                   </p>
                 </div>
-                <div className="rounded-2xl border border-[var(--app-border)] bg-black/3 p-3">
+                <div className="rounded-2xl border border-[var(--app-border)] bg-black/3 p-4">
                   <p className="text-xs uppercase tracking-[0.2em] text-[var(--app-muted)]">Límite</p>
                   <p className="mt-1">Máximo {draft.maxPhotoMb} MB por foto.</p>
                 </div>
               </div>
             </div>
 
-            <div className="panel rounded-[34px] p-5">
+            <div className="panel rounded-[34px] p-5 sm:p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-semibold text-black">Fotos actuales</p>
@@ -374,9 +380,9 @@ export function AdminDashboard({ initialStore }: Props) {
                   Previsualizar
                 </Button>
               </div>
-              <div className="mt-4 space-y-3">
+              <div className="mt-5 space-y-3">
                 {selectedPhotos.slice(0, 4).map((photo) => (
-                  <div key={photo.id} className="flex gap-3 rounded-[22px] border border-[var(--app-border)] bg-white p-3">
+                  <div key={photo.id} className="flex gap-3 rounded-[24px] border border-[var(--app-border)] bg-white p-3">
                     <img src={photo.src} alt="" className="h-16 w-16 rounded-2xl object-cover" />
                     <div className="min-w-0">
                       <p className="truncate text-sm font-semibold text-black">{photo.authorName}</p>
