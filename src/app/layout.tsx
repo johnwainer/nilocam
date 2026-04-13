@@ -1,21 +1,8 @@
 import type { Metadata, Viewport } from "next";
-import { Cormorant_Garamond, Manrope } from "next/font/google";
 import "./globals.css";
 import { APP_NAME, APP_TAGLINE } from "@/lib/constants";
 import { siteUrl } from "@/lib/utils";
 import { AppShell } from "@/components/app-shell";
-
-const serif = Cormorant_Garamond({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-serif",
-});
-
-const sans = Manrope({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"],
-  variable: "--font-sans",
-});
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl("/")),
@@ -38,7 +25,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0b0f19",
+  themeColor: "#f5f5f7",
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
@@ -51,7 +38,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es">
-      <body className={`${serif.variable} ${sans.variable}`}>
+      <body>
         <AppShell>{children}</AppShell>
       </body>
     </html>
