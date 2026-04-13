@@ -69,6 +69,16 @@ img {
   padding: 72px 0;
 }
 
+.landing-hero-section {
+  min-height: calc(100vh - 88px);
+  display: flex;
+  align-items: center;
+}
+
+.landing-hero-wrap {
+  align-items: center;
+}
+
 .eyebrow {
   letter-spacing: 0.18em;
   text-transform: uppercase;
@@ -228,5 +238,86 @@ img {
 @media (max-width: 900px) {
   .section {
     padding: 56px 0;
+  }
+
+  .landing-hero-section {
+    min-height: auto;
+    padding-top: 16px;
+    padding-bottom: 32px;
+  }
+
+  .landing-hero-wrap {
+    grid-template-columns: 1fr;
+  }
+
+  .landing-hero-canvas {
+    grid-template-columns: 1fr;
+  }
+
+  .landing-hero-main {
+    min-height: 520px;
+    padding: 22px;
+  }
+
+  .landing-hero-side {
+    min-height: 220px;
+  }
+}
+
+@media (max-width: 640px) {
+  .landing-hero-section {
+    padding-top: 8px;
+    padding-bottom: 28px;
+  }
+
+  .container {
+    width: min(1180px, calc(100% - 24px));
+  }
+
+  .landing-hero-wrap {
+    gap: 20px;
+  }
+
+  .landing-hero-copy {
+    gap: 14px;
+  }
+
+  .landing-hero-wrap .serif {
+    font-size: clamp(42px, 14vw, 60px);
+  }
+
+  .landing-hero-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .landing-hero-canvas {
+    padding: 12px;
+    gap: 12px;
+    border-radius: 28px;
+  }
+
+  .landing-hero-main {
+    min-height: 420px;
+    padding: 18px;
+    border-radius: 24px;
+  }
+
+  .landing-hero-side {
+    min-height: 180px;
+    padding: 18px;
+    border-radius: 24px;
+  }
+
+  .landing-hero-device {
+    padding: 16px;
+    border-radius: 26px;
+  }
+
+  .landing-hero-device-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .landing-hero-tile {
+    min-height: 140px;
   }
 }

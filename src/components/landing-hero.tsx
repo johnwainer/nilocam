@@ -18,9 +18,9 @@ const slides = [
 
 export function LandingHero() {
   return (
-    <section className="section" style={{ paddingTop: 12 }}>
-      <div className="container" style={styles.wrap}>
-        <div style={styles.copy}>
+    <section className="section landing-hero-section" style={styles.section}>
+      <div className="container landing-hero-wrap" style={styles.wrap}>
+        <div className="landing-hero-copy" style={styles.copy}>
           <span className="pill">PWA · sin instalar nada · QR por evento</span>
           <h1 className="serif" style={styles.title}>
             Fotos para eventos con una estética blanca, negra y muy visual
@@ -29,7 +29,7 @@ export function LandingHero() {
             {APP_NAME} abre una experiencia moderna donde los invitados toman o suben fotos y las ven
             aparecer en tiempo real dentro de una landing personalizada.
           </p>
-          <div style={styles.actions}>
+          <div className="landing-hero-actions" style={styles.actions}>
             <Link href="/admin" className="btn btn-primary">
               Crear evento
             </Link>
@@ -38,7 +38,7 @@ export function LandingHero() {
             </Link>
           </div>
 
-          <div style={styles.statsRow}>
+          <div className="landing-hero-stats" style={styles.statsRow}>
             <div className="card" style={styles.stat}>
               <strong>10 tipos</strong>
               <span className="muted">de evento listos</span>
@@ -54,24 +54,37 @@ export function LandingHero() {
           </div>
         </div>
 
-        <div style={styles.visual}>
-          <div className="card glass" style={styles.slideDeck}>
-            {slides.map((slide, index) => (
-              <article key={slide.title} className="card" style={{ ...styles.slide, ...styles[`slide${index + 1}`] }}>
-                <div style={styles.slideKicker}>0{index + 1}</div>
-                <h2 style={styles.slideTitle}>{slide.title}</h2>
-                <p style={styles.slideText}>{slide.subtitle}</p>
+        <div className="landing-hero-visual" style={styles.visual}>
+          <div className="card glass landing-hero-canvas" style={styles.heroCanvas}>
+            <article className="card landing-hero-main" style={{ ...styles.heroMain, ...styles.heroMainBg }}>
+              <div style={styles.slideKicker}>01</div>
+              <h2 style={styles.heroMainTitle}>{slides[0].title}</h2>
+              <p style={styles.heroMainText}>{slides[0].subtitle}</p>
+            </article>
+
+            <div className="landing-hero-side-stack" style={styles.sideStack}>
+              <article className="card landing-hero-side" style={{ ...styles.sideSlide, ...styles.slide2Bg }}>
+                <div style={styles.slideKicker}>02</div>
+                <h2 style={styles.sideTitle}>{slides[1].title}</h2>
+                <p style={styles.sideText}>{slides[1].subtitle}</p>
               </article>
-            ))}
+
+              <article className="card landing-hero-side" style={{ ...styles.sideSlide, ...styles.slide3Bg }}>
+                <div style={styles.slideKicker}>03</div>
+                <h2 style={styles.sideTitle}>{slides[2].title}</h2>
+                <p style={styles.sideText}>{slides[2].subtitle}</p>
+              </article>
+            </div>
           </div>
-          <div className="card" style={styles.device}>
+
+          <div className="card landing-hero-device" style={styles.device}>
             <div style={styles.deviceTop}>
               <span className="pulse-dot" />
-              <span>Galería destacada en vivo</span>
+              <span>Galería destacada en vivo</span>
             </div>
-            <div style={styles.deviceGrid}>
+            <div className="landing-hero-device-grid" style={styles.deviceGrid}>
               {["A", "B", "C"].map((item) => (
-                <div key={item} style={styles.tile}>
+                <div key={item} className="landing-hero-tile" style={styles.tile}>
                   <div style={styles.tileLabel}>Evento</div>
                 </div>
               ))}
@@ -92,19 +105,26 @@ export function LandingHero() {
 }
 
 const styles: Record<string, React.CSSProperties> = {
+  section: {
+    paddingTop: 12,
+    paddingBottom: 20,
+    minHeight: "calc(100vh - 88px)",
+    display: "flex",
+    alignItems: "center",
+  },
   wrap: {
     display: "grid",
-    gap: 28,
-    gridTemplateColumns: "minmax(0, 1.02fr) minmax(0, 0.98fr)",
+    gap: 32,
+    gridTemplateColumns: "minmax(0, 0.92fr) minmax(0, 1.08fr)",
     alignItems: "center",
   },
   copy: {
     display: "grid",
     gap: 18,
-    maxWidth: 760,
+    maxWidth: 720,
   },
   title: {
-    fontSize: "clamp(60px, 7vw, 112px)",
+    fontSize: "clamp(58px, 7vw, 108px)",
     lineHeight: 0.9,
     margin: 0,
     letterSpacing: "-0.05em",
@@ -138,15 +158,51 @@ const styles: Record<string, React.CSSProperties> = {
     display: "grid",
     gap: 16,
   },
-  slideDeck: {
+  heroCanvas: {
     padding: 16,
-    borderRadius: 34,
+    borderRadius: 36,
     display: "grid",
-    gap: 14,
-    background: "linear-gradient(180deg, rgba(255,255,255,0.96), rgba(255,255,255,0.86))",
+    gap: 16,
+    gridTemplateColumns: "1.3fr 0.7fr",
+    background: "linear-gradient(180deg, rgba(255,255,255,0.98), rgba(255,255,255,0.88))",
   },
-  slide: {
-    minHeight: 170,
+  heroMain: {
+    minHeight: 640,
+    borderRadius: 30,
+    padding: 28,
+    display: "grid",
+    alignContent: "end",
+    gap: 14,
+    backgroundSize: "cover",
+    backgroundPosition: "center",
+    overflow: "hidden",
+    position: "relative",
+  },
+  heroMainBg: {
+    background:
+      "linear-gradient(180deg, rgba(0,0,0,0.18), rgba(0,0,0,0.9)), url(https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=1400&q=80)",
+  },
+  heroMainTitle: {
+    margin: 0,
+    color: "#fff",
+    fontSize: "clamp(42px, 4.8vw, 76px)",
+    lineHeight: 0.94,
+    letterSpacing: "-0.05em",
+    maxWidth: 560,
+  },
+  heroMainText: {
+    margin: 0,
+    color: "rgba(255,255,255,0.9)",
+    lineHeight: 1.65,
+    maxWidth: 470,
+    fontSize: 18,
+  },
+  sideStack: {
+    display: "grid",
+    gap: 16,
+  },
+  sideSlide: {
+    minHeight: 312,
     borderRadius: 28,
     padding: 22,
     display: "grid",
@@ -157,17 +213,13 @@ const styles: Record<string, React.CSSProperties> = {
     overflow: "hidden",
     position: "relative",
   },
-  slide1: {
+  slide2Bg: {
     background:
-      "linear-gradient(180deg, rgba(0,0,0,0.28), rgba(0,0,0,0.88)), url(https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=1200&q=80)",
+      "linear-gradient(180deg, rgba(0,0,0,0.14), rgba(0,0,0,0.9)), url(https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&w=1200&q=80)",
   },
-  slide2: {
+  slide3Bg: {
     background:
-      "linear-gradient(180deg, rgba(0,0,0,0.24), rgba(0,0,0,0.9)), url(https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&w=1200&q=80)",
-  },
-  slide3: {
-    background:
-      "linear-gradient(180deg, rgba(0,0,0,0.24), rgba(0,0,0,0.9)), url(https://images.unsplash.com/photo-1504196606672-aef5c9cefc92?auto=format&fit=crop&w=1200&q=80)",
+      "linear-gradient(180deg, rgba(0,0,0,0.14), rgba(0,0,0,0.9)), url(https://images.unsplash.com/photo-1504196606672-aef5c9cefc92?auto=format&fit=crop&w=1200&q=80)",
   },
   slideKicker: {
     display: "inline-flex",
@@ -180,19 +232,19 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: 700,
     letterSpacing: "0.16em",
   },
-  slideTitle: {
+  sideTitle: {
     margin: 0,
     color: "#fff",
-    fontSize: "clamp(28px, 3vw, 44px)",
+    fontSize: "clamp(24px, 2.4vw, 36px)",
     lineHeight: 0.96,
     letterSpacing: "-0.04em",
-    maxWidth: 480,
+    maxWidth: 380,
   },
-  slideText: {
+  sideText: {
     margin: 0,
     color: "rgba(255,255,255,0.88)",
     lineHeight: 1.6,
-    maxWidth: 420,
+    maxWidth: 360,
   },
   device: {
     padding: 20,

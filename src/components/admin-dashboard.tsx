@@ -173,12 +173,12 @@ export function AdminDashboard({
   };
 
   return (
-    <main className="section">
+    <main className="section" style={styles.shell}>
       <div className="container" style={styles.page}>
         <aside className="card glass" style={styles.sidebar}>
           <div style={styles.sidebarHead}>
             <div>
-              <span className="eyebrow">Admin / dueño</span>
+              <span className="eyebrow">Admin</span>
               <h1 className="serif" style={styles.title}>
                 {APP_NAME} events
               </h1>
@@ -188,7 +188,7 @@ export function AdminDashboard({
             </button>
           </div>
           <div style={styles.userBox}>
-            <span className="muted">Sesión</span>
+            <span className="muted">Sesión activa</span>
             <strong>{userEmail}</strong>
           </div>
           <div style={styles.list}>
@@ -483,15 +483,19 @@ export function AdminDashboard({
 const styles: Record<string, React.CSSProperties> = {
   page: {
     display: "grid",
-    gap: 20,
-    gridTemplateColumns: "360px 1fr",
+    gap: 24,
+    gridTemplateColumns: "300px 1fr",
     alignItems: "start",
   },
+  shell: {
+    paddingTop: 44,
+  },
   sidebar: {
-    padding: 20,
-    borderRadius: 28,
+    padding: 18,
+    borderRadius: 24,
     position: "sticky",
-    top: 20,
+    top: 18,
+    background: "rgba(255,255,255,0.88)",
   },
   sidebarHead: {
     display: "flex",
@@ -501,50 +505,52 @@ const styles: Record<string, React.CSSProperties> = {
   },
   title: {
     margin: "10px 0 0",
-    fontSize: 38,
-    lineHeight: 0.95,
+    fontSize: 28,
+    lineHeight: 0.96,
+    letterSpacing: "-0.04em",
   },
   userBox: {
     display: "grid",
     gap: 6,
-    padding: 14,
-    borderRadius: 20,
-    background: "rgba(255,255,255,0.05)",
+    padding: 12,
+    borderRadius: 18,
+    background: "rgba(0,0,0,0.03)",
   },
   list: {
     display: "grid",
-    gap: 10,
-    marginTop: 4,
+    gap: 8,
+    marginTop: 8,
   },
   eventItem: {
-    padding: 16,
-    borderRadius: 22,
+    padding: 14,
+    borderRadius: 18,
     textAlign: "left",
-    border: "1px solid rgba(255,255,255,0.08)",
-    background: "rgba(255,255,255,0.03)",
+    border: "1px solid rgba(0,0,0,0.06)",
+    background: "rgba(255,255,255,0.9)",
     display: "grid",
-    gap: 6,
+    gap: 4,
     color: "var(--text)",
     cursor: "pointer",
   },
   eventActive: {
-    padding: 16,
-    borderRadius: 22,
+    padding: 14,
+    borderRadius: 18,
     textAlign: "left",
-    border: "1px solid rgba(212,163,115,0.38)",
-    background: "rgba(212,163,115,0.08)",
+    border: "1px solid rgba(0,0,0,0.14)",
+    background: "rgba(0,0,0,0.04)",
     display: "grid",
-    gap: 6,
+    gap: 4,
     color: "var(--text)",
     cursor: "pointer",
   },
   main: {
     display: "grid",
-    gap: 20,
+    gap: 18,
   },
   editor: {
-    padding: 22,
-    borderRadius: 30,
+    padding: 20,
+    borderRadius: 26,
+    background: "rgba(255,255,255,0.9)",
   },
   editorHead: {
     display: "flex",
@@ -552,12 +558,13 @@ const styles: Record<string, React.CSSProperties> = {
     gap: 12,
     alignItems: "start",
     flexWrap: "wrap",
-    marginBottom: 18,
+    marginBottom: 14,
   },
   h2: {
     margin: "8px 0 0",
-    fontSize: 42,
+    fontSize: 34,
     lineHeight: 0.95,
+    letterSpacing: "-0.04em",
   },
   editorActions: {
     display: "flex",
@@ -565,21 +572,21 @@ const styles: Record<string, React.CSSProperties> = {
     flexWrap: "wrap",
   },
   notice: {
-    borderRadius: 18,
-    padding: 14,
-    marginBottom: 16,
-    background: "rgba(52, 211, 153, 0.12)",
-    border: "1px solid rgba(52, 211, 153, 0.18)",
-    color: "#bbf7d0",
+    borderRadius: 16,
+    padding: 12,
+    marginBottom: 14,
+    background: "rgba(0,0,0,0.04)",
+    border: "1px solid rgba(0,0,0,0.08)",
+    color: "var(--text)",
   },
   editorGrid: {
     display: "grid",
-    gridTemplateColumns: "1fr 420px",
-    gap: 18,
+    gridTemplateColumns: "1fr 360px",
+    gap: 16,
   },
   form: {
     display: "grid",
-    gap: 14,
+    gap: 12,
     alignContent: "start",
   },
   helper: {
@@ -602,16 +609,16 @@ const styles: Record<string, React.CSSProperties> = {
   sectionChip: {
     padding: "8px 12px",
     borderRadius: 999,
-    background: "rgba(255,255,255,0.04)",
-    border: "1px solid rgba(255,255,255,0.08)",
+    background: "rgba(0,0,0,0.03)",
+    border: "1px solid rgba(0,0,0,0.08)",
     color: "var(--text)",
   },
   sectionChipActive: {
     padding: "8px 12px",
     borderRadius: 999,
-    background: "rgba(212,163,115,0.12)",
-    border: "1px solid rgba(212,163,115,0.36)",
-    color: "#fff",
+    background: "rgba(0,0,0,0.08)",
+    border: "1px solid rgba(0,0,0,0.16)",
+    color: "#111",
   },
   preview: {
     position: "sticky",
@@ -619,10 +626,10 @@ const styles: Record<string, React.CSSProperties> = {
     alignSelf: "start",
   },
   previewCard: {
-    borderRadius: 26,
+    borderRadius: 24,
     padding: 18,
-    background: "radial-gradient(circle at top, rgba(212,163,115,0.14), transparent 34%), rgba(10,15,25,0.98)",
-    border: "1px solid rgba(255,255,255,0.08)",
+    background: "linear-gradient(180deg, rgba(255,255,255,0.98), rgba(255,255,255,0.92))",
+    border: "1px solid rgba(0,0,0,0.08)",
   },
   previewHeader: {
     display: "flex",
@@ -654,7 +661,7 @@ const styles: Record<string, React.CSSProperties> = {
     width: "fit-content",
     padding: 14,
     borderRadius: 24,
-    background: "rgba(255,255,255,0.03)",
-    border: "1px solid rgba(255,255,255,0.08)",
+    background: "rgba(0,0,0,0.03)",
+    border: "1px solid rgba(0,0,0,0.08)",
   },
 };
