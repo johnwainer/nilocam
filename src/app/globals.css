@@ -410,6 +410,63 @@ img {
   }
 }
 
+/* ─── Dark theme scope (event landing + modal) ─────────────────────── */
+
+.dark-theme .card {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.07);
+}
+
+.dark-theme .glass {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
+  border-color: rgba(255, 255, 255, 0.09);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.4);
+}
+
+.dark-theme .eyebrow {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.dark-theme .muted {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.dark-theme .pill {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.dark-theme .pulse-dot {
+  background: rgba(255, 255, 255, 0.8);
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.12);
+}
+
+.dark-theme .label {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.dark-theme .input,
+.dark-theme .textarea,
+.dark-theme .select {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+}
+
+.dark-theme .input::placeholder,
+.dark-theme .textarea::placeholder {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.dark-theme .input:focus,
+.dark-theme .textarea:focus {
+  border-color: rgba(255, 255, 255, 0.38);
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.06);
+}
+
 /* ─── Event Landing ─────────────────────────────────────────────────── */
 
 .el-hero {

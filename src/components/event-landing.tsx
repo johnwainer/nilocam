@@ -34,10 +34,11 @@ export function EventLanding({
 
   return (
     <main
+      className="dark-theme"
       style={
         {
           background: `radial-gradient(circle at top, ${theme.accentSoft}33, transparent 30%), linear-gradient(180deg, ${theme.background}, #050816 82%)`,
-          color: theme.text,
+          color: "#f0ede8",
           minHeight: "100vh",
         } as React.CSSProperties
       }
@@ -47,10 +48,10 @@ export function EventLanding({
           <div className="card glass el-hero">
             {/* ── Copy column ── */}
             <div style={styles.heroCopy}>
-              <span className="pill" style={{ color: theme.text, background: "rgba(255,255,255,0.05)" }}>
+              <span className="pill">
                 {event.event_type_key.replaceAll("-", " ")}
               </span>
-              <p className="eyebrow" style={{ color: theme.accent }}>
+              <p className="eyebrow">
                 {event.landing_config.heroEyebrow}
               </p>
               <h1 className="serif" style={{ ...styles.heroTitle, color: "#ffffff" }}>
