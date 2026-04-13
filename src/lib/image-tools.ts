@@ -24,11 +24,15 @@ export async function fileToImageBitmap(file: File) {
   }
 }
 
-function fitContain(width: number, height: number, maxWidth: number, maxHeight: number) {
-  const ratio = Math.min(maxWidth / width, maxHeight / height);
+function fitCover(imgW: number, imgH: number, canvasW: number, canvasH: number) {
+  const scale = Math.max(canvasW / imgW, canvasH / imgH);
+  const w = Math.round(imgW * scale);
+  const h = Math.round(imgH * scale);
   return {
-    width: Math.round(width * ratio),
-    height: Math.round(height * ratio),
+    x: Math.round((canvasW - w) / 2),
+    y: Math.round((canvasH - h) / 2),
+    width: w,
+    height: h,
   };
 }
 
@@ -36,10 +40,7 @@ async function canvasToBlob(canvas: HTMLCanvasElement, quality: number) {
   return new Promise<Blob>((resolve, reject) => {
     canvas.toBlob(
       (blob) => {
-        if (!blob) {
-          reject(new Error("No se pudo generar la imagen editada."));
-          return;
-        }
+        if (!blob) { reject(new Error("No se pudo generar la imagen editada.")); return; }
         resolve(blob);
       },
       "image/jpeg",
@@ -58,6 +59,24 @@ async function loadImage(url: string): Promise<HTMLImageElement> {
   });
 }
 
+function roundRect(
+  ctx: CanvasRenderingContext2D,
+  x: number, y: number, width: number, height: number, radius: number
+) {
+  const r = Math.min(radius, width / 2, height / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + width - r, y);
+  ctx.quadraticCurveTo(x + width, y, x + width, y + r);
+  ctx.lineTo(x + width, y + height - r);
+  ctx.quadraticCurveTo(x + width, y + height, x + width - r, y + height);
+  ctx.lineTo(x + r, y + height);
+  ctx.quadraticCurveTo(x, y + height, x, y + height - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
 export async function renderEditedImage(
   source: File,
   options: {
@@ -73,21 +92,13 @@ export async function renderEditedImage(
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("Tu navegador no soporta canvas.");
 
-  const outputWidth = 1600;
-  const outputHeight = 2000;
-  canvas.width = outputWidth;
-  canvas.height = outputHeight;
+  const W = 1080;
+  const H = 1350; // 4:5 — Instagram-friendly portrait
+  canvas.width = W;
+  canvas.height = H;
 
-  const bg = ctx.createLinearGradient(0, 0, 0, outputHeight);
-  bg.addColorStop(0, "#050816");
-  bg.addColorStop(1, "#10192d");
-  ctx.fillStyle = bg;
-  ctx.fillRect(0, 0, outputWidth, outputHeight);
-
-  const drawArea = fitContain(img.naturalWidth, img.naturalHeight, outputWidth - 120, outputHeight - 320);
-  const x = Math.round((outputWidth - drawArea.width) / 2);
-  const y = 120;
-
+  // ── 1. Draw photo (cover-fill) with filter ──────────────────────────────
+  const { x, y, width, height } = fitCover(img.naturalWidth, img.naturalHeight, W, H);
   ctx.save();
   switch (options.filter) {
     case "warm":     ctx.filter = "sepia(0.2) saturate(1.22) contrast(1.05) brightness(1.03)"; break;
@@ -106,89 +117,100 @@ export async function renderEditedImage(
     case "dramatic": ctx.filter = "contrast(1.4) brightness(0.86) saturate(1.1)"; break;
     default:         ctx.filter = "none"; break;
   }
-  ctx.drawImage(img, x, y, drawArea.width, drawArea.height);
+  ctx.drawImage(img, x, y, width, height);
   ctx.restore();
 
-  const radius = 36;
-  ctx.fillStyle = "rgba(255,255,255,0.08)";
-  roundRect(ctx, x - 4, y - 4, drawArea.width + 8, drawArea.height + 8, radius);
-  ctx.strokeStyle = "rgba(255,255,255,0.12)";
-  ctx.lineWidth = 2;
-  ctx.stroke();
-
+  // ── 2. Template decorations (purely visual, no text) ───────────────────
   if (options.template === "film") {
-    ctx.fillStyle = "rgba(8, 12, 23, 0.68)";
-    ctx.fillRect(0, outputHeight - 240, outputWidth, 240);
-    ctx.fillStyle = "#f8fafc";
-    ctx.font = "700 56px Manrope, system-ui, sans-serif";
-    ctx.fillText(options.title || "Nilo Cam", 72, outputHeight - 154);
-    ctx.fillStyle = "#cbd5e1";
-    ctx.font = "500 28px Manrope, system-ui, sans-serif";
-    ctx.fillText(options.subtitle || "Tu momento, en tiempo real", 72, outputHeight - 102);
-  } else if (options.template === "frame") {
-    ctx.strokeStyle = "rgba(212,163,115,0.9)";
-    ctx.lineWidth = 18;
-    roundRect(ctx, 26, 26, outputWidth - 52, outputHeight - 52, 52);
+    // Cinematic letterbox: dark gradient bars at top and bottom
+    const barH = 110;
+
+    const topGrad = ctx.createLinearGradient(0, 0, 0, barH);
+    topGrad.addColorStop(0, "rgba(0,0,0,0.82)");
+    topGrad.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = topGrad;
+    ctx.fillRect(0, 0, W, barH);
+
+    const btmGrad = ctx.createLinearGradient(0, H - barH, 0, H);
+    btmGrad.addColorStop(0, "rgba(0,0,0,0)");
+    btmGrad.addColorStop(1, "rgba(0,0,0,0.82)");
+    ctx.fillStyle = btmGrad;
+    ctx.fillRect(0, H - barH, W, barH);
+
+    // Thin separator lines
+    ctx.strokeStyle = "rgba(255,255,255,0.12)";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(0, barH); ctx.lineTo(W, barH);
+    ctx.moveTo(0, H - barH); ctx.lineTo(W, H - barH);
     ctx.stroke();
-    ctx.fillStyle = "#fff";
-    ctx.font = "800 44px Manrope, system-ui, sans-serif";
-    ctx.fillText(options.title || "Nilo Cam", 66, 94);
+
+  } else if (options.template === "frame") {
+    // Elegant double frame + corner ornaments — no text
+    const m1 = 28; // outer frame margin
+    const m2 = 44; // inner frame margin
+
+    // outer thin white line
+    ctx.strokeStyle = "rgba(255,255,255,0.2)";
+    ctx.lineWidth = 2;
+    roundRect(ctx, m1, m1, W - m1 * 2, H - m1 * 2, 10);
+    ctx.stroke();
+
+    // inner golden line
+    ctx.strokeStyle = "rgba(212,163,115,0.85)";
+    ctx.lineWidth = 3;
+    roundRect(ctx, m2, m2, W - m2 * 2, H - m2 * 2, 6);
+    ctx.stroke();
+
+    // Corner ornaments — L-shaped gold strokes
+    const cOff = m2 + 14;
+    const cLen = 60;
+    ctx.strokeStyle = "rgba(212,163,115,0.9)";
+    ctx.lineWidth = 5;
+    ctx.lineCap = "square";
+    const corners: [number, number, number, number][] = [
+      [cOff, cOff, 1, 1],
+      [W - cOff, cOff, -1, 1],
+      [cOff, H - cOff, 1, -1],
+      [W - cOff, H - cOff, -1, -1],
+    ];
+    for (const [cx, cy, dx, dy] of corners) {
+      ctx.beginPath();
+      ctx.moveTo(cx + dx * cLen, cy);
+      ctx.lineTo(cx, cy);
+      ctx.lineTo(cx, cy + dy * cLen);
+      ctx.stroke();
+    }
   }
 
-  // ── Watermark overlay ──────────────────────────────────────────────────
+  // ── 3. Watermark ────────────────────────────────────────────────────────
   if (options.watermark?.url) {
     try {
       const wm = options.watermark;
       const wmImg = await loadImage(wm.url);
-      const margin = 40;
-      const wmW = Math.round(outputWidth * (wm.size / 100));
+      const margin = 32;
+      const wmW = Math.round(W * (wm.size / 100));
       const wmH = Math.round(wmW * (wmImg.naturalHeight / wmImg.naturalWidth));
       let wx = margin;
       let wy = margin;
-      if (wm.position === "top-right") wx = outputWidth - wmW - margin;
-      if (wm.position === "bottom-left") wy = outputHeight - wmH - margin;
-      if (wm.position === "bottom-right") {
-        wx = outputWidth - wmW - margin;
-        wy = outputHeight - wmH - margin;
-      }
+      if (wm.position === "top-right")    wx = W - wmW - margin;
+      if (wm.position === "bottom-left")  wy = H - wmH - margin;
+      if (wm.position === "bottom-right") { wx = W - wmW - margin; wy = H - wmH - margin; }
       ctx.save();
       ctx.globalAlpha = wm.opacity;
       ctx.drawImage(wmImg, wx, wy, wmW, wmH);
       ctx.restore();
     } catch {
-      // If watermark fails to load, continue without it
+      // watermark load failure — skip silently
     }
   }
 
+  // ── 4. Compress ─────────────────────────────────────────────────────────
   const qualitySequence = [0.92, 0.82, 0.72];
   for (const quality of qualitySequence) {
     const blob = await canvasToBlob(canvas, quality);
-    if (blob.size < 14 * 1024 * 1024 || quality === qualitySequence.at(-1)) {
-      return blob;
-    }
+    if (blob.size < 14 * 1024 * 1024 || quality === qualitySequence.at(-1)) return blob;
   }
 
   throw new Error("No se pudo comprimir la imagen.");
-}
-
-function roundRect(
-  ctx: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  width: number,
-  height: number,
-  radius: number
-) {
-  const r = Math.min(radius, width / 2, height / 2);
-  ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.lineTo(x + width - r, y);
-  ctx.quadraticCurveTo(x + width, y, x + width, y + r);
-  ctx.lineTo(x + width, y + height - r);
-  ctx.quadraticCurveTo(x + width, y + height, x + width - r, y + height);
-  ctx.lineTo(x + r, y + height);
-  ctx.quadraticCurveTo(x, y + height, x, y + height - r);
-  ctx.lineTo(x, y + r);
-  ctx.quadraticCurveTo(x, y, x + r, y);
-  ctx.closePath();
 }

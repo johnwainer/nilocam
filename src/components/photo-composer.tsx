@@ -235,17 +235,21 @@ export function PhotoComposer({ event, onUploaded, compact, accentColor }: Compo
                     style={{ objectFit: "cover", filter: FILTER_CSS[filter], transition: "filter 200ms ease" }}
                   />
 
-                  {/* ── Template overlays ── */}
+                  {/* ── Template overlays (decorative only, no text) ── */}
                   {template === "film" && (
-                    <div style={styles.tmplFilmOverlay}>
-                      <strong style={styles.tmplFilmTitle}>{event.title}</strong>
-                      {event.subtitle ? <span style={styles.tmplFilmSub}>{event.subtitle}</span> : null}
-                    </div>
+                    <>
+                      <div style={styles.tmplFilmTop} />
+                      <div style={styles.tmplFilmBottom} />
+                    </>
                   )}
                   {template === "frame" && (
                     <>
-                      <div style={styles.tmplFrameBorder} />
-                      <div style={styles.tmplFrameTitle}>{event.title}</div>
+                      <div style={styles.tmplFrameOuter} />
+                      <div style={styles.tmplFrameInner} />
+                      <div style={{ ...styles.tmplCorner, top: 14, left: 14 }} />
+                      <div style={{ ...styles.tmplCorner, top: 14, right: 14, borderLeft: "none", borderRight: "2px solid rgba(212,163,115,0.85)" }} />
+                      <div style={{ ...styles.tmplCorner, bottom: 14, left: 14, borderTop: "none", borderBottom: "2px solid rgba(212,163,115,0.85)" }} />
+                      <div style={{ ...styles.tmplCorner, bottom: 14, right: 14, borderLeft: "none", borderRight: "2px solid rgba(212,163,115,0.85)", borderTop: "none", borderBottom: "2px solid rgba(212,163,115,0.85)" }} />
                     </>
                   )}
 
@@ -490,47 +494,48 @@ const styles: Record<string, React.CSSProperties> = {
     letterSpacing: "0.04em",
     zIndex: 4,
   },
-  // template: film
-  tmplFilmOverlay: {
+  // template: film — cinematic letterbox bars
+  tmplFilmTop: {
     position: "absolute",
-    inset: "auto 0 0 0",
-    background: "linear-gradient(0deg, rgba(8,12,23,0.88) 0%, rgba(8,12,23,0.3) 70%, transparent 100%)",
-    padding: "32px 16px 14px",
-    display: "grid",
-    gap: 3,
-    zIndex: 3,
-  },
-  tmplFilmTitle: {
-    color: "#f8fafc",
-    fontSize: 16,
-    fontWeight: 700,
-    letterSpacing: "-0.01em",
-    lineHeight: 1.2,
-  },
-  tmplFilmSub: {
-    color: "rgba(255,255,255,0.65)",
-    fontSize: 11,
-    fontWeight: 500,
-  },
-  // template: frame
-  tmplFrameBorder: {
-    position: "absolute",
-    inset: 8,
-    border: "3px solid rgba(212,163,115,0.85)",
-    borderRadius: 10,
+    top: 0, left: 0, right: 0,
+    height: "14%",
+    background: "linear-gradient(180deg, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0) 100%)",
     zIndex: 3,
     pointerEvents: "none",
   },
-  tmplFrameTitle: {
+  tmplFilmBottom: {
     position: "absolute",
-    top: 16,
-    left: 16,
-    color: "#ffffff",
-    fontSize: 13,
-    fontWeight: 800,
-    letterSpacing: "-0.01em",
-    textShadow: "0 1px 4px rgba(0,0,0,0.5)",
+    bottom: 0, left: 0, right: 0,
+    height: "14%",
+    background: "linear-gradient(0deg, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0) 100%)",
+    zIndex: 3,
+    pointerEvents: "none",
+  },
+  // template: frame — double golden border + corner ornaments
+  tmplFrameOuter: {
+    position: "absolute",
+    inset: 6,
+    border: "1.5px solid rgba(255,255,255,0.2)",
+    borderRadius: 8,
+    zIndex: 3,
+    pointerEvents: "none",
+  },
+  tmplFrameInner: {
+    position: "absolute",
+    inset: 10,
+    border: "2px solid rgba(212,163,115,0.85)",
+    borderRadius: 5,
+    zIndex: 3,
+    pointerEvents: "none",
+  },
+  tmplCorner: {
+    position: "absolute",
+    width: 18,
+    height: 18,
+    borderTop: "2px solid rgba(212,163,115,0.85)",
+    borderLeft: "2px solid rgba(212,163,115,0.85)",
     zIndex: 4,
+    pointerEvents: "none",
   },
   filterScrollOuter: {
     background: "rgba(0,0,0,0.6)",
