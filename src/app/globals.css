@@ -469,34 +469,17 @@ img {
 
 /* ─── Event Landing ─────────────────────────────────────────────────── */
 
-.el-hero {
-  display: grid;
-  gap: 24px;
-  padding: 24px;
-  border-radius: 32px;
-  overflow: hidden;
-  grid-template-columns: 1.02fr 0.98fr;
-}
-
-.el-info-grid {
-  display: grid;
-  gap: 16px;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+/* Hero content: 2-col on desktop (copy + cover image), 1-col on mobile */
+@media (min-width: 821px) {
+  .el-hero-content {
+    grid-template-columns: 1fr 0.9fr !important;
+    align-items: end;
+  }
 }
 
 @media (max-width: 820px) {
-  .el-hero {
-    grid-template-columns: 1fr;
-    padding: 20px;
-    border-radius: 24px;
-  }
-
   .el-hero-visual {
     display: none;
-  }
-
-  .el-info-grid {
-    grid-template-columns: 1fr;
   }
 }
 

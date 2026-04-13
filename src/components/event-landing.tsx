@@ -5,6 +5,22 @@ import { formatDate } from "@/lib/utils";
 import { PhotoComposer } from "@/components/photo-composer";
 import { RealtimeGallery } from "@/components/realtime-gallery";
 
+function CalendarIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ flexShrink: 0 }}>
+      <rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
+    </svg>
+  );
+}
+
+function PinIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ flexShrink: 0 }}>
+      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" />
+    </svg>
+  );
+}
+
 export function EventLanding({
   event,
   initialPhotos,
@@ -14,355 +30,221 @@ export function EventLanding({
 }) {
   const theme = event.landing_config.theme;
   const sections = event.landing_config.sections;
-  const quickSteps = [
-    {
-      step: "1",
-      title: "Escanea el QR",
-      text: "En un segundo estás dentro del evento. Sin apps, sin registros, sin fricción.",
-    },
-    {
-      step: "2",
-      title: "Captura el momento",
-      text: "Usa la cámara directamente o sube una foto ya tomada. Tan fácil como debería ser.",
-    },
-    {
-      step: "3",
-      title: "Aparece en pantalla",
-      text: "Tu foto se suma a la galería del evento en tiempo real, visible para todos.",
-    },
-  ];
+  const coverUrl = theme.heroImage ?? event.cover_image_url ?? "";
+  const hasGallery = sections.includes("gallery");
 
   return (
     <main
       className="dark-theme"
-      style={
-        {
-          background: `radial-gradient(circle at top, ${theme.accentSoft}33, transparent 30%), linear-gradient(180deg, ${theme.background}, #050816 82%)`,
-          color: "#f0ede8",
-          minHeight: "100vh",
-        } as React.CSSProperties
-      }
+      style={{ background: `linear-gradient(180deg, ${theme.background} 0%, #050816 100%)`, color: "#f0ede8", minHeight: "100vh" }}
     >
-      <section className="section" style={{ paddingTop: 28 }}>
-        <div className="container">
-          <div className="card glass el-hero">
-            {/* ── Copy column ── */}
-            <div style={styles.heroCopy}>
-              <span className="pill">
-                {event.event_type_key.replaceAll("-", " ")}
-              </span>
-              <p className="eyebrow">
-                {event.landing_config.heroEyebrow}
-              </p>
-              <h1 className="serif" style={{ ...styles.heroTitle, color: "#ffffff" }}>
-                {event.landing_config.heroTitle}
-              </h1>
-              <p style={{ ...styles.heroSubtitle, color: "rgba(255,255,255,0.7)" }}>
-                {event.landing_config.heroSubtitle}
-              </p>
+      {/* ── HERO ─────────────────────────────────────────────────────── */}
+      <section style={styles.heroSection}>
+        {/* Full-bleed cover image with gradient overlay (visible on mobile too) */}
+        {coverUrl ? (
+          <div
+            style={{
+              ...styles.heroBg,
+              backgroundImage: `linear-gradient(180deg, rgba(5,8,22,0.25) 0%, rgba(5,8,22,0.78) 55%, rgba(5,8,22,1) 100%), url(${coverUrl})`,
+            }}
+          />
+        ) : (
+          <div style={{ ...styles.heroBg, background: `radial-gradient(ellipse at top, ${theme.accentSoft}44 0%, transparent 60%)` }} />
+        )}
 
-              {sections.includes("ctas") ? (
-                <div style={styles.ctaRow}>
-                  <a style={styles.ctaPrimary} href="#uploader">
-                    {event.landing_config.primaryCta}
-                  </a>
-                  <a style={styles.ctaSecondary} href="#gallery">
-                    {event.landing_config.tertiaryCta}
-                  </a>
-                </div>
+        <div className="container el-hero-content" style={styles.heroContent}>
+          {/* ── left / main copy ── */}
+          <div style={styles.heroCopy}>
+            <span style={styles.eventTypeBadge}>
+              {event.event_type_key.replaceAll("-", " ")}
+            </span>
+
+            <h1 style={styles.heroTitle}>
+              {event.landing_config.heroTitle}
+            </h1>
+
+            {event.landing_config.heroSubtitle ? (
+              <p style={styles.heroSubtitle}>{event.landing_config.heroSubtitle}</p>
+            ) : null}
+
+            <div style={styles.metaRow}>
+              {event.event_date ? (
+                <span style={styles.metaChip}>
+                  <CalendarIcon />
+                  {formatDate(event.event_date)}
+                </span>
               ) : null}
-
-              {sections.includes("how-it-works") ? (
-                <div style={styles.quickGrid}>
-                  {quickSteps.map((item) => (
-                    <article key={item.step} className="card glass" style={styles.quickCard}>
-                      <span className="pill" style={styles.quickBadge}>
-                        {item.step}
-                      </span>
-                      <strong style={styles.quickTitle}>{item.title}</strong>
-                      <p style={styles.quickText}>{item.text}</p>
-                    </article>
-                  ))}
-                </div>
+              {event.venue_name ? (
+                <span style={styles.metaChip}>
+                  <PinIcon />
+                  {event.venue_name}
+                  {event.venue_city ? `, ${event.venue_city}` : ""}
+                </span>
               ) : null}
-
-              <div style={styles.metaGrid}>
-                <div className="card glass" style={styles.metaCard}>
-                  <span style={styles.metaMuted}>Evento</span>
-                  <strong style={{ color: "#fff" }}>{event.title}</strong>
-                </div>
-                <div className="card glass" style={styles.metaCard}>
-                  <span style={styles.metaMuted}>Fecha</span>
-                  <strong style={{ color: "#fff" }}>{formatDate(event.event_date)}</strong>
-                </div>
-                <div className="card glass" style={styles.metaCard}>
-                  <span style={styles.metaMuted}>Moderación</span>
-                  <strong style={{ color: "#fff" }}>
-                    {event.moderation_mode === "auto" ? "Instantánea" : "Por aprobación"}
-                  </strong>
-                </div>
-              </div>
             </div>
 
-            {/* ── Visual column (hidden on mobile via CSS) ── */}
-            <div className="el-hero-visual" style={styles.heroVisual}>
-              <div
-                className="card"
-                style={{
-                  ...styles.heroPoster,
-                  backgroundImage: `linear-gradient(180deg, rgba(6,9,19,0.1), rgba(6,9,19,0.9)), url(${theme.heroImage ?? event.cover_image_url ?? ""})`,
-                }}
-              >
-                <div style={styles.posterBadge}>Nilo Cam</div>
-                <div style={styles.posterBottom}>
-                  <strong style={{ color: "#fff" }}>{event.venue_name || "Landing personalizable"}</strong>
-                  <span style={{ color: "rgba(255,255,255,0.7)" }}>
-                    {event.venue_city || "Fotos en vivo desde el QR"}
-                  </span>
-                </div>
-              </div>
-              <div className="card glass" style={styles.highlightCard}>
-                <div className="pulse-dot" />
-                <strong style={{ color: "#fff" }}>{event.landing_config.highlightCopy}</strong>
-                <p style={{ ...styles.highlightText }}>{event.landing_config.introCopy}</p>
-              </div>
+            <div style={styles.ctaRow}>
+              <a style={styles.ctaPrimary} href="#uploader">
+                {event.landing_config.primaryCta ?? "Subir mi foto"}
+              </a>
+              {hasGallery ? (
+                <a style={styles.ctaGhost} href="#gallery">
+                  Ver galería
+                </a>
+              ) : null}
             </div>
           </div>
+
+          {/* ── right: cover image card (desktop only) ── */}
+          {coverUrl ? (
+            <div
+              className="el-hero-visual"
+              style={{
+                ...styles.heroImageCard,
+                backgroundImage: `url(${coverUrl})`,
+              }}
+            />
+          ) : null}
         </div>
       </section>
 
-      <section className="section" id="uploader">
+      {/* ── UPLOADER ─────────────────────────────────────────────────── */}
+      <section id="uploader" style={styles.section}>
         <div className="container">
           <PhotoComposer event={event} />
         </div>
       </section>
 
-      {sections.includes("gallery") ? (
+      {/* ── GALLERY ──────────────────────────────────────────────────── */}
+      {hasGallery ? (
         <RealtimeGallery event={event} initialPhotos={initialPhotos} />
-      ) : null}
-
-      {sections.includes("how-it-works") ||
-      sections.includes("privacy") ||
-      sections.includes("event-info") ? (
-        <section className="section">
-          <div className="container">
-            <div className="el-info-grid">
-              {sections.includes("how-it-works") ? (
-                <article className="card glass" style={styles.infoCard}>
-                  <span className="eyebrow">Sin fricción</span>
-                  <h3 className="serif" style={styles.infoTitle}>
-                    Nadie necesita instrucciones.
-                  </h3>
-                  <p style={styles.infoText}>
-                    Sin registro obligatorio. Puedes firmar tu foto con tu nombre o subir de forma
-                    anónima. La experiencia está diseñada para que todo fluya.
-                  </p>
-                </article>
-              ) : null}
-              {sections.includes("privacy") ? (
-                <article className="card glass" style={styles.infoCard}>
-                  <span className="eyebrow">Tu control, tus reglas.</span>
-                  <h3 className="serif" style={styles.infoTitle}>
-                    Moderación pensada para el organizador.
-                  </h3>
-                  <p style={styles.infoText}>{event.landing_config.privacyCopy}</p>
-                </article>
-              ) : null}
-              {sections.includes("event-info") ? (
-                <article className="card glass" style={styles.infoCard}>
-                  <span className="eyebrow">Ligero por diseño.</span>
-                  <h3 className="serif" style={styles.infoTitle}>
-                    Rápido de subir, fácil de ver.
-                  </h3>
-                  <p style={styles.infoText}>
-                    Este evento acepta fotos de hasta {event.max_upload_mb} MB. Un límite pensado
-                    para que la galería cargue rápido en cualquier conexión.
-                  </p>
-                </article>
-              ) : null}
-              {sections.includes("support") ? (
-                <article className="card glass" style={styles.infoCard}>
-                  <span className="eyebrow">Siempre hay solución.</span>
-                  <h3 className="serif" style={styles.infoTitle}>
-                    Algo no funcionó. Sin problema.
-                  </h3>
-                  <p style={styles.infoText}>
-                    Vuelve a escanear el QR o acércate al staff. La experiencia está pensada para
-                    resolverse sola, sin manuales ni tutoriales.
-                  </p>
-                </article>
-              ) : null}
-            </div>
-          </div>
-        </section>
       ) : null}
     </main>
   );
 }
 
 const styles: Record<string, React.CSSProperties> = {
+  heroSection: {
+    position: "relative",
+    minHeight: "100svh",
+    display: "flex",
+    alignItems: "flex-end",
+    paddingBottom: 0,
+  },
+  heroBg: {
+    position: "absolute",
+    inset: 0,
+    backgroundSize: "cover",
+    backgroundPosition: "center",
+    zIndex: 0,
+  },
+  heroContent: {
+    position: "relative",
+    zIndex: 1,
+    display: "grid",
+    gridTemplateColumns: "1fr",
+    gap: 32,
+    paddingTop: 80,
+    paddingBottom: 56,
+    alignItems: "end",
+  },
   heroCopy: {
     display: "grid",
-    gap: 16,
-    alignContent: "start",
+    gap: 20,
+    alignContent: "end",
+  },
+  eventTypeBadge: {
+    display: "inline-flex",
+    alignItems: "center",
+    padding: "6px 14px",
+    borderRadius: 999,
+    fontSize: 11,
+    fontWeight: 700,
+    letterSpacing: "0.14em",
+    textTransform: "uppercase",
+    background: "rgba(255,255,255,0.1)",
+    border: "1px solid rgba(255,255,255,0.16)",
+    color: "rgba(255,255,255,0.75)",
+    width: "fit-content",
   },
   heroTitle: {
-    fontSize: "clamp(40px, 9vw, 82px)",
-    lineHeight: 0.92,
+    fontSize: "clamp(42px, 10vw, 96px)",
+    lineHeight: 0.9,
     margin: 0,
     letterSpacing: "-0.04em",
+    color: "#ffffff",
+    fontWeight: 700,
   },
   heroSubtitle: {
-    fontSize: 17,
-    lineHeight: 1.75,
+    fontSize: "clamp(16px, 2.2vw, 20px)",
+    lineHeight: 1.65,
     margin: 0,
-    maxWidth: 640,
+    color: "rgba(255,255,255,0.65)",
+    maxWidth: 560,
+  },
+  metaRow: {
+    display: "flex",
+    gap: 10,
+    flexWrap: "wrap",
+  },
+  metaChip: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 6,
+    padding: "7px 14px",
+    borderRadius: 999,
+    fontSize: 13,
+    fontWeight: 500,
+    background: "rgba(255,255,255,0.08)",
+    border: "1px solid rgba(255,255,255,0.12)",
+    color: "rgba(255,255,255,0.8)",
   },
   ctaRow: {
     display: "flex",
     gap: 12,
     flexWrap: "wrap",
-    marginTop: 4,
+    paddingTop: 4,
   },
   ctaPrimary: {
     display: "inline-flex",
     alignItems: "center",
     justifyContent: "center",
-    minHeight: 52,
-    padding: "0 28px",
+    minHeight: 56,
+    padding: "0 32px",
     borderRadius: 999,
     background: "#ffffff",
-    color: "#0b0f19",
-    fontWeight: 600,
-    fontSize: 16,
+    color: "#060a18",
+    fontWeight: 700,
+    fontSize: 17,
     letterSpacing: "-0.01em",
     cursor: "pointer",
     textDecoration: "none",
     WebkitTapHighlightColor: "transparent",
   },
-  ctaSecondary: {
+  ctaGhost: {
     display: "inline-flex",
     alignItems: "center",
     justifyContent: "center",
-    minHeight: 52,
+    minHeight: 56,
     padding: "0 28px",
     borderRadius: 999,
     background: "transparent",
-    border: "1.5px solid rgba(255,255,255,0.35)",
-    color: "#ffffff",
+    border: "1.5px solid rgba(255,255,255,0.28)",
+    color: "rgba(255,255,255,0.85)",
     fontWeight: 500,
     fontSize: 16,
-    letterSpacing: "-0.01em",
     cursor: "pointer",
     textDecoration: "none",
     WebkitTapHighlightColor: "transparent",
   },
-  quickGrid: {
-    display: "grid",
-    gap: 12,
-    gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-    marginTop: 4,
-  },
-  quickCard: {
-    padding: 16,
-    borderRadius: 22,
-    display: "grid",
-    gap: 10,
-  },
-  quickBadge: {
-    width: "fit-content",
-    color: "#fff",
-    background: "rgba(255,255,255,0.08)",
-    borderColor: "rgba(255,255,255,0.12)",
-  },
-  quickTitle: {
-    margin: 0,
-    fontSize: 16,
-    lineHeight: 1.1,
-    color: "#ffffff",
-  },
-  quickText: {
-    margin: 0,
-    fontSize: 13,
-    lineHeight: 1.55,
-    color: "rgba(255,255,255,0.65)",
-  },
-  metaGrid: {
-    display: "grid",
-    gap: 12,
-    gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
-    marginTop: 4,
-  },
-  metaCard: {
-    padding: 14,
-    borderRadius: 20,
-    display: "grid",
-    gap: 6,
-  },
-  metaMuted: {
-    fontSize: 12,
-    color: "rgba(255,255,255,0.5)",
-    textTransform: "uppercase",
-    letterSpacing: "0.06em",
-  },
-  heroVisual: {
-    display: "grid",
-    gap: 14,
-  },
-  heroPoster: {
-    minHeight: 520,
+  heroImageCard: {
     borderRadius: 28,
     backgroundSize: "cover",
     backgroundPosition: "center",
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "space-between",
-    padding: 18,
-    overflow: "hidden",
-    filter: "grayscale(1) contrast(1.15) brightness(0.55)",
+    minHeight: 520,
+    filter: "grayscale(0.2) contrast(1.05)",
   },
-  posterBadge: {
-    alignSelf: "flex-start",
-    padding: "8px 12px",
-    borderRadius: 999,
-    background: "rgba(255,255,255,0.08)",
-    border: "1px solid rgba(255,255,255,0.12)",
-    color: "#fff",
-    fontSize: 13,
-  },
-  posterBottom: {
-    display: "grid",
-    gap: 4,
-    fontSize: 18,
-  },
-  highlightCard: {
-    padding: 20,
-    borderRadius: 24,
-    display: "grid",
-    gap: 12,
-  },
-  highlightText: {
-    margin: 0,
-    fontSize: 14,
-    lineHeight: 1.65,
-    color: "rgba(255,255,255,0.65)",
-  },
-  infoCard: {
-    padding: 22,
-    borderRadius: 26,
-    display: "grid",
-    gap: 12,
-  },
-  infoTitle: {
-    margin: 0,
-    fontSize: "clamp(22px, 3.5vw, 30px)",
-    lineHeight: 1.05,
-    color: "#ffffff",
-  },
-  infoText: {
-    margin: 0,
-    fontSize: 15,
-    lineHeight: 1.75,
-    color: "rgba(255,255,255,0.65)",
+  section: {
+    padding: "64px 0",
   },
 };
