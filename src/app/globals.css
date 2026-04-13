@@ -402,11 +402,43 @@ img {
   }
 
   .feature-card {
-    grid-template-rows: 240px auto;
+    grid-template-columns: 1fr !important;
+    grid-template-rows: 360px !important;
+    min-height: 360px !important;
+    border-radius: 22px !important;
+  }
+
+  .feature-img {
+    grid-row: 1 !important;
+    grid-column: 1 !important;
+    min-height: 360px !important;
+    order: 0 !important;
   }
 
   .feature-body {
-    padding: 28px 24px;
+    grid-row: 1 !important;
+    grid-column: 1 !important;
+    align-self: end !important;
+    justify-content: flex-end !important;
+    padding: 28px 22px !important;
+    background: linear-gradient(
+      0deg,
+      rgba(0, 0, 0, 0.88) 0%,
+      rgba(0, 0, 0, 0.5) 55%,
+      transparent 100%
+    ) !important;
+    order: 1 !important;
+  }
+
+  .feature-body h2 {
+    color: #ffffff !important;
+  }
+
+  .feature-body p,
+  .feature-body .muted {
+    color: rgba(255, 255, 255, 0.65) !important;
+    font-size: 15px !important;
+    max-width: none !important;
   }
 }
 
