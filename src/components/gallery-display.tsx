@@ -99,10 +99,11 @@ export function GalleryDisplay({
     ctrlTimerRef.current = setTimeout(() => setCtrlVisible(false), 3200);
   }, []);
 
+  // Start hide timer on mount (ctrlVisible is already true by default)
   useEffect(() => {
-    showControls();
+    ctrlTimerRef.current = setTimeout(() => setCtrlVisible(false), 3200);
     return () => { if (ctrlTimerRef.current) clearTimeout(ctrlTimerRef.current); };
-  }, [showControls]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Fullscreen ───────────────────────────────────────────────────────────
   const toggleFullscreen = useCallback(() => {
