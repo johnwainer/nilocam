@@ -1,9 +1,46 @@
 <svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
-<rect width="512" height="512" rx="120" fill="#F5F5F7"/>
-<rect x="86" y="86" width="340" height="340" rx="88" fill="#111111"/>
-<path d="M176 198L140 140L194 150L256 104L318 150L372 140L336 198" stroke="#F5F5F7" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"/>
-<circle cx="215" cy="256" r="16" fill="#F5F5F7"/>
-<circle cx="297" cy="256" r="16" fill="#F5F5F7"/>
-<path d="M244 292C252 302 260 302 268 292" stroke="#F5F5F7" stroke-width="16" stroke-linecap="round"/>
-<path d="M200 344C224 322 288 322 312 344" stroke="#F5F5F7" stroke-width="16" stroke-linecap="round"/>
+  <!-- background -->
+  <rect width="512" height="512" rx="112" fill="#0d0f15"/>
+
+  <!-- left ear outline -->
+  <path d="M 148 210 L 174 96 L 216 182" stroke="#EDE9E3" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <!-- left inner ear -->
+  <path d="M 165 197 L 181 136 L 203 177" stroke="#EDE9E3" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="#EDE9E3" fill-opacity="0.07"/>
+
+  <!-- right ear outline -->
+  <path d="M 296 182 L 338 96 L 364 210" stroke="#EDE9E3" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <!-- right inner ear -->
+  <path d="M 309 177 L 331 136 L 347 197" stroke="#EDE9E3" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="#EDE9E3" fill-opacity="0.07"/>
+
+  <!-- face oval -->
+  <ellipse cx="256" cy="282" rx="155" ry="144" stroke="#EDE9E3" stroke-width="10" fill="none"/>
+
+  <!-- left eye — almond with cat tilt (outer corner lifts slightly) -->
+  <path d="M 179 266 C 187 242 210 234 228 240 C 246 246 250 262 246 272 C 238 286 194 286 179 266 Z"
+        stroke="#EDE9E3" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <!-- left pupil (vertical slit) -->
+  <ellipse cx="212" cy="263" rx="6" ry="10" fill="#EDE9E3"/>
+
+  <!-- right eye — almond with cat tilt -->
+  <path d="M 266 272 C 262 262 266 246 284 240 C 302 234 325 242 333 266 C 318 286 274 286 266 272 Z"
+        stroke="#EDE9E3" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <!-- right pupil (vertical slit) -->
+  <ellipse cx="300" cy="263" rx="6" ry="10" fill="#EDE9E3"/>
+
+  <!-- nose — small inverted triangle -->
+  <path d="M 249 308 L 256 296 L 263 308 Z" fill="#EDE9E3"/>
+
+  <!-- mouth — two gentle curves from nose -->
+  <path d="M 249 308 Q 238 324 226 321" stroke="#EDE9E3" stroke-width="8" stroke-linecap="round" fill="none"/>
+  <path d="M 263 308 Q 274 324 286 321" stroke="#EDE9E3" stroke-width="8" stroke-linecap="round" fill="none"/>
+
+  <!-- whiskers left — 3 lines, graduated opacity -->
+  <line x1="82" y1="292" x2="218" y2="298" stroke="#EDE9E3" stroke-width="5" stroke-linecap="round" opacity="0.65"/>
+  <line x1="86" y1="312" x2="218" y2="315" stroke="#EDE9E3" stroke-width="4" stroke-linecap="round" opacity="0.48"/>
+  <line x1="94" y1="332" x2="218" y2="330" stroke="#EDE9E3" stroke-width="3.5" stroke-linecap="round" opacity="0.30"/>
+
+  <!-- whiskers right — 3 lines, graduated opacity -->
+  <line x1="294" y1="298" x2="430" y2="292" stroke="#EDE9E3" stroke-width="5" stroke-linecap="round" opacity="0.65"/>
+  <line x1="294" y1="315" x2="426" y2="312" stroke="#EDE9E3" stroke-width="4" stroke-linecap="round" opacity="0.48"/>
+  <line x1="294" y1="330" x2="418" y2="332" stroke="#EDE9E3" stroke-width="3.5" stroke-linecap="round" opacity="0.30"/>
 </svg>

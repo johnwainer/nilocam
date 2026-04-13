@@ -409,3 +409,134 @@ img {
     padding: 28px 24px;
   }
 }
+
+/* ─── Event Landing ─────────────────────────────────────────────────── */
+
+.el-hero {
+  display: grid;
+  gap: 24px;
+  padding: 24px;
+  border-radius: 32px;
+  overflow: hidden;
+  grid-template-columns: 1.02fr 0.98fr;
+}
+
+.el-info-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+@media (max-width: 820px) {
+  .el-hero {
+    grid-template-columns: 1fr;
+    padding: 20px;
+    border-radius: 24px;
+  }
+
+  .el-hero-visual {
+    display: none;
+  }
+
+  .el-info-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ─── Photo Composer modal ──────────────────────────────────────────── */
+
+.pc-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.82);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  z-index: 50;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 18px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.pc-modal {
+  width: min(1120px, 100%);
+  border-radius: 30px;
+  padding: 22px;
+  margin: auto;
+  flex-shrink: 0;
+}
+
+.pc-editor-grid {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  margin-top: 20px;
+}
+
+@media (max-width: 640px) {
+  .pc-backdrop {
+    padding: 10px;
+    padding-top: max(10px, env(safe-area-inset-top, 10px));
+    align-items: flex-start;
+  }
+
+  .pc-modal {
+    border-radius: 20px;
+    padding: 16px;
+    margin: 0;
+    width: 100%;
+  }
+
+  .pc-editor-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ─── Realtime Gallery ──────────────────────────────────────────────── */
+
+.rg-layout {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: 1.15fr 0.85fr;
+}
+
+.rg-featured {
+  position: relative;
+  min-height: 720px;
+  overflow: hidden;
+}
+
+.rg-featured-img-wrap {
+  position: relative;
+  width: 100%;
+  min-height: 720px;
+}
+
+.rg-empty {
+  min-height: 720px;
+  padding: 28px;
+  display: grid;
+  align-content: center;
+  justify-items: start;
+  gap: 12px;
+}
+
+@media (max-width: 820px) {
+  .rg-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .rg-featured {
+    min-height: 380px;
+  }
+
+  .rg-featured-img-wrap {
+    min-height: 380px;
+  }
+
+  .rg-empty {
+    min-height: 380px;
+  }
+}

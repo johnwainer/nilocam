@@ -55,43 +55,45 @@ export function RealtimeGallery({
           <div>
             <span className="eyebrow">Galería en vivo</span>
             <h2 className="serif" style={styles.title}>
-              Las fotos aparecen destacadas mientras avanza el evento
+              Las fotos aparecen mientras avanza el evento
             </h2>
-            <p className="muted" style={styles.subtitle}>
-              La vista se actualiza sola. Cuando el evento usa moderación manual, las fotos pendientes no se
-              muestran hasta que alguien las aprueba.
+            <p style={styles.subtitle}>
+              La vista se actualiza sola. Con moderación manual, las fotos quedan pendientes hasta
+              que alguien las aprueba.
             </p>
           </div>
-          <div className="pill">
+          <div className="pill" style={styles.countPill}>
             <span className="pulse-dot" />
             {photos.length} fotos visibles
           </div>
         </div>
 
-        <div style={styles.layout}>
-          <article className="card glass" style={styles.featured}>
+        <div className="rg-layout">
+          <article className="card glass rg-featured">
             {featured ? (
               <>
-                <div style={styles.featuredImgWrap}>
+                <div className="rg-featured-img-wrap">
                   <Image
                     src={publicStorageUrl(featured.storage_path)}
                     alt="Foto destacada"
                     fill
-                    sizes="(max-width: 1024px) 100vw, 60vw"
+                    sizes="(max-width: 820px) 100vw, 60vw"
                     style={{ objectFit: "cover" }}
                   />
                 </div>
                 <div style={styles.featuredOverlay}>
-                  <div className="pill" style={{ color: "#fff" }}>
+                  <div className="pill" style={{ color: "#fff", background: "rgba(255,255,255,0.08)", borderColor: "rgba(255,255,255,0.15)" }}>
                     {featured.is_anonymous ? "Anónimo" : featured.uploaded_by_name || "Invitado"}
                   </div>
-                  <strong>{featured.template_key ? `Plantilla ${featured.template_key}` : "Nueva foto"}</strong>
+                  <strong style={{ color: "#fff" }}>
+                    {featured.template_key ? `Plantilla ${featured.template_key}` : "Nueva foto"}
+                  </strong>
                 </div>
               </>
             ) : (
-              <div style={styles.empty}>
-                <strong>No hay fotos todavía</strong>
-                <p className="muted" style={{ margin: 0, lineHeight: 1.7 }}>
+              <div className="rg-empty">
+                <strong style={{ color: "#fff" }}>No hay fotos todavía</strong>
+                <p style={{ margin: 0, lineHeight: 1.7, color: "rgba(255,255,255,0.55)" }}>
                   En cuanto alguien suba la primera foto, aparecerá aquí en grande.
                 </p>
               </div>
@@ -106,13 +108,20 @@ export function RealtimeGallery({
                     src={publicStorageUrl(photo.storage_path)}
                     alt="Foto del evento"
                     fill
-                    sizes="(max-width: 1024px) 50vw, 28vw"
+                    sizes="(max-width: 820px) 50vw, 28vw"
                     style={{ objectFit: "cover" }}
                   />
                 </div>
                 <div style={styles.tileMeta}>
-                  <strong>{photo.is_anonymous ? "Anónimo" : photo.uploaded_by_name || "Invitado"}</strong>
-                  <span className="muted">{new Date(photo.created_at).toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" })}</span>
+                  <strong style={{ color: "#fff", fontSize: 14 }}>
+                    {photo.is_anonymous ? "Anónimo" : photo.uploaded_by_name || "Invitado"}
+                  </strong>
+                  <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 12 }}>
+                    {new Date(photo.created_at).toLocaleTimeString("es-CO", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </span>
                 </div>
               </article>
             ))}
@@ -133,36 +142,24 @@ const styles: Record<string, React.CSSProperties> = {
     marginBottom: 22,
   },
   title: {
-    fontSize: "clamp(32px, 4vw, 56px)",
+    fontSize: "clamp(28px, 5vw, 56px)",
     lineHeight: 0.95,
     margin: "10px 0 0",
     maxWidth: 760,
+    color: "#ffffff",
   },
   subtitle: {
     margin: "12px 0 0",
     lineHeight: 1.7,
     maxWidth: 720,
+    color: "rgba(255,255,255,0.6)",
+    fontSize: 15,
   },
-  layout: {
-    display: "grid",
-    gap: 18,
-    gridTemplateColumns: "1.15fr 0.85fr",
-  },
-  featured: {
-    position: "relative",
-    minHeight: 720,
-    overflow: "hidden",
-  },
-  featuredImg: {
-    width: "100%",
-    height: "100%",
-    objectFit: "cover",
-    minHeight: 720,
-  },
-  featuredImgWrap: {
-    position: "relative",
-    width: "100%",
-    minHeight: 720,
+  countPill: {
+    color: "rgba(255,255,255,0.75)",
+    background: "rgba(255,255,255,0.06)",
+    borderColor: "rgba(255,255,255,0.12)",
+    flexShrink: 0,
   },
   featuredOverlay: {
     position: "absolute",
@@ -170,7 +167,7 @@ const styles: Record<string, React.CSSProperties> = {
     padding: 18,
     borderRadius: 22,
     display: "grid",
-    gap: 12,
+    gap: 10,
     background: "linear-gradient(180deg, rgba(8,12,23,0.08), rgba(8,12,23,0.84))",
   },
   grid: {
@@ -183,27 +180,14 @@ const styles: Record<string, React.CSSProperties> = {
     overflow: "hidden",
     borderRadius: 24,
   },
-  tileImg: {
-    aspectRatio: "1 / 1.16",
-    width: "100%",
-    objectFit: "cover",
-  },
   tileImgWrap: {
     position: "relative",
     width: "100%",
-    minHeight: 220,
+    minHeight: 180,
   },
   tileMeta: {
     display: "grid",
-    gap: 6,
-    padding: 14,
-  },
-  empty: {
-    minHeight: 720,
-    padding: 28,
-    display: "grid",
-    alignContent: "center",
-    justifyItems: "start",
-    gap: 12,
+    gap: 4,
+    padding: 12,
   },
 };

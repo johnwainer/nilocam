@@ -44,7 +44,8 @@ export function EventLanding({
     >
       <section className="section" style={{ paddingTop: 28 }}>
         <div className="container">
-          <div className="card glass" style={styles.hero}>
+          <div className="card glass el-hero">
+            {/* ── Copy column ── */}
             <div style={styles.heroCopy}>
               <span className="pill" style={{ color: theme.text, background: "rgba(255,255,255,0.05)" }}>
                 {event.event_type_key.replaceAll("-", " ")}
@@ -52,20 +53,24 @@ export function EventLanding({
               <p className="eyebrow" style={{ color: theme.accent }}>
                 {event.landing_config.heroEyebrow}
               </p>
-              <h1 className="serif" style={{ ...styles.heroTitle, color: theme.text }}>
+              <h1 className="serif" style={{ ...styles.heroTitle, color: "#ffffff" }}>
                 {event.landing_config.heroTitle}
               </h1>
-              <p style={{ ...styles.heroSubtitle, color: theme.muted }}>{event.landing_config.heroSubtitle}</p>
+              <p style={{ ...styles.heroSubtitle, color: "rgba(255,255,255,0.7)" }}>
+                {event.landing_config.heroSubtitle}
+              </p>
+
               {sections.includes("ctas") ? (
                 <div style={styles.ctaRow}>
-                  <a className="btn btn-primary" href="#uploader">
+                  <a style={styles.ctaPrimary} href="#uploader">
                     {event.landing_config.primaryCta}
                   </a>
-                  <a className="btn btn-secondary" href="#gallery">
+                  <a style={styles.ctaSecondary} href="#gallery">
                     {event.landing_config.tertiaryCta}
                   </a>
                 </div>
               ) : null}
+
               {sections.includes("how-it-works") ? (
                 <div style={styles.quickGrid}>
                   {quickSteps.map((item) => (
@@ -74,29 +79,32 @@ export function EventLanding({
                         {item.step}
                       </span>
                       <strong style={styles.quickTitle}>{item.title}</strong>
-                      <p className="muted" style={styles.quickText}>
-                        {item.text}
-                      </p>
+                      <p style={styles.quickText}>{item.text}</p>
                     </article>
                   ))}
                 </div>
               ) : null}
+
               <div style={styles.metaGrid}>
                 <div className="card glass" style={styles.metaCard}>
-                  <span className="muted">Evento</span>
-                  <strong>{event.title}</strong>
+                  <span style={styles.metaMuted}>Evento</span>
+                  <strong style={{ color: "#fff" }}>{event.title}</strong>
                 </div>
                 <div className="card glass" style={styles.metaCard}>
-                  <span className="muted">Fecha</span>
-                  <strong>{formatDate(event.event_date)}</strong>
+                  <span style={styles.metaMuted}>Fecha</span>
+                  <strong style={{ color: "#fff" }}>{formatDate(event.event_date)}</strong>
                 </div>
                 <div className="card glass" style={styles.metaCard}>
-                  <span className="muted">Moderación</span>
-                  <strong>{event.moderation_mode === "auto" ? "Instantánea" : "Por aprobación"}</strong>
+                  <span style={styles.metaMuted}>Moderación</span>
+                  <strong style={{ color: "#fff" }}>
+                    {event.moderation_mode === "auto" ? "Instantánea" : "Por aprobación"}
+                  </strong>
                 </div>
               </div>
             </div>
-            <div style={styles.heroVisual}>
+
+            {/* ── Visual column (hidden on mobile via CSS) ── */}
+            <div className="el-hero-visual" style={styles.heroVisual}>
               <div
                 className="card"
                 style={{
@@ -106,29 +114,16 @@ export function EventLanding({
               >
                 <div style={styles.posterBadge}>Nilo Cam</div>
                 <div style={styles.posterBottom}>
-                  <strong>{event.venue_name || "Landing personalizable"}</strong>
-                  <span>{event.venue_city || "Fotos en vivo desde el QR"}</span>
+                  <strong style={{ color: "#fff" }}>{event.venue_name || "Landing personalizable"}</strong>
+                  <span style={{ color: "rgba(255,255,255,0.7)" }}>
+                    {event.venue_city || "Fotos en vivo desde el QR"}
+                  </span>
                 </div>
               </div>
               <div className="card glass" style={styles.highlightCard}>
                 <div className="pulse-dot" />
-                <strong>{event.landing_config.highlightCopy}</strong>
-                <p className="muted" style={{ margin: 0, lineHeight: 1.6 }}>
-                  {event.landing_config.introCopy}
-                </p>
-              </div>
-              <div style={styles.bigStrip}>
-                <div style={styles.bigStripImage} />
-                <div style={styles.bigStripText}>
-                  <span className="eyebrow">Así funciona</span>
-                  <h2 className="serif" style={styles.bigStripTitle}>
-                    Un gesto. Mil recuerdos.
-                  </h2>
-                  <p className="muted" style={styles.bigStripCopy}>
-                    Escanear, capturar y aparecer en vivo: tres pasos que cualquier invitado entiende de forma
-                    instintiva, sin que nadie tenga que explicar nada.
-                  </p>
-                </div>
+                <strong style={{ color: "#fff" }}>{event.landing_config.highlightCopy}</strong>
+                <p style={{ ...styles.highlightText }}>{event.landing_config.introCopy}</p>
               </div>
             </div>
           </div>
@@ -141,21 +136,25 @@ export function EventLanding({
         </div>
       </section>
 
-      {sections.includes("gallery") ? <RealtimeGallery event={event} initialPhotos={initialPhotos} /> : null}
+      {sections.includes("gallery") ? (
+        <RealtimeGallery event={event} initialPhotos={initialPhotos} />
+      ) : null}
 
-      {sections.includes("how-it-works") || sections.includes("privacy") || sections.includes("event-info") ? (
+      {sections.includes("how-it-works") ||
+      sections.includes("privacy") ||
+      sections.includes("event-info") ? (
         <section className="section">
           <div className="container">
-            <div style={styles.infoGrid}>
+            <div className="el-info-grid">
               {sections.includes("how-it-works") ? (
                 <article className="card glass" style={styles.infoCard}>
                   <span className="eyebrow">Sin fricción</span>
                   <h3 className="serif" style={styles.infoTitle}>
                     Nadie necesita instrucciones.
                   </h3>
-                  <p className="muted" style={styles.infoText}>
-                    Sin registro obligatorio. Puedes firmar tu foto con tu nombre o subir de forma anónima.
-                    La experiencia está diseñada para que todo fluya sin que nadie tenga que explicar nada.
+                  <p style={styles.infoText}>
+                    Sin registro obligatorio. Puedes firmar tu foto con tu nombre o subir de forma
+                    anónima. La experiencia está diseñada para que todo fluya.
                   </p>
                 </article>
               ) : null}
@@ -165,9 +164,7 @@ export function EventLanding({
                   <h3 className="serif" style={styles.infoTitle}>
                     Moderación pensada para el organizador.
                   </h3>
-                  <p className="muted" style={styles.infoText}>
-                    {event.landing_config.privacyCopy}
-                  </p>
+                  <p style={styles.infoText}>{event.landing_config.privacyCopy}</p>
                 </article>
               ) : null}
               {sections.includes("event-info") ? (
@@ -176,9 +173,9 @@ export function EventLanding({
                   <h3 className="serif" style={styles.infoTitle}>
                     Rápido de subir, fácil de ver.
                   </h3>
-                  <p className="muted" style={styles.infoText}>
-                    Este evento acepta fotos de hasta {event.max_upload_mb} MB. Un límite pensado para que
-                    la galería cargue rápido en cualquier conexión.
+                  <p style={styles.infoText}>
+                    Este evento acepta fotos de hasta {event.max_upload_mb} MB. Un límite pensado
+                    para que la galería cargue rápido en cualquier conexión.
                   </p>
                 </article>
               ) : null}
@@ -188,9 +185,9 @@ export function EventLanding({
                   <h3 className="serif" style={styles.infoTitle}>
                     Algo no funcionó. Sin problema.
                   </h3>
-                  <p className="muted" style={styles.infoText}>
-                    Vuelve a escanear el QR o acércate al staff. La experiencia está pensada para resolverse
-                    sola, sin manuales ni tutoriales.
+                  <p style={styles.infoText}>
+                    Vuelve a escanear el QR o acércate al staff. La experiencia está pensada para
+                    resolverse sola, sin manuales ni tutoriales.
                   </p>
                 </article>
               ) : null}
@@ -203,29 +200,20 @@ export function EventLanding({
 }
 
 const styles: Record<string, React.CSSProperties> = {
-  hero: {
-    padding: 24,
-    borderRadius: 32,
-    display: "grid",
-    gap: 24,
-    gridTemplateColumns: "1.02fr 0.98fr",
-    overflow: "hidden",
-  },
   heroCopy: {
     display: "grid",
     gap: 16,
     alignContent: "start",
-    paddingRight: 6,
   },
   heroTitle: {
-    fontSize: "clamp(44px, 6vw, 82px)",
+    fontSize: "clamp(40px, 9vw, 82px)",
     lineHeight: 0.92,
     margin: 0,
     letterSpacing: "-0.04em",
   },
   heroSubtitle: {
-    fontSize: 18,
-    lineHeight: 1.8,
+    fontSize: 17,
+    lineHeight: 1.75,
     margin: 0,
     maxWidth: 640,
   },
@@ -233,19 +221,52 @@ const styles: Record<string, React.CSSProperties> = {
     display: "flex",
     gap: 12,
     flexWrap: "wrap",
+    marginTop: 4,
+  },
+  ctaPrimary: {
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    minHeight: 52,
+    padding: "0 28px",
+    borderRadius: 999,
+    background: "#ffffff",
+    color: "#0b0f19",
+    fontWeight: 600,
+    fontSize: 16,
+    letterSpacing: "-0.01em",
+    cursor: "pointer",
+    textDecoration: "none",
+    WebkitTapHighlightColor: "transparent",
+  },
+  ctaSecondary: {
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    minHeight: 52,
+    padding: "0 28px",
+    borderRadius: 999,
+    background: "transparent",
+    border: "1.5px solid rgba(255,255,255,0.35)",
+    color: "#ffffff",
+    fontWeight: 500,
+    fontSize: 16,
+    letterSpacing: "-0.01em",
+    cursor: "pointer",
+    textDecoration: "none",
+    WebkitTapHighlightColor: "transparent",
   },
   quickGrid: {
     display: "grid",
     gap: 12,
-    gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))",
-    marginTop: 8,
+    gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+    marginTop: 4,
   },
   quickCard: {
     padding: 16,
     borderRadius: 22,
     display: "grid",
     gap: 10,
-    minHeight: 140,
   },
   quickBadge: {
     width: "fit-content",
@@ -255,34 +276,40 @@ const styles: Record<string, React.CSSProperties> = {
   },
   quickTitle: {
     margin: 0,
-    fontSize: 18,
-    lineHeight: 1.05,
-    color: "#fff",
+    fontSize: 16,
+    lineHeight: 1.1,
+    color: "#ffffff",
   },
   quickText: {
     margin: 0,
-    fontSize: 14,
+    fontSize: 13,
     lineHeight: 1.55,
-    color: "rgba(255,255,255,0.8)",
+    color: "rgba(255,255,255,0.65)",
   },
   metaGrid: {
     display: "grid",
     gap: 12,
-    gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
-    marginTop: 8,
+    gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
+    marginTop: 4,
   },
   metaCard: {
-    padding: 16,
-    borderRadius: 22,
+    padding: 14,
+    borderRadius: 20,
     display: "grid",
-    gap: 8,
+    gap: 6,
+  },
+  metaMuted: {
+    fontSize: 12,
+    color: "rgba(255,255,255,0.5)",
+    textTransform: "uppercase",
+    letterSpacing: "0.06em",
   },
   heroVisual: {
     display: "grid",
     gap: 14,
   },
   heroPoster: {
-    minHeight: 560,
+    minHeight: 520,
     borderRadius: 28,
     backgroundSize: "cover",
     backgroundPosition: "center",
@@ -299,6 +326,8 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: 999,
     background: "rgba(255,255,255,0.08)",
     border: "1px solid rgba(255,255,255,0.12)",
+    color: "#fff",
+    fontSize: 13,
   },
   posterBottom: {
     display: "grid",
@@ -311,43 +340,11 @@ const styles: Record<string, React.CSSProperties> = {
     display: "grid",
     gap: 12,
   },
-  bigStrip: {
-    minHeight: 240,
-    borderRadius: 28,
-    overflow: "hidden",
-    background: "#fff",
-    border: "1px solid rgba(0,0,0,0.08)",
-    display: "grid",
-    gridTemplateColumns: "0.8fr 1.2fr",
-  },
-  bigStripImage: {
-    background:
-      "linear-gradient(180deg, rgba(0,0,0,0.2), rgba(0,0,0,0.85)), url(https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?auto=format&fit=crop&w=1000&q=80)",
-    backgroundSize: "cover",
-    backgroundPosition: "center",
-    filter: "grayscale(1) brightness(0.6) contrast(1.15)",
-  },
-  bigStripText: {
-    padding: 22,
-    display: "grid",
-    alignContent: "end",
-    gap: 10,
-  },
-  bigStripTitle: {
+  highlightText: {
     margin: 0,
-    fontSize: "clamp(26px, 2.8vw, 40px)",
-    lineHeight: 0.98,
-    letterSpacing: "-0.04em",
-  },
-  bigStripCopy: {
-    margin: 0,
+    fontSize: 14,
     lineHeight: 1.65,
-    maxWidth: 420,
-  },
-  infoGrid: {
-    display: "grid",
-    gap: 16,
-    gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+    color: "rgba(255,255,255,0.65)",
   },
   infoCard: {
     padding: 22,
@@ -357,12 +354,14 @@ const styles: Record<string, React.CSSProperties> = {
   },
   infoTitle: {
     margin: 0,
-    fontSize: 30,
-    lineHeight: 1,
+    fontSize: "clamp(22px, 3.5vw, 30px)",
+    lineHeight: 1.05,
+    color: "#ffffff",
   },
   infoText: {
     margin: 0,
-    fontSize: 16,
+    fontSize: 15,
     lineHeight: 1.75,
+    color: "rgba(255,255,255,0.65)",
   },
 };
