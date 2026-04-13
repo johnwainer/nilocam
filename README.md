@@ -23,7 +23,17 @@ npm run dev
 
 ## Supabase
 
-El archivo `supabase/schema.sql` trae la base para eventos y fotos. Falta conectar las variables de entorno y, si quieres pasar esto a producción con persistencia real, integrar:
+Ejecuta estos pasos en Supabase:
+
+1. Pega y corre `supabase/schema.sql`.
+2. Pega y corre `supabase/seed.sql` si quieres el evento demo.
+3. Crea tu usuario en Auth y luego corre `supabase/super-admin.sql` para marcarlo como `super_admin`.
+4. En Auth > URL Configuration agrega:
+   - Site URL: `https://nilocam.vercel.app`
+   - Redirect URL: `https://nilocam.vercel.app/auth/callback`
+5. Verifica que exista el bucket `event-photos` y que sea público para lectura.
+
+El archivo `supabase/schema.sql` ya crea tablas, triggers y policies para la versión actual de la app. Variables de entorno requeridas:
 
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`

@@ -212,7 +212,7 @@ const styles: Record<string, React.CSSProperties> = {
     justifyContent: "space-between",
     padding: 18,
     overflow: "hidden",
-    filter: "grayscale(1) contrast(1.05)",
+    filter: "grayscale(1) contrast(1.15) brightness(0.55)",
   },
   posterBadge: {
     alignSelf: "flex-start",
@@ -243,10 +243,10 @@ const styles: Record<string, React.CSSProperties> = {
   },
   bigStripImage: {
     background:
-      "linear-gradient(180deg, rgba(255,255,255,0.1), rgba(0,0,0,0.5)), url(https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?auto=format&fit=crop&w=1000&q=80)",
+      "linear-gradient(180deg, rgba(0,0,0,0.2), rgba(0,0,0,0.85)), url(https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?auto=format&fit=crop&w=1000&q=80)",
     backgroundSize: "cover",
     backgroundPosition: "center",
-    filter: "grayscale(1)",
+    filter: "grayscale(1) brightness(0.6) contrast(1.15)",
   },
   bigStripText: {
     padding: 22,

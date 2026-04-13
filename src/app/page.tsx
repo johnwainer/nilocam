@@ -127,6 +127,8 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: 26,
     backgroundSize: "cover",
     backgroundPosition: "center",
+    filter: "grayscale(1) brightness(0.55) contrast(1.2)",
+    boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.08)",
   },
   featureCopy: {
     display: "grid",

@@ -159,15 +159,15 @@ const styles: Record<string, React.CSSProperties> = {
   },
   slide1: {
     background:
-      "linear-gradient(180deg, rgba(255,255,255,0.16), rgba(0,0,0,0.58)), url(https://images.unsplash.com/photo-1519225421980-715cb0215aed?auto=format&fit=crop&w=1200&q=80)",
+      "linear-gradient(180deg, rgba(0,0,0,0.28), rgba(0,0,0,0.88)), url(https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=1200&q=80)",
   },
   slide2: {
     background:
-      "linear-gradient(180deg, rgba(255,255,255,0.16), rgba(0,0,0,0.58)), url(https://images.unsplash.com/photo-1523438097201-512ae7d59f0d?auto=format&fit=crop&w=1200&q=80)",
+      "linear-gradient(180deg, rgba(0,0,0,0.24), rgba(0,0,0,0.9)), url(https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&w=1200&q=80)",
   },
   slide3: {
     background:
-      "linear-gradient(180deg, rgba(255,255,255,0.16), rgba(0,0,0,0.58)), url(https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=1200&q=80)",
+      "linear-gradient(180deg, rgba(0,0,0,0.24), rgba(0,0,0,0.9)), url(https://images.unsplash.com/photo-1504196606672-aef5c9cefc92?auto=format&fit=crop&w=1200&q=80)",
   },
   slideKicker: {
     display: "inline-flex",
@@ -217,13 +217,14 @@ const styles: Record<string, React.CSSProperties> = {
     aspectRatio: "3 / 4",
     borderRadius: 22,
     background:
-      "linear-gradient(180deg, rgba(255,255,255,0.15), rgba(0,0,0,0.52)), url(https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=800&q=80)",
+      "linear-gradient(180deg, rgba(0,0,0,0.2), rgba(0,0,0,0.88)), url(https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=800&q=80)",
     backgroundSize: "cover",
     backgroundPosition: "center",
     display: "flex",
     alignItems: "end",
     padding: 14,
     filter: "grayscale(1)",
+    boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.06)",
   },
   tileLabel: {
     color: "#fff",

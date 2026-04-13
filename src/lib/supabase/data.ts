@@ -28,10 +28,13 @@ export async function fetchEventBySlug(slug: string) {
 
 export async function fetchPhotosBySlug(slug: string) {
   const supabase = await createSupabaseServerClient();
+  const { data: event } = await supabase.from("events").select("id").eq("slug", slug).maybeSingle();
+  if (!event?.id) return [];
+
   const { data } = await supabase
     .from("photos")
     .select("*")
-    .eq("event_id", slug)
+    .eq("event_id", event.id)
     .order("created_at", { ascending: false });
   return (data ?? []) as PhotoRecord[];
 }
