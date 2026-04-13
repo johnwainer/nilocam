@@ -9,7 +9,7 @@ export function TopNav() {
           <span style={styles.cat}>🐈‍⬛</span>
           <span>
             <strong style={{ display: "block" }}>{APP_NAME}</strong>
-            <small style={{ color: "var(--muted-2)" }}>QR, eventos y fotos en vivo</small>
+            <small style={{ color: "var(--muted-2)" }}>Convierte un QR en un álbum vivo</small>
           </span>
         </Link>
         <div style={styles.links}>

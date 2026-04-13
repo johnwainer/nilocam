@@ -14,6 +14,23 @@ export function EventLanding({
 }) {
   const theme = event.landing_config.theme;
   const sections = event.landing_config.sections;
+  const quickSteps = [
+    {
+      step: "1",
+      title: "Escanea el QR",
+      text: "Abres la landing del evento desde tu celular, sin instalar nada.",
+    },
+    {
+      step: "2",
+      title: "Toma o sube la foto",
+      text: "Puedes usar la cámara o elegir una imagen de tu galería.",
+    },
+    {
+      step: "3",
+      title: "Aparece en vivo",
+      text: "La foto se publica o pasa a moderación según la configuración.",
+    },
+  ];
 
   return (
     <main
@@ -47,6 +64,21 @@ export function EventLanding({
                   <a className="btn btn-secondary" href="#gallery">
                     {event.landing_config.tertiaryCta}
                   </a>
+                </div>
+              ) : null}
+              {sections.includes("how-it-works") ? (
+                <div style={styles.quickGrid}>
+                  {quickSteps.map((item) => (
+                    <article key={item.step} className="card glass" style={styles.quickCard}>
+                      <span className="pill" style={styles.quickBadge}>
+                        {item.step}
+                      </span>
+                      <strong style={styles.quickTitle}>{item.title}</strong>
+                      <p className="muted" style={styles.quickText}>
+                        {item.text}
+                      </p>
+                    </article>
+                  ))}
                 </div>
               ) : null}
               <div style={styles.metaGrid}>
@@ -90,8 +122,12 @@ export function EventLanding({
                 <div style={styles.bigStripText}>
                   <span className="eyebrow">Slide destacado</span>
                   <h2 className="serif" style={styles.bigStripTitle}>
-                    Mucho más visual, mucho más limpio
+                    Una sola acción, muchas fotos vivas
                   </h2>
+                  <p className="muted" style={styles.bigStripCopy}>
+                    Cada invitado entiende qué hacer en segundos: escanear, capturar y ver el resultado dentro
+                    del evento.
+                  </p>
                 </div>
               </div>
             </div>
@@ -146,6 +182,18 @@ export function EventLanding({
                   </p>
                 </article>
               ) : null}
+              {sections.includes("support") ? (
+                <article className="card glass" style={styles.infoCard}>
+                  <span className="eyebrow">Soporte</span>
+                  <h3 className="serif" style={styles.infoTitle}>
+                    Si algo no queda claro
+                  </h3>
+                  <p className="muted" style={styles.infoText}>
+                    Vuelve a escanear el QR o pide ayuda al staff. La experiencia está pensada para resolverse
+                    sin explicación larga.
+                  </p>
+                </article>
+              ) : null}
             </div>
           </div>
         </section>
@@ -186,10 +234,41 @@ const styles: Record<string, React.CSSProperties> = {
     gap: 12,
     flexWrap: "wrap",
   },
+  quickGrid: {
+    display: "grid",
+    gap: 12,
+    gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))",
+    marginTop: 8,
+  },
+  quickCard: {
+    padding: 16,
+    borderRadius: 22,
+    display: "grid",
+    gap: 10,
+    minHeight: 140,
+  },
+  quickBadge: {
+    width: "fit-content",
+    color: "#fff",
+    background: "rgba(255,255,255,0.08)",
+    borderColor: "rgba(255,255,255,0.12)",
+  },
+  quickTitle: {
+    margin: 0,
+    fontSize: 18,
+    lineHeight: 1.05,
+    color: "#fff",
+  },
+  quickText: {
+    margin: 0,
+    fontSize: 14,
+    lineHeight: 1.55,
+    color: "rgba(255,255,255,0.8)",
+  },
   metaGrid: {
     display: "grid",
     gap: 12,
-    gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+    gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
     marginTop: 8,
   },
   metaCard: {
@@ -260,10 +339,15 @@ const styles: Record<string, React.CSSProperties> = {
     lineHeight: 0.98,
     letterSpacing: "-0.04em",
   },
+  bigStripCopy: {
+    margin: 0,
+    lineHeight: 1.65,
+    maxWidth: 420,
+  },
   infoGrid: {
     display: "grid",
     gap: 16,
-    gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+    gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
   },
   infoCard: {
     padding: 22,

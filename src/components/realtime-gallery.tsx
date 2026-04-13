@@ -57,6 +57,10 @@ export function RealtimeGallery({
             <h2 className="serif" style={styles.title}>
               Las fotos aparecen destacadas mientras avanza el evento
             </h2>
+            <p className="muted" style={styles.subtitle}>
+              La vista se actualiza sola. Cuando el evento usa moderación manual, las fotos pendientes no se
+              muestran hasta que alguien las aprueba.
+            </p>
           </div>
           <div className="pill">
             <span className="pulse-dot" />
@@ -133,6 +137,11 @@ const styles: Record<string, React.CSSProperties> = {
     lineHeight: 0.95,
     margin: "10px 0 0",
     maxWidth: 760,
+  },
+  subtitle: {
+    margin: "12px 0 0",
+    lineHeight: 1.7,
+    maxWidth: 720,
   },
   layout: {
     display: "grid",

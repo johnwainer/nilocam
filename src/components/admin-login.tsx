@@ -35,8 +35,13 @@ export function AdminLogin() {
           Entra con tu correo para crear y editar eventos
         </h1>
         <p className="muted" style={styles.text}>
-          Usa el correo del admin o del dueño del evento. El enlace de acceso se envía por email desde Supabase.
+          Usa el correo del admin o del dueño del evento. Te enviamos un enlace seguro de un solo uso y
+          vuelves directo al panel.
         </p>
+        <div style={styles.noteBox}>
+          <strong>¿Qué puedes hacer aquí?</strong>
+          <span>Crear eventos, cambiar la landing, definir moderación y copiar la URL para el QR.</span>
+        </div>
         <div style={styles.form}>
           <input
             className="input"
@@ -73,6 +78,15 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 18,
     lineHeight: 1.7,
     margin: 0,
+  },
+  noteBox: {
+    display: "grid",
+    gap: 6,
+    padding: 14,
+    borderRadius: 18,
+    background: "rgba(0,0,0,0.03)",
+    border: "1px solid rgba(0,0,0,0.06)",
+    color: "var(--text)",
   },
   form: {
     display: "grid",

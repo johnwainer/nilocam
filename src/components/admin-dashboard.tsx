@@ -10,7 +10,7 @@ import {
   MODERATION_COPY,
   eventTypePresetFromKey,
 } from "@/lib/constants";
-import { siteUrl, toSlug } from "@/lib/utils";
+import { formatBytes, siteUrl, toSlug } from "@/lib/utils";
 import type { EventRecord, EventTypeKey } from "@/types";
 
 const supabase = createSupabaseBrowserClient();
@@ -34,6 +34,38 @@ const emptyEvent: EventRecord = {
   updated_at: new Date().toISOString(),
 };
 
+const sectionLabels: Record<string, string> = {
+  hero: "Hero",
+  ctas: "CTAs",
+  "how-it-works": "Cómo funciona",
+  gallery: "Galería",
+  privacy: "Privacidad",
+  "event-info": "Datos del evento",
+  support: "Soporte",
+};
+
+function createDraftEvent(ownerEmail: string): EventRecord {
+  const preset = eventTypePresetFromKey("matrimonio");
+  return {
+    ...emptyEvent,
+    id: crypto.randomUUID(),
+    event_type_key: preset.key,
+    owner_email: ownerEmail,
+    landing_config: {
+      ...DEFAULT_LANDING_CONFIG,
+      heroEyebrow: preset.name,
+      heroTitle: "",
+      heroSubtitle: "",
+      theme: {
+        ...DEFAULT_LANDING_CONFIG.theme,
+        accent: preset.accent,
+        accentSoft: preset.accentSoft,
+        heroImage: preset.heroImage,
+      },
+    },
+  };
+}
+
 export function AdminDashboard({
   userEmail,
   initialEvents,
@@ -41,10 +73,12 @@ export function AdminDashboard({
   userEmail: string;
   initialEvents: EventRecord[];
 }) {
-  const [events, setEvents] = useState(initialEvents);
-  const [selectedId, setSelectedId] = useState(initialEvents[0]?.id ?? "");
+  const initialDraft = initialEvents[0] ?? createDraftEvent(userEmail);
+  const [events, setEvents] = useState(initialEvents.length > 0 ? initialEvents : [initialDraft]);
+  const [selectedId, setSelectedId] = useState(initialDraft.id);
   const [saving, setSaving] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  const [copyNotice, setCopyNotice] = useState<string | null>(null);
 
   const selected = useMemo(
     () => events.find((event) => event.id === selectedId) ?? events[0] ?? emptyEvent,
@@ -52,30 +86,11 @@ export function AdminDashboard({
   );
 
   const createNew = () => {
-    const preset = eventTypePresetFromKey("matrimonio");
-    const event: EventRecord = {
-      ...emptyEvent,
-      id: crypto.randomUUID(),
-      slug: toSlug(`${preset.sampleTitle}-${Date.now().toString(36)}`),
-      title: preset.sampleTitle,
-      subtitle: preset.sampleSubtitle,
-      event_type_key: preset.key,
-      owner_email: userEmail,
-      landing_config: {
-        ...DEFAULT_LANDING_CONFIG,
-        heroEyebrow: preset.name,
-        heroTitle: preset.sampleTitle,
-        heroSubtitle: preset.sampleSubtitle,
-        theme: {
-          ...DEFAULT_LANDING_CONFIG.theme,
-          accent: preset.accent,
-          accentSoft: preset.accentSoft,
-          heroImage: preset.heroImage,
-        },
-      },
-    };
+    const event = createDraftEvent(userEmail);
+    event.slug = toSlug(`nuevo-evento-${Date.now().toString(36)}`);
     setEvents((current) => [event, ...current]);
     setSelectedId(event.id);
+    setNotice("Creaste un borrador. Completa el título, el slug y guarda.");
   };
 
   const saveEvent = async () => {
@@ -116,7 +131,17 @@ export function AdminDashboard({
       return [data as EventRecord, ...next];
     });
     setSelectedId(data.id);
-    setNotice("Evento guardado.");
+    setNotice("Evento guardado. Copia la URL pública y compártela con el QR.");
+  };
+
+  const copyEventUrl = async () => {
+    const url = siteUrl(`/event/${selected.slug}`);
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopyNotice("URL copiada al portapapeles.");
+    } catch {
+      setCopyNotice("No pudimos copiarla automáticamente. Puedes copiarla desde la vista previa.");
+    }
   };
 
   const updateSelected = <K extends keyof EventRecord>(key: K, value: EventRecord[K]) => {
@@ -217,6 +242,10 @@ export function AdminDashboard({
                 <h2 className="serif" style={styles.h2}>
                   Edita la landing del evento
                 </h2>
+                <p className="muted" style={styles.subtitle}>
+                  Todo lo importante está en un solo lugar: identidad del evento, tipo de QR, moderación y
+                  contenido visible para los invitados.
+                </p>
               </div>
               <div style={styles.editorActions}>
                 <a className="btn btn-secondary" href={siteUrl(`/event/${selected.slug}`)} target="_blank">
@@ -229,6 +258,29 @@ export function AdminDashboard({
             </div>
 
             {notice ? <div style={styles.notice}>{notice}</div> : null}
+            {copyNotice ? <div style={styles.notice}>{copyNotice}</div> : null}
+
+            <div style={styles.summaryGrid}>
+              <div className="card" style={styles.summaryCard}>
+                <span className="muted">URL pública</span>
+                <strong style={styles.summaryValue}>{siteUrl(`/event/${selected.slug}`)}</strong>
+                <button className="btn btn-tertiary" onClick={copyEventUrl} type="button">
+                  Copiar enlace
+                </button>
+              </div>
+              <div className="card" style={styles.summaryCard}>
+                <span className="muted">Moderación</span>
+                <strong style={styles.summaryValue}>
+                  {selected.moderation_mode === "auto" ? "Automática" : "Manual"}
+                </strong>
+                <span className="muted">{MODERATION_COPY[selected.moderation_mode]}</span>
+              </div>
+              <div className="card" style={styles.summaryCard}>
+                <span className="muted">Límite</span>
+                <strong style={styles.summaryValue}>{formatBytes(selected.max_upload_mb * 1024 * 1024)}</strong>
+                <span className="muted">Peso máximo por foto configurable por evento.</span>
+              </div>
+            </div>
 
             <div style={styles.editorGrid}>
               <div style={styles.form}>
@@ -352,6 +404,37 @@ export function AdminDashboard({
                   <span>Permitir subida de invitados</span>
                 </label>
 
+                <label style={styles.switchRow}>
+                  <input
+                    type="checkbox"
+                    checked={selected.landing_config.showNameField}
+                    onChange={(event) =>
+                      updateLanding("showNameField", event.target.checked)
+                    }
+                  />
+                  <span>Mostrar campo de nombre</span>
+                </label>
+
+                <label style={styles.switchRow}>
+                  <input
+                    type="checkbox"
+                    checked={selected.landing_config.showAnonymousToggle}
+                    onChange={(event) =>
+                      updateLanding("showAnonymousToggle", event.target.checked)
+                    }
+                  />
+                  <span>Permitir opción anónima</span>
+                </label>
+
+                <label style={styles.switchRow}>
+                  <input
+                    type="checkbox"
+                    checked={selected.landing_config.showTerms}
+                    onChange={(event) => updateLanding("showTerms", event.target.checked)}
+                  />
+                  <span>Mostrar términos y condiciones</span>
+                </label>
+
                 <label>
                   <span className="label">Hero title</span>
                   <input
@@ -430,11 +513,14 @@ export function AdminDashboard({
                             )
                           }
                         >
-                          {section}
+                          {sectionLabels[section] ?? section}
                         </button>
                       );
                     })}
                   </div>
+                  <p className="muted" style={styles.helper}>
+                    Activa solo las secciones que realmente ayuden al invitado. Menos bloques, más claridad.
+                  </p>
                 </label>
               </div>
 
@@ -466,9 +552,14 @@ export function AdminDashboard({
                         />
                       ) : null}
                     </div>
-                    <p className="muted" style={{ margin: 0 }}>
-                      Usa esta URL para recortar el QR y compartirlo en tus invitaciones.
-                    </p>
+                    <div className="muted" style={styles.previewNote}>
+                      <p style={{ margin: 0 }}>
+                        Usa esta URL para recortar el QR y compartirlo en tus invitaciones.
+                      </p>
+                      <p style={{ margin: 0 }}>
+                        Si el evento está en moderación manual, las fotos se publican cuando alguien las aprueba.
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -484,7 +575,7 @@ const styles: Record<string, React.CSSProperties> = {
   page: {
     display: "grid",
     gap: 24,
-    gridTemplateColumns: "300px 1fr",
+    gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
     alignItems: "start",
   },
   shell: {
@@ -579,9 +670,31 @@ const styles: Record<string, React.CSSProperties> = {
     border: "1px solid rgba(0,0,0,0.08)",
     color: "var(--text)",
   },
+  subtitle: {
+    margin: "10px 0 0",
+    maxWidth: 760,
+    lineHeight: 1.7,
+  },
+  summaryGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+    gap: 12,
+    marginBottom: 16,
+  },
+  summaryCard: {
+    padding: 16,
+    borderRadius: 22,
+    display: "grid",
+    gap: 10,
+  },
+  summaryValue: {
+    fontSize: 18,
+    lineHeight: 1.2,
+    letterSpacing: "-0.03em",
+  },
   editorGrid: {
     display: "grid",
-    gridTemplateColumns: "1fr 360px",
+    gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
     gap: 16,
   },
   form: {
@@ -593,6 +706,12 @@ const styles: Record<string, React.CSSProperties> = {
     margin: "8px 0 0",
     fontSize: 13,
     lineHeight: 1.5,
+  },
+  previewNote: {
+    display: "grid",
+    gap: 8,
+    fontSize: 13,
+    lineHeight: 1.55,
   },
   switchRow: {
     display: "flex",
@@ -644,7 +763,7 @@ const styles: Record<string, React.CSSProperties> = {
     marginTop: 14,
   },
   previewTitle: {
-    fontSize: 52,
+    fontSize: "clamp(34px, 4vw, 52px)",
     lineHeight: 0.92,
     margin: 0,
   },

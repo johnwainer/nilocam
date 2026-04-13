@@ -134,6 +134,11 @@ export function PhotoComposer({ event, onUploaded }: ComposerProps) {
             Puedes tomar una foto ahora mismo o subir una imagen desde la galería. El límite del evento es {limitLabel}.
           </p>
         </div>
+        <div style={styles.stepRow}>
+          <span className="pill">1. Captura o sube</span>
+          <span className="pill">2. Edita el estilo</span>
+          <span className="pill">3. Publica en vivo</span>
+        </div>
         <div style={styles.actions}>
           <button className="btn btn-primary" onClick={() => openPicker("camera")}>
             Tomar foto
@@ -218,6 +223,11 @@ export function PhotoComposer({ event, onUploaded }: ComposerProps) {
                   />
                   <span>Publicar como anónimo</span>
                 </label>
+                {!event.landing_config.showAnonymousToggle ? (
+                  <p className="muted" style={{ margin: 0, fontSize: 13, lineHeight: 1.5 }}>
+                    Este evento no muestra el control de anonimato, así que la experiencia queda más simple.
+                  </p>
+                ) : null}
 
                 <div>
                   <div className="label">Filtro</div>
@@ -287,6 +297,11 @@ const styles: Record<string, React.CSSProperties> = {
     display: "grid",
     gap: 18,
   },
+  stepRow: {
+    display: "flex",
+    gap: 10,
+    flexWrap: "wrap",
+  },
   actions: {
     display: "flex",
     gap: 12,
@@ -324,7 +339,7 @@ const styles: Record<string, React.CSSProperties> = {
   modalGrid: {
     display: "grid",
     gap: 18,
-    gridTemplateColumns: "1fr 0.92fr",
+    gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
     marginTop: 20,
   },
   previewPane: {
