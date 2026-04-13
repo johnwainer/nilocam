@@ -766,6 +766,28 @@ img {
     align-items: flex-start !important;
     gap: 12px !important;
   }
+
+  /* Event header: stack title + actions vertically, no overflow */
+  .admin-event-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 14px !important;
+  }
+
+  /* Action buttons row: wrap, smaller padding */
+  .admin-event-header-actions {
+    width: 100% !important;
+    flex-shrink: 1 !important;
+    flex-wrap: wrap !important;
+  }
+
+  .admin-event-header-actions .btn {
+    font-size: 13px !important;
+    padding: 9px 14px !important;
+    flex: 1 1 auto !important;
+    text-align: center !important;
+    min-width: 0 !important;
+  }
 }
 
 /* ─── Gallery Display — responsive for 9:16 and 16:9 ────────────────────── */

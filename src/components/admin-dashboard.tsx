@@ -608,7 +608,7 @@ export function AdminDashboard({
         <div className="admin-main-wrap" style={s.mainWrap}>
           <div style={s.main}>
             {/* Event header */}
-            <div style={s.eventHeader}>
+            <div className="admin-event-header" style={s.eventHeader}>
               <div>
                 <span className="eyebrow">
                   {eventTypePresetFromKey(selected.event_type_key).name}
@@ -617,7 +617,7 @@ export function AdminDashboard({
                   {selected.title || "Nuevo evento"}
                 </h1>
               </div>
-              <div style={s.eventHeaderActions}>
+              <div className="admin-event-header-actions" style={s.eventHeaderActions}>
                 {selected.slug && (
                   <>
                     <a
