@@ -10,21 +10,34 @@ import { renderEditedImage, type FilterKey, type TemplateKey } from "@/lib/image
 
 const supabase = createSupabaseBrowserClient();
 
-// CSS filter map for live preview (approximates the canvas output)
+// CSS filter map — mirrors the canvas filter in image-tools.ts
 const FILTER_CSS: Record<FilterKey, string> = {
-  none: "none",
-  warm: "sepia(0.2) saturate(1.22) contrast(1.05) brightness(1.03)",
-  dream: "saturate(1.05) contrast(0.96) brightness(1.08)",
-  mono: "grayscale(1) contrast(1.08)",
-  pop: "saturate(1.5) contrast(1.14) brightness(1.04)",
+  none:     "none",
+  warm:     "sepia(0.2) saturate(1.22) contrast(1.05) brightness(1.03)",
+  golden:   "sepia(0.45) saturate(1.4) brightness(1.05) contrast(1.08)",
+  rose:     "sepia(0.15) saturate(1.3) hue-rotate(-15deg) brightness(1.06)",
+  vintage:  "sepia(0.55) saturate(0.85) contrast(0.9) brightness(1.1)",
+  dream:    "saturate(1.05) contrast(0.96) brightness(1.1)",
+  soft:     "brightness(1.14) saturate(0.8) contrast(0.9)",
+  fade:     "contrast(0.84) brightness(1.14) saturate(0.7)",
+  matte:    "contrast(0.86) saturate(0.78) brightness(1.08) sepia(0.08)",
+  cool:     "saturate(0.88) hue-rotate(18deg) brightness(1.05) contrast(1.06)",
+  mono:     "grayscale(1) contrast(1.08)",
+  noir:     "grayscale(1) contrast(1.45) brightness(0.88)",
+  pop:      "saturate(1.5) contrast(1.14) brightness(1.04)",
+  vivid:    "saturate(1.8) contrast(1.18) brightness(1.02)",
+  dramatic: "contrast(1.4) brightness(0.86) saturate(1.1)",
 };
 
 type ComposerProps = {
   event: EventRecord;
   onUploaded?: (photo: PhotoRecord) => void;
+  /** compact=true: renders only the action buttons + modal, no card wrapper */
+  compact?: boolean;
+  accentColor?: string;
 };
 
-export function PhotoComposer({ event, onUploaded }: ComposerProps) {
+export function PhotoComposer({ event, onUploaded, compact, accentColor }: ComposerProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [name, setName] = useState("");
@@ -104,12 +117,7 @@ export function PhotoComposer({ event, onUploaded }: ComposerProps) {
       const path = `${event.id}/${crypto.randomUUID()}.jpg`;
       const { error: uploadError } = await supabase.storage
         .from(EVENT_BUCKET)
-        .upload(path, editedBlob, {
-          contentType: "image/jpeg",
-          upsert: false,
-          cacheControl: "3600",
-        });
-
+        .upload(path, editedBlob, { contentType: "image/jpeg", upsert: false, cacheControl: "3600" });
       if (uploadError) throw uploadError;
 
       const moderationStatus = event.moderation_mode === "auto" ? "approved" : "pending";
@@ -131,7 +139,6 @@ export function PhotoComposer({ event, onUploaded }: ComposerProps) {
         })
         .select("*")
         .single();
-
       if (insertError) throw insertError;
 
       onUploaded?.({ ...data, public_url: storageUrl } as PhotoRecord);
@@ -143,55 +150,67 @@ export function PhotoComposer({ event, onUploaded }: ComposerProps) {
     }
   };
 
+  // ── Action buttons (shared between compact and card mode) ──────────────────
+  const actionButtons = (
+    <div style={styles.actions}>
+      <button
+        style={{ ...styles.btnCamera, ...(accentColor ? { background: accentColor } : {}) }}
+        onClick={() => openPicker("camera")}
+        type="button"
+      >
+        <CameraIcon />
+        Tomar foto
+      </button>
+      <button style={styles.btnUpload} onClick={() => openPicker("upload")} type="button">
+        <UploadIcon />
+        Desde galería
+      </button>
+    </div>
+  );
+
   return (
     <>
-      <div className="card glass" style={styles.wrapper}>
-        <div style={{ display: "grid", gap: 8 }}>
-          <strong style={{ fontSize: "clamp(22px, 5vw, 28px)", color: "#fff", lineHeight: 1.1, letterSpacing: "-0.02em" }}>
-            Tu foto, en la pantalla del evento
-          </strong>
-          <p style={{ margin: 0, lineHeight: 1.65, color: "rgba(255,255,255,0.6)", fontSize: 15 }}>
-            Toma una foto ahora o sube una de tu galería. Puedes aplicarle un filtro antes de publicarla.
-          </p>
+      {/* ── Trigger UI ──────────────────────────────────────────────────── */}
+      {compact ? (
+        <>
+          {actionButtons}
+          {error ? <div style={{ ...styles.error, marginTop: 10 }}>{error}</div> : null}
+        </>
+      ) : (
+        <div className="card glass" style={styles.wrapper}>
+          <div style={{ display: "grid", gap: 8 }}>
+            <strong style={{ fontSize: "clamp(22px, 5vw, 28px)", color: "#fff", lineHeight: 1.1, letterSpacing: "-0.02em" }}>
+              Tu foto, en la pantalla del evento
+            </strong>
+            <p style={{ margin: 0, lineHeight: 1.65, color: "rgba(255,255,255,0.6)", fontSize: 15 }}>
+              Toma una foto o sube una de tu galería. Aplica filtros y publícala en segundos.
+            </p>
+          </div>
+          {actionButtons}
+          {error ? <div style={styles.error}>{error}</div> : null}
         </div>
-        <div style={styles.actions}>
-          <button style={styles.btnCamera} onClick={() => openPicker("camera")}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-              <circle cx="12" cy="13" r="4"/>
-            </svg>
-            Tomar foto
-          </button>
-          <button style={styles.btnUpload} onClick={() => openPicker("upload")}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <polyline points="16 16 12 12 8 16"/>
-              <line x1="12" y1="12" x2="12" y2="21"/>
-              <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/>
-            </svg>
-            Desde galería
-          </button>
-        </div>
-        {error ? <div style={styles.error}>{error}</div> : null}
-      </div>
+      )}
 
+      {/* ── Hidden inputs ───────────────────────────────────────────────── */}
       <input ref={cameraRef} type="file" accept="image/*" capture="environment"
         onChange={(e) => onFile(e.target.files?.[0] ?? null)} className="sr-only" />
       <input ref={uploadRef} type="file" accept="image/*"
         onChange={(e) => onFile(e.target.files?.[0] ?? null)} className="sr-only" />
 
+      {/* ── Editor modal ────────────────────────────────────────────────── */}
       {isOpen && file && previewUrl ? (
         <div className="pc-backdrop">
           <div className="card glass pc-modal">
             {/* Header */}
             <div style={styles.modalHead}>
-              <h3 style={{ fontSize: "clamp(20px, 4vw, 28px)", margin: 0, color: "#fff", fontWeight: 700, letterSpacing: "-0.02em" }}>
+              <h3 style={{ fontSize: "clamp(18px, 4vw, 24px)", margin: 0, color: "#fff", fontWeight: 700, letterSpacing: "-0.02em" }}>
                 Elige tu estilo
               </h3>
               <button style={styles.btnClose} onClick={reset} aria-label="Cerrar">✕</button>
             </div>
 
             <div className="pc-editor-grid">
-              {/* ── Preview ── */}
+              {/* ── Preview + Filter strip ── */}
               <div style={styles.previewPane}>
                 <div style={styles.previewImageWrap}>
                   <Image
@@ -200,25 +219,52 @@ export function PhotoComposer({ event, onUploaded }: ComposerProps) {
                     fill
                     unoptimized
                     sizes="(max-width: 640px) 100vw, 48vw"
-                    style={{
-                      objectFit: "cover",
-                      filter: FILTER_CSS[filter],
-                      transition: "filter 220ms ease",
-                    }}
+                    style={{ objectFit: "cover", filter: FILTER_CSS[filter], transition: "filter 200ms ease" }}
                   />
+                  {/* Active filter name overlay */}
+                  <div style={styles.filterNameBadge}>
+                    {FILTERS.find(f => f.key === filter)?.label ?? "Original"}
+                  </div>
                 </div>
-                {/* Filter strip at bottom of preview */}
-                <div style={styles.filterStrip}>
-                  {FILTERS.map((item) => (
-                    <button
-                      key={item.key}
-                      type="button"
-                      style={filter === item.key ? styles.filterBtnActive : styles.filterBtn}
-                      onClick={() => setFilter(item.key as FilterKey)}
-                    >
-                      {item.label}
-                    </button>
-                  ))}
+
+                {/* Filter thumbnail strip */}
+                <div style={styles.filterScrollOuter}>
+                  <div style={styles.filterScroll}>
+                    {FILTERS.map((f) => {
+                      const active = filter === (f.key as FilterKey);
+                      return (
+                        <button
+                          key={f.key}
+                          type="button"
+                          onClick={() => setFilter(f.key as FilterKey)}
+                          style={styles.filterThumbBtn}
+                          aria-label={f.label}
+                        >
+                          <div style={{
+                            ...styles.filterThumbImg,
+                            outline: active ? "2.5px solid #ffffff" : "2.5px solid transparent",
+                            outlineOffset: 2,
+                          }}>
+                            <Image
+                              src={previewUrl}
+                              alt={f.label}
+                              fill
+                              unoptimized
+                              sizes="60px"
+                              style={{ objectFit: "cover", filter: FILTER_CSS[f.key as FilterKey] }}
+                            />
+                          </div>
+                          <span style={{
+                            ...styles.filterThumbLabel,
+                            color: active ? "#ffffff" : "rgba(255,255,255,0.5)",
+                            fontWeight: active ? 700 : 500,
+                          }}>
+                            {f.label}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
 
@@ -226,7 +272,7 @@ export function PhotoComposer({ event, onUploaded }: ComposerProps) {
               <div style={styles.formPane}>
                 {/* Template */}
                 <div>
-                  <div style={styles.formLabel}>Marco / Plantilla</div>
+                  <div style={styles.formLabel}>Marco</div>
                   <div style={styles.chips}>
                     {TEMPLATES.map((item) => (
                       <button
@@ -246,7 +292,6 @@ export function PhotoComposer({ event, onUploaded }: ComposerProps) {
                   <label style={styles.formField}>
                     <span style={styles.formLabel}>Tu nombre</span>
                     <input
-                      id="guest-name"
                       className="input"
                       placeholder="Ej: Andrea"
                       value={name}
@@ -278,6 +323,7 @@ export function PhotoComposer({ event, onUploaded }: ComposerProps) {
                   style={isSaving ? styles.btnPublishDisabled : styles.btnPublish}
                   onClick={submit}
                   disabled={isSaving}
+                  type="button"
                 >
                   {isSaving ? (
                     <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
@@ -300,6 +346,25 @@ export function PhotoComposer({ event, onUploaded }: ComposerProps) {
         </div>
       ) : null}
     </>
+  );
+}
+
+function CameraIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+      <circle cx="12" cy="13" r="4"/>
+    </svg>
+  );
+}
+
+function UploadIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <polyline points="16 16 12 12 8 16"/>
+      <line x1="12" y1="12" x2="12" y2="21"/>
+      <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/>
+    </svg>
   );
 }
 
@@ -388,33 +453,56 @@ const styles: Record<string, React.CSSProperties> = {
     position: "relative",
     width: "100%",
     flex: 1,
-    minHeight: 300,
+    minHeight: 280,
   },
-  filterStrip: {
-    display: "flex",
-    gap: 6,
-    padding: "10px 12px",
-    background: "rgba(0,0,0,0.5)",
-    flexWrap: "wrap",
-  },
-  filterBtn: {
-    padding: "7px 13px",
+  filterNameBadge: {
+    position: "absolute",
+    top: 12,
+    left: 12,
+    padding: "5px 12px",
     borderRadius: 999,
-    border: "1px solid rgba(255,255,255,0.12)",
-    background: "rgba(255,255,255,0.06)",
-    color: "rgba(255,255,255,0.7)",
-    fontSize: 13,
-    cursor: "pointer",
-  },
-  filterBtnActive: {
-    padding: "7px 13px",
-    borderRadius: 999,
-    border: "1px solid rgba(255,255,255,0.9)",
-    background: "#ffffff",
-    color: "#060a18",
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: 700,
+    background: "rgba(0,0,0,0.55)",
+    color: "#ffffff",
+    backdropFilter: "blur(8px)",
+    letterSpacing: "0.04em",
+  },
+  filterScrollOuter: {
+    background: "rgba(0,0,0,0.6)",
+    padding: "10px 10px 8px",
+  },
+  filterScroll: {
+    display: "flex",
+    gap: 8,
+    overflowX: "auto",
+    scrollbarWidth: "none",
+    paddingBottom: 2,
+  },
+  filterThumbBtn: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: 5,
+    background: "none",
+    border: "none",
     cursor: "pointer",
+    padding: 0,
+    flexShrink: 0,
+  },
+  filterThumbImg: {
+    position: "relative",
+    width: 58,
+    height: 74,
+    borderRadius: 10,
+    overflow: "hidden",
+    transition: "outline 150ms ease",
+  },
+  filterThumbLabel: {
+    fontSize: 10,
+    letterSpacing: "0.03em",
+    whiteSpace: "nowrap" as const,
+    transition: "color 150ms ease",
   },
   formPane: {
     display: "grid",
@@ -422,12 +510,12 @@ const styles: Record<string, React.CSSProperties> = {
     alignContent: "start",
   },
   formLabel: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: 700,
-    color: "rgba(255,255,255,0.6)",
+    color: "rgba(255,255,255,0.5)",
     marginBottom: 8,
     textTransform: "uppercase" as const,
-    letterSpacing: "0.08em",
+    letterSpacing: "0.1em",
   },
   formField: {
     display: "grid",

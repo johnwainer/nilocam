@@ -580,3 +580,13 @@ img {
     min-height: 380px;
   }
 }
+
+/* ─── Spinner ────────────────────────────────────────────────────────── */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Hide scrollbar on filter strip */
+.pc-filter-scroll::-webkit-scrollbar {
+  display: none;
+}

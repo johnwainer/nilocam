@@ -90,21 +90,21 @@ export async function renderEditedImage(
 
   ctx.save();
   switch (options.filter) {
-    case "warm":
-      ctx.filter = "sepia(0.2) saturate(1.22) contrast(1.05) brightness(1.03)";
-      break;
-    case "dream":
-      ctx.filter = "saturate(1.05) contrast(0.96) brightness(1.08)";
-      break;
-    case "mono":
-      ctx.filter = "grayscale(1) contrast(1.08)";
-      break;
-    case "pop":
-      ctx.filter = "saturate(1.5) contrast(1.14) brightness(1.04)";
-      break;
-    default:
-      ctx.filter = "none";
-      break;
+    case "warm":     ctx.filter = "sepia(0.2) saturate(1.22) contrast(1.05) brightness(1.03)"; break;
+    case "golden":   ctx.filter = "sepia(0.45) saturate(1.4) brightness(1.05) contrast(1.08)"; break;
+    case "rose":     ctx.filter = "sepia(0.15) saturate(1.3) hue-rotate(-15deg) brightness(1.06)"; break;
+    case "vintage":  ctx.filter = "sepia(0.55) saturate(0.85) contrast(0.9) brightness(1.1)"; break;
+    case "dream":    ctx.filter = "saturate(1.05) contrast(0.96) brightness(1.1)"; break;
+    case "soft":     ctx.filter = "brightness(1.14) saturate(0.8) contrast(0.9)"; break;
+    case "fade":     ctx.filter = "contrast(0.84) brightness(1.14) saturate(0.7)"; break;
+    case "matte":    ctx.filter = "contrast(0.86) saturate(0.78) brightness(1.08) sepia(0.08)"; break;
+    case "cool":     ctx.filter = "saturate(0.88) hue-rotate(18deg) brightness(1.05) contrast(1.06)"; break;
+    case "mono":     ctx.filter = "grayscale(1) contrast(1.08)"; break;
+    case "noir":     ctx.filter = "grayscale(1) contrast(1.45) brightness(0.88)"; break;
+    case "pop":      ctx.filter = "saturate(1.5) contrast(1.14) brightness(1.04)"; break;
+    case "vivid":    ctx.filter = "saturate(1.8) contrast(1.18) brightness(1.02)"; break;
+    case "dramatic": ctx.filter = "contrast(1.4) brightness(0.86) saturate(1.1)"; break;
+    default:         ctx.filter = "none"; break;
   }
   ctx.drawImage(img, x, y, drawArea.width, drawArea.height);
   ctx.restore();

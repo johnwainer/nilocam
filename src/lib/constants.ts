@@ -140,11 +140,21 @@ export const DEFAULT_LANDING_CONFIG: EventLandingConfig = {
 };
 
 export const FILTERS = [
-  { key: "none", label: "Original", css: "none" },
-  { key: "warm", label: "Cálido", css: "sepia(0.2) saturate(1.2) contrast(1.05) brightness(1.03)" },
-  { key: "dream", label: "Sueño", css: "saturate(1.05) contrast(0.95) brightness(1.08) blur(0px)" },
-  { key: "mono", label: "Mono", css: "grayscale(1) contrast(1.08)" },
-  { key: "pop", label: "Pop", css: "saturate(1.45) contrast(1.12) brightness(1.03)" },
+  { key: "none",     label: "Original",   css: "none" },
+  { key: "warm",     label: "Cálido",     css: "sepia(0.2) saturate(1.22) contrast(1.05) brightness(1.03)" },
+  { key: "golden",   label: "Dorado",     css: "sepia(0.45) saturate(1.4) brightness(1.05) contrast(1.08)" },
+  { key: "rose",     label: "Rosa",       css: "sepia(0.15) saturate(1.3) hue-rotate(-15deg) brightness(1.06)" },
+  { key: "vintage",  label: "Vintage",    css: "sepia(0.55) saturate(0.85) contrast(0.9) brightness(1.1)" },
+  { key: "dream",    label: "Sueño",      css: "saturate(1.05) contrast(0.96) brightness(1.1)" },
+  { key: "soft",     label: "Suave",      css: "brightness(1.14) saturate(0.8) contrast(0.9)" },
+  { key: "fade",     label: "Fade",       css: "contrast(0.84) brightness(1.14) saturate(0.7)" },
+  { key: "matte",    label: "Mate",       css: "contrast(0.86) saturate(0.78) brightness(1.08) sepia(0.08)" },
+  { key: "cool",     label: "Frío",       css: "saturate(0.88) hue-rotate(18deg) brightness(1.05) contrast(1.06)" },
+  { key: "mono",     label: "Mono",       css: "grayscale(1) contrast(1.08)" },
+  { key: "noir",     label: "Noir",       css: "grayscale(1) contrast(1.45) brightness(0.88)" },
+  { key: "pop",      label: "Pop",        css: "saturate(1.5) contrast(1.14) brightness(1.04)" },
+  { key: "vivid",    label: "Vívido",     css: "saturate(1.8) contrast(1.18) brightness(1.02)" },
+  { key: "dramatic", label: "Dramático",  css: "contrast(1.4) brightness(0.86) saturate(1.1)" },
 ];
 
 export const TEMPLATES = [

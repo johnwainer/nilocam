@@ -6,20 +6,19 @@ import { formatDate } from "@/lib/utils";
 import { PhotoComposer } from "@/components/photo-composer";
 import { RealtimeGallery } from "@/components/realtime-gallery";
 
-/** Returns true if the hex color is too dark to show a dark-colored badge/button on it */
+/** Returns true if hex color is too dark to use as button background on a dark landing */
 function isDark(hex: string): boolean {
   const h = hex.replace("#", "");
   if (h.length < 6) return true;
   const r = parseInt(h.slice(0, 2), 16);
   const g = parseInt(h.slice(2, 4), 16);
   const b = parseInt(h.slice(4, 6), 16);
-  // Perceived brightness (0–255)
   return (r * 299 + g * 587 + b * 114) / 1000 < 80;
 }
 
 function CalendarIcon() {
   return (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ flexShrink: 0 }}>
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ flexShrink: 0 }}>
       <rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
     </svg>
   );
@@ -27,7 +26,7 @@ function CalendarIcon() {
 
 function PinIcon() {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ flexShrink: 0 }}>
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ flexShrink: 0 }}>
       <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" />
     </svg>
   );
@@ -44,126 +43,116 @@ export function EventLanding({
 
   const theme = event.landing_config.theme;
   const sections = event.landing_config.sections;
-  const accentDark = isDark(theme.accent);
   const coverUrl = theme.heroImage ?? event.cover_image_url ?? "";
   const hasGallery = sections.includes("gallery");
+  const accentDark = isDark(theme.accent);
+  const accentColor = accentDark ? "#ffffff" : theme.accent;
+  const accentTextColor = accentDark ? "#060a18" : "#ffffff";
+
+  // Show gallery only when there are photos
+  const hasPhotos = initialPhotos.length > 0 || livePhotos.length > 0;
 
   return (
     <main
       className="dark-theme"
       style={{ background: `linear-gradient(180deg, ${theme.background} 0%, #050816 100%)`, color: "#f0ede8", minHeight: "100vh" }}
     >
-      {/* ── HERO ─────────────────────────────────────────────────────── */}
-      <section style={styles.heroSection}>
-        {/* Full-bleed cover image with gradient overlay (visible on mobile too) */}
+      {/* ── HERO — full screen, upload buttons embedded ─────────────── */}
+      <section style={s.heroSection}>
+        {/* Background */}
         {coverUrl ? (
-          <div
-            style={{
-              ...styles.heroBg,
-              backgroundImage: `linear-gradient(180deg, rgba(5,8,22,0.25) 0%, rgba(5,8,22,0.78) 55%, rgba(5,8,22,1) 100%), url(${coverUrl})`,
-            }}
-          />
+          <div style={{
+            ...s.heroBg,
+            backgroundImage: `linear-gradient(180deg, rgba(5,8,22,0.18) 0%, rgba(5,8,22,0.65) 50%, rgba(5,8,22,0.97) 100%), url(${coverUrl})`,
+          }} />
         ) : (
-          <div style={{ ...styles.heroBg, background: `radial-gradient(ellipse at top, ${theme.accentSoft}44 0%, transparent 60%)` }} />
+          <div style={{ ...s.heroBg, background: `radial-gradient(ellipse at 50% 20%, ${theme.accent}28 0%, transparent 65%)` }} />
         )}
 
-        <div className="container el-hero-content" style={styles.heroContent}>
-          {/* ── left / main copy ── */}
-          <div style={styles.heroCopy}>
+        <div className="container" style={s.heroInner}>
+          {/* Event badge */}
+          <div style={s.heroTop}>
             <span style={{
-              ...styles.eventTypeBadge,
+              ...s.badge,
               background: `${theme.accent}22`,
-              border: `1px solid ${theme.accent}66`,
-              color: accentDark ? "rgba(255,255,255,0.75)" : theme.accent,
+              border: `1px solid ${theme.accent}55`,
+              color: accentDark ? "rgba(255,255,255,0.7)" : theme.accent,
             }}>
               {event.event_type_key.replaceAll("-", " ")}
             </span>
+          </div>
 
-            <h1 style={styles.heroTitle}>
+          {/* Title block */}
+          <div style={s.heroCopy}>
+            <h1 style={s.heroTitle}>
               {event.landing_config.heroTitle}
             </h1>
 
             {event.landing_config.heroSubtitle ? (
-              <p style={styles.heroSubtitle}>{event.landing_config.heroSubtitle}</p>
+              <p style={s.heroSubtitle}>{event.landing_config.heroSubtitle}</p>
             ) : null}
 
-            <div style={styles.metaRow}>
-              {event.event_date ? (
-                <span style={styles.metaChip}>
-                  <CalendarIcon />
-                  {formatDate(event.event_date)}
-                </span>
-              ) : null}
-              {event.venue_name ? (
-                <span style={styles.metaChip}>
-                  <PinIcon />
-                  {event.venue_name}
-                  {event.venue_city ? `, ${event.venue_city}` : ""}
-                </span>
-              ) : null}
-            </div>
-
-            <div style={styles.ctaRow}>
-              <a style={{
-                ...styles.ctaPrimary,
-                background: accentDark ? "#ffffff" : theme.accent,
-                color: accentDark ? "#060a18" : "#ffffff",
-              }} href="#uploader">
-                {event.landing_config.primaryCta ?? "Subir mi foto"}
-              </a>
-              {hasGallery ? (
-                <a style={{
-                  ...styles.ctaGhost,
-                  borderColor: accentDark ? "rgba(255,255,255,0.28)" : `${theme.accent}88`,
-                }} href="#gallery">
-                  Ver galería
-                </a>
-              ) : null}
-            </div>
+            {/* Date / venue chips */}
+            {(event.event_date || event.venue_name) ? (
+              <div style={s.metaRow}>
+                {event.event_date ? (
+                  <span style={s.metaChip}>
+                    <CalendarIcon />
+                    {formatDate(event.event_date)}
+                  </span>
+                ) : null}
+                {event.venue_name ? (
+                  <span style={s.metaChip}>
+                    <PinIcon />
+                    {event.venue_name}{event.venue_city ? `, ${event.venue_city}` : ""}
+                  </span>
+                ) : null}
+              </div>
+            ) : null}
           </div>
 
-          {/* ── right: cover image card (desktop only) ── */}
-          {coverUrl ? (
-            <div
-              className="el-hero-visual"
-              style={{
-                ...styles.heroImageCard,
-                backgroundImage: `url(${coverUrl})`,
+          {/* ── Action area — upload buttons live here ── */}
+          <div style={s.heroActions}>
+            <p style={s.uploadPrompt}>
+              Comparte tu foto y aparecerá aquí en segundos
+            </p>
+            <PhotoComposer
+              event={event}
+              compact
+              accentColor={accentColor}
+              onUploaded={(photo) => {
+                if (photo.moderation_status === "approved") {
+                  setLivePhotos((prev) => [photo, ...prev]);
+                }
               }}
             />
-          ) : null}
+            {hasGallery && hasPhotos ? (
+              <a style={s.scrollDown} href="#gallery">
+                Ver fotos del evento ↓
+              </a>
+            ) : null}
+          </div>
         </div>
       </section>
 
-      {/* ── UPLOADER ─────────────────────────────────────────────────── */}
-      <section id="uploader" style={styles.section}>
-        <div className="container">
-          <PhotoComposer
-            event={event}
-            onUploaded={(photo) => {
-              if (photo.moderation_status === "approved") {
-                setLivePhotos((prev) => [photo, ...prev]);
-              }
-            }}
-          />
-        </div>
-      </section>
-
-      {/* ── GALLERY ──────────────────────────────────────────────────── */}
-      {hasGallery ? (
-        <RealtimeGallery event={event} initialPhotos={initialPhotos} additionalPhotos={livePhotos} />
+      {/* ── GALLERY — only when there are photos ─────────────────────── */}
+      {hasGallery && hasPhotos ? (
+        <RealtimeGallery
+          event={event}
+          initialPhotos={initialPhotos}
+          additionalPhotos={livePhotos}
+        />
       ) : null}
     </main>
   );
 }
 
-const styles: Record<string, React.CSSProperties> = {
+const s: Record<string, React.CSSProperties> = {
   heroSection: {
     position: "relative",
     minHeight: "100svh",
     display: "flex",
-    alignItems: "flex-end",
-    paddingBottom: 0,
+    flexDirection: "column",
   },
   heroBg: {
     position: "absolute",
@@ -172,22 +161,21 @@ const styles: Record<string, React.CSSProperties> = {
     backgroundPosition: "center",
     zIndex: 0,
   },
-  heroContent: {
+  heroInner: {
     position: "relative",
     zIndex: 1,
-    display: "grid",
-    gridTemplateColumns: "1fr",
-    gap: 32,
-    paddingTop: 80,
-    paddingBottom: 56,
-    alignItems: "end",
+    display: "flex",
+    flexDirection: "column",
+    flex: 1,
+    paddingTop: "max(64px, env(safe-area-inset-top, 64px))",
+    paddingBottom: 48,
+    gap: 0,
+    minHeight: "100svh",
   },
-  heroCopy: {
-    display: "grid",
-    gap: 20,
-    alignContent: "end",
+  heroTop: {
+    paddingBottom: 20,
   },
-  eventTypeBadge: {
+  badge: {
     display: "inline-flex",
     alignItems: "center",
     padding: "6px 14px",
@@ -196,89 +184,70 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: 700,
     letterSpacing: "0.14em",
     textTransform: "uppercase",
-    background: "rgba(255,255,255,0.1)",
-    border: "1px solid rgba(255,255,255,0.16)",
-    color: "rgba(255,255,255,0.75)",
     width: "fit-content",
   },
+  heroCopy: {
+    display: "grid",
+    gap: 16,
+    flex: 1,
+    justifyContent: "start",
+    alignContent: "center",
+  },
   heroTitle: {
-    fontSize: "clamp(42px, 10vw, 96px)",
-    lineHeight: 0.9,
+    fontSize: "clamp(40px, 10vw, 88px)",
+    lineHeight: 0.92,
     margin: 0,
     letterSpacing: "-0.04em",
     color: "#ffffff",
-    fontWeight: 700,
+    fontWeight: 800,
   },
   heroSubtitle: {
-    fontSize: "clamp(16px, 2.2vw, 20px)",
+    fontSize: "clamp(15px, 2vw, 19px)",
     lineHeight: 1.65,
     margin: 0,
-    color: "rgba(255,255,255,0.65)",
-    maxWidth: 560,
+    color: "rgba(255,255,255,0.6)",
+    maxWidth: 520,
   },
   metaRow: {
     display: "flex",
-    gap: 10,
+    gap: 8,
     flexWrap: "wrap",
+    paddingTop: 4,
   },
   metaChip: {
     display: "inline-flex",
     alignItems: "center",
     gap: 6,
-    padding: "7px 14px",
+    padding: "6px 12px",
     borderRadius: 999,
+    fontSize: 12,
+    fontWeight: 500,
+    background: "rgba(255,255,255,0.07)",
+    border: "1px solid rgba(255,255,255,0.1)",
+    color: "rgba(255,255,255,0.7)",
+  },
+  heroActions: {
+    display: "grid",
+    gap: 14,
+    paddingTop: 32,
+    borderTop: "1px solid rgba(255,255,255,0.08)",
+    marginTop: 20,
+  },
+  uploadPrompt: {
+    margin: 0,
     fontSize: 13,
+    color: "rgba(255,255,255,0.45)",
     fontWeight: 500,
-    background: "rgba(255,255,255,0.08)",
-    border: "1px solid rgba(255,255,255,0.12)",
-    color: "rgba(255,255,255,0.8)",
+    letterSpacing: "0.02em",
   },
-  ctaRow: {
-    display: "flex",
-    gap: 12,
-    flexWrap: "wrap",
-    paddingTop: 4,
-  },
-  ctaPrimary: {
+  scrollDown: {
     display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    minHeight: 56,
-    padding: "0 32px",
-    borderRadius: 999,
-    background: "#ffffff",
-    color: "#060a18",
-    fontWeight: 700,
-    fontSize: 17,
-    letterSpacing: "-0.01em",
-    cursor: "pointer",
+    alignSelf: "flex-start",
+    padding: "8px 0",
+    fontSize: 13,
+    color: "rgba(255,255,255,0.45)",
     textDecoration: "none",
-    WebkitTapHighlightColor: "transparent",
-  },
-  ctaGhost: {
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    minHeight: 56,
-    padding: "0 28px",
-    borderRadius: 999,
-    background: "transparent",
-    border: "1.5px solid rgba(255,255,255,0.28)",
-    color: "rgba(255,255,255,0.85)",
     fontWeight: 500,
-    fontSize: 16,
-    cursor: "pointer",
-    textDecoration: "none",
-    WebkitTapHighlightColor: "transparent",
-  },
-  heroImageCard: {
-    borderRadius: 28,
-    backgroundSize: "cover",
-    backgroundPosition: "center",
-    minHeight: 520,
-    filter: "grayscale(0.2) contrast(1.05)",
-  },
-  section: {
-    padding: "64px 0",
+    letterSpacing: "0.02em",
   },
 };
