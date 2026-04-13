@@ -31,7 +31,10 @@ Ejecuta estos pasos en Supabase:
 4. En Auth > URL Configuration agrega:
    - Site URL: `https://nilocam.vercel.app`
    - Redirect URL: `https://nilocam.vercel.app/auth/callback`
-5. Verifica que exista el bucket `event-photos` y que sea público para lectura.
+5. En Auth > Providers > Email activa login con correo y contraseña. Si quieres que el registro sea inmediato, desactiva la confirmación por email; si la dejas activa, el usuario deberá confirmar antes de entrar.
+6. Verifica que exista el bucket `event-photos` y que sea público para lectura.
+
+El panel ya no usa magic links para entrar. El acceso normal ahora es por correo + contraseña, con registro, login y recuperación de contraseña.
 
 El archivo `supabase/schema.sql` ya crea tablas, triggers y policies para la versión actual de la app. Variables de entorno requeridas:
 

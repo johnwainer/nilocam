@@ -13,7 +13,7 @@ export function TopNav() {
           </span>
         </Link>
         <div style={styles.links}>
-          <Link className="btn btn-ghost" href="/admin">
+          <Link className="btn btn-ghost" href="/auth">
             Admin
           </Link>
           <Link className="btn btn-primary" href="/#demo">

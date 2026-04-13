@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { QRCodeCanvas } from "qrcode.react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 import {
@@ -73,6 +74,7 @@ export function AdminDashboard({
   userEmail: string;
   initialEvents: EventRecord[];
 }) {
+  const router = useRouter();
   const initialDraft = initialEvents[0] ?? createDraftEvent(userEmail);
   const [events, setEvents] = useState(initialEvents.length > 0 ? initialEvents : [initialDraft]);
   const [selectedId, setSelectedId] = useState(initialDraft.id);
@@ -144,6 +146,12 @@ export function AdminDashboard({
     }
   };
 
+  const signOut = async () => {
+    await supabase.auth.signOut();
+    router.replace("/auth");
+    router.refresh();
+  };
+
   const updateSelected = <K extends keyof EventRecord>(key: K, value: EventRecord[K]) => {
     setEvents((current) =>
       current.map((event) => (event.id === selected.id ? { ...event, [key]: value } : event))
@@ -202,15 +210,20 @@ export function AdminDashboard({
       <div className="container" style={styles.page}>
         <aside className="card glass" style={styles.sidebar}>
           <div style={styles.sidebarHead}>
-            <div>
-              <span className="eyebrow">Admin</span>
-              <h1 className="serif" style={styles.title}>
-                {APP_NAME} events
-              </h1>
+              <div>
+                <span className="eyebrow">Admin</span>
+                <h1 className="serif" style={styles.title}>
+                  {APP_NAME} events
+                </h1>
+              </div>
+            <div style={styles.sidebarActions}>
+              <button className="btn btn-tertiary" onClick={signOut} type="button">
+                Salir
+              </button>
+              <button className="btn btn-primary" onClick={createNew} type="button">
+                Crear evento
+              </button>
             </div>
-            <button className="btn btn-primary" onClick={createNew}>
-              Crear evento
-            </button>
           </div>
           <div style={styles.userBox}>
             <span className="muted">Sesión activa</span>
@@ -593,6 +606,12 @@ const styles: Record<string, React.CSSProperties> = {
     justifyContent: "space-between",
     gap: 12,
     alignItems: "start",
+  },
+  sidebarActions: {
+    display: "flex",
+    gap: 10,
+    flexWrap: "wrap",
+    justifyContent: "flex-end",
   },
   title: {
     margin: "10px 0 0",

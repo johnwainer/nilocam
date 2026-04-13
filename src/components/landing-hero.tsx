@@ -30,8 +30,8 @@ export function LandingHero() {
             aparecer en tiempo real dentro de una landing personalizada.
           </p>
           <div className="landing-hero-actions" style={styles.actions}>
-            <Link href="/admin" className="btn btn-primary">
-              Crear evento
+            <Link href="/auth" className="btn btn-primary">
+              Entrar al panel
             </Link>
             <Link href="/event/demo-nilo-cam" className="btn btn-secondary">
               Abrir demo
