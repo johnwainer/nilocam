@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { APP_NAME } from "@/lib/constants";
 
-function SpyCatIcon({ size = 32 }: { size?: number }) {
+export function SpyCatIcon({ size = 32 }: { size?: number }) {
   return (
     <svg
       viewBox="0 0 32 32"

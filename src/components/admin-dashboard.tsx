@@ -17,6 +17,7 @@ import {
 import type { FilterKey, TemplateKey } from "@/lib/image-tools";
 import { formatBytes, formatDate, publicStorageUrl, siteUrl, toSlug } from "@/lib/utils";
 import type { EventRecord, EventTypeKey, PhotoRecord, WatermarkPosition } from "@/types";
+import { SpyCatIcon } from "@/components/top-nav";
 
 const supabase = createSupabaseBrowserClient();
 
@@ -184,6 +185,9 @@ export function AdminDashboard({
   // Feedback
   const [notice, setNotice] = useState<{ text: string; ok: boolean } | null>(null);
   const [copyDone, setCopyDone] = useState(false);
+
+  // Mobile sidebar drawer
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Watermark upload
   const [watermarkUploading, setWatermarkUploading] = useState(false);
@@ -458,24 +462,49 @@ export function AdminDashboard({
     <div style={s.shell}>
       {/* ── Header ── */}
       <header style={s.header}>
-        <div style={s.headerBrand}>
-          <strong style={s.headerTitle}>{APP_NAME}</strong>
-          <span className="pill" style={s.adminPill}>
-            {isSuperAdmin ? "Super admin" : "Panel admin"}
-          </span>
-        </div>
-        <div style={s.headerRight}>
-          <span style={s.headerEmail}>{userEmail}</span>
-          <button className="btn btn-ghost" style={s.headerBtn} onClick={signOut} type="button">
-            Salir
-          </button>
+        <div className="container" style={s.headerInner}>
+          {/* Brand — same structure as TopNav */}
+          <div style={s.headerBrand}>
+            <SpyCatIcon size={32} />
+            <strong style={s.headerTitle}>{APP_NAME}</strong>
+            <span className="pill" style={s.adminPill}>
+              {isSuperAdmin ? "Super admin" : "Admin"}
+            </span>
+          </div>
+
+          {/* Right actions */}
+          <div style={s.headerRight}>
+            <span className="admin-header-email" style={s.headerEmail}>{userEmail}</span>
+            <button className="btn btn-ghost" style={s.headerBtn} onClick={signOut} type="button">
+              Salir
+            </button>
+            {/* Hamburger — mobile only */}
+            <button
+              className="admin-hamburger"
+              style={s.hamburger}
+              onClick={() => setSidebarOpen((v) => !v)}
+              type="button"
+              aria-label="Menú de eventos"
+            >
+              <HamburgerIcon open={sidebarOpen} />
+            </button>
+          </div>
         </div>
       </header>
+
+      {/* Mobile sidebar backdrop */}
+      {sidebarOpen && (
+        <div
+          className="admin-drawer-backdrop"
+          style={s.drawerBackdrop}
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
 
       {/* ── Body ── */}
       <div style={s.body}>
         {/* ── Sidebar ── */}
-        <aside style={s.sidebar}>
+        <aside className={`admin-sidebar${sidebarOpen ? " admin-sidebar-open" : ""}`} style={s.sidebar}>
           <button
             className="btn btn-primary"
             style={s.createBtn}
@@ -493,6 +522,7 @@ export function AdminDashboard({
                 onClick={() => {
                   setSelectedId(event.id);
                   setTab("evento");
+                  setSidebarOpen(false);
                 }}
                 style={event.id === selectedId ? s.eventItemActive : s.eventItem}
               >
@@ -1451,6 +1481,26 @@ export function AdminDashboard({
   );
 }
 
+// ─── HamburgerIcon ───────────────────────────────────────────────────────────
+
+function HamburgerIcon({ open }: { open: boolean }) {
+  const bar: React.CSSProperties = {
+    display: "block",
+    width: 18,
+    height: 2,
+    borderRadius: 2,
+    background: "var(--text)",
+    transition: "transform 220ms ease, opacity 220ms ease",
+  };
+  return (
+    <span style={{ display: "flex", flexDirection: "column", gap: 4, width: 18 }}>
+      <span style={{ ...bar, transform: open ? "translateY(6px) rotate(45deg)" : "none" }} />
+      <span style={{ ...bar, opacity: open ? 0 : 1 }} />
+      <span style={{ ...bar, transform: open ? "translateY(-6px) rotate(-45deg)" : "none" }} />
+    </span>
+  );
+}
+
 // ─── styles ──────────────────────────────────────────────────────────────────
 
 const s: Record<string, React.CSSProperties> = {
@@ -1464,23 +1514,45 @@ const s: Record<string, React.CSSProperties> = {
     height: 56,
     position: "sticky",
     top: 0,
-    zIndex: 20,
+    zIndex: 40,
     flexShrink: 0,
-    background: "rgba(255,255,255,0.92)",
+    background: "rgba(245,245,247,0.82)",
     backdropFilter: "blur(20px)",
     WebkitBackdropFilter: "blur(20px)",
-    borderBottom: "1px solid rgba(0,0,0,0.08)",
+    borderBottom: "1px solid rgba(0,0,0,0.06)",
+  },
+  headerInner: {
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
-    padding: "0 20px",
+    gap: 16,
+    height: 56,
   },
-  headerBrand: { display: "flex", alignItems: "center", gap: 10 },
+  headerBrand: { display: "flex", alignItems: "center", gap: 10, flexShrink: 0 },
   headerTitle: { fontSize: 15, letterSpacing: "-0.02em" },
   adminPill: { fontSize: 11, padding: "3px 10px" },
-  headerRight: { display: "flex", alignItems: "center", gap: 12 },
+  headerRight: { display: "flex", alignItems: "center", gap: 8, flexShrink: 0 },
   headerEmail: { fontSize: 13, color: "var(--muted)" },
   headerBtn: { fontSize: 13, padding: "7px 14px" },
+  hamburger: {
+    display: "none", // shown via CSS on mobile
+    width: 38,
+    height: 38,
+    borderRadius: 999,
+    background: "transparent",
+    border: "1px solid rgba(0,0,0,0.08)",
+    cursor: "pointer",
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+  },
+  drawerBackdrop: {
+    position: "fixed",
+    inset: "56px 0 0 0",
+    background: "rgba(0,0,0,0.35)",
+    backdropFilter: "blur(4px)",
+    zIndex: 29,
+  },
 
   body: { flex: 1, display: "flex", alignItems: "flex-start" },
 

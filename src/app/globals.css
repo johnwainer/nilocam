@@ -626,3 +626,41 @@ img {
 .pc-filter-scroll::-webkit-scrollbar {
   display: none;
 }
+
+/* ─── Admin mobile layout ────────────────────────────────────────────────── */
+
+/* Sidebar: desktop = sticky column, mobile = off-canvas drawer */
+.admin-sidebar {
+  transition: transform 260ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.admin-hamburger {
+  display: none !important;
+}
+
+@media (max-width: 768px) {
+  .admin-hamburger {
+    display: flex !important;
+  }
+
+  /* Hide email on mobile to save space */
+  .admin-header-email {
+    display: none !important;
+  }
+
+  .admin-sidebar {
+    position: fixed !important;
+    top: 56px !important;
+    left: 0 !important;
+    bottom: 0 !important;
+    z-index: 30 !important;
+    height: calc(100dvh - 56px) !important;
+    transform: translateX(-100%);
+    box-shadow: none;
+  }
+
+  .admin-sidebar.admin-sidebar-open {
+    transform: translateX(0);
+    box-shadow: 4px 0 40px rgba(0, 0, 0, 0.18);
+  }
+}
