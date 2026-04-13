@@ -787,7 +787,7 @@ export function AdminDashboard({
 
                     {/* Filtros y marcos */}
                     <div style={{ borderTop: "1px solid rgba(0,0,0,0.07)", paddingTop: 18, display: "grid", gap: 16 }}>
-                      <span className="label" style={{ margin: 0 }}>Filtros y marcos</span>
+                      <span className="eyebrow" style={s.sectionEyebrow}>Filtros y marcos</span>
 
                       {/* Filters mode */}
                       <div style={s.field}>
