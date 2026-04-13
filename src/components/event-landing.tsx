@@ -85,6 +85,15 @@ export function EventLanding({
                   {event.landing_config.introCopy}
                 </p>
               </div>
+              <div style={styles.bigStrip}>
+                <div style={styles.bigStripImage} />
+                <div style={styles.bigStripText}>
+                  <span className="eyebrow">Slide destacado</span>
+                  <h2 className="serif" style={styles.bigStripTitle}>
+                    Mucho más visual, mucho más limpio
+                  </h2>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -203,6 +212,7 @@ const styles: Record<string, React.CSSProperties> = {
     justifyContent: "space-between",
     padding: 18,
     overflow: "hidden",
+    filter: "grayscale(1) contrast(1.05)",
   },
   posterBadge: {
     alignSelf: "flex-start",
@@ -221,6 +231,34 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: 24,
     display: "grid",
     gap: 12,
+  },
+  bigStrip: {
+    minHeight: 240,
+    borderRadius: 28,
+    overflow: "hidden",
+    background: "#fff",
+    border: "1px solid rgba(0,0,0,0.08)",
+    display: "grid",
+    gridTemplateColumns: "0.8fr 1.2fr",
+  },
+  bigStripImage: {
+    background:
+      "linear-gradient(180deg, rgba(255,255,255,0.1), rgba(0,0,0,0.5)), url(https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?auto=format&fit=crop&w=1000&q=80)",
+    backgroundSize: "cover",
+    backgroundPosition: "center",
+    filter: "grayscale(1)",
+  },
+  bigStripText: {
+    padding: 22,
+    display: "grid",
+    alignContent: "end",
+    gap: 10,
+  },
+  bigStripTitle: {
+    margin: 0,
+    fontSize: "clamp(26px, 2.8vw, 40px)",
+    lineHeight: 0.98,
+    letterSpacing: "-0.04em",
   },
   infoGrid: {
     display: "grid",

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 import type { EventRecord, PhotoRecord } from "@/types";
@@ -67,7 +68,15 @@ export function RealtimeGallery({
           <article className="card glass" style={styles.featured}>
             {featured ? (
               <>
-                <img src={publicStorageUrl(featured.storage_path)} alt="Foto destacada" style={styles.featuredImg} />
+                <div style={styles.featuredImgWrap}>
+                  <Image
+                    src={publicStorageUrl(featured.storage_path)}
+                    alt="Foto destacada"
+                    fill
+                    sizes="(max-width: 1024px) 100vw, 60vw"
+                    style={{ objectFit: "cover" }}
+                  />
+                </div>
                 <div style={styles.featuredOverlay}>
                   <div className="pill" style={{ color: "#fff" }}>
                     {featured.is_anonymous ? "Anónimo" : featured.uploaded_by_name || "Invitado"}
@@ -88,7 +97,15 @@ export function RealtimeGallery({
           <div style={styles.grid}>
             {rest.map((photo) => (
               <article key={photo.id} className="card glass" style={styles.tile}>
-                <img src={publicStorageUrl(photo.storage_path)} alt="Foto del evento" style={styles.tileImg} />
+                <div style={styles.tileImgWrap}>
+                  <Image
+                    src={publicStorageUrl(photo.storage_path)}
+                    alt="Foto del evento"
+                    fill
+                    sizes="(max-width: 1024px) 50vw, 28vw"
+                    style={{ objectFit: "cover" }}
+                  />
+                </div>
                 <div style={styles.tileMeta}>
                   <strong>{photo.is_anonymous ? "Anónimo" : photo.uploaded_by_name || "Invitado"}</strong>
                   <span className="muted">{new Date(photo.created_at).toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" })}</span>
@@ -133,6 +150,11 @@ const styles: Record<string, React.CSSProperties> = {
     objectFit: "cover",
     minHeight: 720,
   },
+  featuredImgWrap: {
+    position: "relative",
+    width: "100%",
+    minHeight: 720,
+  },
   featuredOverlay: {
     position: "absolute",
     inset: "auto 18px 18px 18px",
@@ -156,6 +178,11 @@ const styles: Record<string, React.CSSProperties> = {
     aspectRatio: "1 / 1.16",
     width: "100%",
     objectFit: "cover",
+  },
+  tileImgWrap: {
+    position: "relative",
+    width: "100%",
+    minHeight: 220,
   },
   tileMeta: {
     display: "grid",

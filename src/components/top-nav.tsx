@@ -33,6 +33,8 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: "center",
     justifyContent: "space-between",
     gap: 18,
+    background: "rgba(255,255,255,0.8)",
+    backdropFilter: "blur(18px)",
   },
   brand: {
     display: "flex",
@@ -46,7 +48,7 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: 999,
     display: "grid",
     placeItems: "center",
-    background: "linear-gradient(180deg, rgba(255,255,255,0.14), rgba(255,255,255,0.04))",
+    background: "rgba(0,0,0,0.04)",
     fontSize: 22,
   },
   links: {

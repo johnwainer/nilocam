@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useMemo, useRef, useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { EVENT_BUCKET, FILTERS, TEMPLATES } from "@/lib/constants";
@@ -177,7 +178,16 @@ export function PhotoComposer({ event, onUploaded }: ComposerProps) {
 
             <div style={styles.modalGrid}>
               <div style={styles.previewPane}>
-                <img src={previewUrl} alt="Vista previa" style={styles.previewImage} />
+                <div style={styles.previewImageWrap}>
+                  <Image
+                    src={previewUrl}
+                    alt="Vista previa"
+                    fill
+                    unoptimized
+                    sizes="(max-width: 1024px) 100vw, 48vw"
+                    style={{ objectFit: "cover" }}
+                  />
+                </div>
               </div>
               <div style={styles.formPane}>
                 {event.landing_config.showNameField ? (
@@ -324,11 +334,11 @@ const styles: Record<string, React.CSSProperties> = {
     background: "rgba(255,255,255,0.04)",
     minHeight: 420,
   },
-  previewImage: {
+  previewImageWrap: {
+    position: "relative",
     width: "100%",
     height: "100%",
-    objectFit: "cover",
-    maxHeight: 720,
+    minHeight: 420,
   },
   formPane: {
     display: "grid",
