@@ -620,15 +620,27 @@ export function AdminDashboard({
               </div>
               <div style={s.eventHeaderActions}>
                 {selected.slug && (
-                  <a
-                    className="btn btn-secondary"
-                    href={siteUrl(`/event/${selected.slug}`)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={s.headerActionBtn}
-                  >
-                    Abrir landing ↗
-                  </a>
+                  <>
+                    <a
+                      className="btn btn-secondary"
+                      href={siteUrl(`/event/${selected.slug}`)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={s.headerActionBtn}
+                    >
+                      Abrir landing ↗
+                    </a>
+                    <a
+                      className="btn btn-secondary"
+                      href={siteUrl(`/event/${selected.slug}/display`)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ ...s.headerActionBtn, gap: 7 }}
+                      title="Vista galería rotativa para proyectar en pantalla grande"
+                    >
+                      <DisplayIcon /> Pantalla
+                    </a>
+                  </>
                 )}
                 <button
                   className="btn btn-primary"
@@ -1669,6 +1681,18 @@ export function AdminDashboard({
         </div>
       )}
     </div>
+  );
+}
+
+// ─── DisplayIcon ─────────────────────────────────────────────────────────────
+
+function DisplayIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="2" y="3" width="20" height="14" rx="2" />
+      <path d="M8 21h8M12 17v4" />
+      <polygon points="10,8 16,11 10,14" fill="currentColor" stroke="none" />
+    </svg>
   );
 }
 

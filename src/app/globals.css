@@ -627,6 +627,29 @@ img {
   display: none;
 }
 
+/* ─── Gallery Display (presentation/slideshow screen) ───────────────────── */
+@keyframes gdFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes gdFadeOut {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+/* Slow zoom + slight drift — loops are undesirable so we use forwards fill */
+@keyframes gdKenBurns {
+  0%   { transform: scale(1.0)   translate(  0%,    0%  ); }
+  40%  { transform: scale(1.03)  translate(-0.5%,  0.3%); }
+  100% { transform: scale(1.07)  translate(-1.1%,  0.7%); }
+}
+
+@keyframes gdProgress {
+  from { width: 0%; }
+  to   { width: 100%; }
+}
+
 /* ─── Admin mobile layout ────────────────────────────────────────────────── */
 
 /* Sidebar: desktop = sticky column, mobile = off-canvas drawer */
