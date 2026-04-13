@@ -4,6 +4,29 @@ import { buildEventUrl } from "@/lib/site";
 import type { EventRecord, EventStore, PhotoRecord } from "@/lib/types";
 import { initialStore } from "@/lib/mock-data";
 
+function mergeDemoStore(store: EventStore): EventStore {
+  const eventsBySlug = new Map<string, EventRecord>();
+  for (const event of initialStore.events) {
+    eventsBySlug.set(event.slug, event);
+  }
+  for (const event of store.events) {
+    eventsBySlug.set(event.slug, event);
+  }
+
+  const photosById = new Map<string, PhotoRecord>();
+  for (const photo of initialStore.photos) {
+    photosById.set(photo.id, photo);
+  }
+  for (const photo of store.photos) {
+    photosById.set(photo.id, photo);
+  }
+
+  return {
+    events: Array.from(eventsBySlug.values()),
+    photos: Array.from(photosById.values()),
+  };
+}
+
 type EventRow = {
   id: string;
   slug: string;
@@ -98,7 +121,10 @@ export async function fetchStoreFromSupabase(): Promise<EventStore> {
   const events = (eventsResult.data ?? []).map((row) => mapEvent(row as EventRow));
   const photos = (photosResult.data ?? []).map((row) => mapPhoto(row as PhotoRow));
 
-  return events.length > 0 ? { events, photos } : initialStore;
+  return mergeDemoStore({
+    events: events.length > 0 ? events : initialStore.events,
+    photos: photos.length > 0 ? photos : initialStore.photos,
+  });
 }
 
 export async function fetchEventBySlug(slug: string) {

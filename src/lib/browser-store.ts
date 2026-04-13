@@ -72,6 +72,25 @@ export function savePhoto(photo: PhotoRecord) {
   void syncPhotoToSupabase(photo);
 }
 
+export function updatePhotoStatus(photoId: string, status: PhotoRecord["status"]) {
+  const store = readStorage();
+  const index = store.photos.findIndex((photo) => photo.id === photoId);
+  if (index < 0) return;
+
+  store.photos[index] = { ...store.photos[index], status };
+  writeStorage(store);
+  broadcast(store);
+  void syncPhotoStatusToSupabase(photoId, status);
+}
+
+export function removePhoto(photoId: string) {
+  const store = readStorage();
+  store.photos = store.photos.filter((photo) => photo.id !== photoId);
+  writeStorage(store);
+  broadcast(store);
+  void deletePhotoFromSupabase(photoId);
+}
+
 export function saveStore(store: EventStore) {
   writeStorage(store);
   broadcast(store);
@@ -211,5 +230,47 @@ async function syncPhotoToSupabase(photo: PhotoRecord) {
     });
   } catch {
     // Local-first fallback keeps the app usable even if Supabase is not configured yet.
+  }
+}
+
+async function syncPhotoStatusToSupabase(photoId: string, status: PhotoRecord["status"]) {
+  const client = createSupabaseBrowserClient();
+  if (client) {
+    try {
+      await client.from("photos").update({ status }).eq("id", photoId);
+      return;
+    } catch {
+      // Fall through to API route.
+    }
+  }
+
+  try {
+    await fetch(`/api/photos/${photoId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status }),
+    });
+  } catch {
+    // Local-first fallback.
+  }
+}
+
+async function deletePhotoFromSupabase(photoId: string) {
+  const client = createSupabaseBrowserClient();
+  if (client) {
+    try {
+      await client.from("photos").delete().eq("id", photoId);
+      return;
+    } catch {
+      // Fall through to API route.
+    }
+  }
+
+  try {
+    await fetch(`/api/photos/${photoId}`, {
+      method: "DELETE",
+    });
+  } catch {
+    // Local-first fallback.
   }
 }
