@@ -11,9 +11,11 @@ const supabase = createSupabaseBrowserClient();
 export function RealtimeGallery({
   event,
   initialPhotos,
+  additionalPhotos,
 }: {
   event: EventRecord;
   initialPhotos: PhotoRecord[];
+  additionalPhotos?: PhotoRecord[];
 }) {
   const [photos, setPhotos] = useState<PhotoRecord[]>(initialPhotos);
 
@@ -35,7 +37,11 @@ export function RealtimeGallery({
         (payload) => {
           const row = payload.new as PhotoRecord;
           if (row.moderation_status !== "approved") return;
-          setPhotos((current) => [row, ...current].slice(0, 30));
+          setPhotos((cur) => {
+            // deduplicate — immediate upload may have already added this id
+            if (cur.some((p) => p.id === row.id)) return cur;
+            return [row, ...cur].slice(0, 40);
+          });
         }
       )
       .subscribe();
@@ -45,149 +51,180 @@ export function RealtimeGallery({
     };
   }, [event.id]);
 
-  const featured = photos[0];
-  const rest = useMemo(() => photos.slice(1, 8), [photos]);
+  // Merge instantly-added photos (additionalPhotos) with realtime photos, deduplicated
+  const allPhotos = useMemo(() => {
+    const ids = new Set(photos.map((p) => p.id));
+    const extra = (additionalPhotos ?? []).filter((p) => !ids.has(p.id));
+    return [...extra, ...photos].slice(0, 40);
+  }, [photos, additionalPhotos]);
+
+  const count = allPhotos.length;
+
+  const headingText =
+    count === 0
+      ? `Sé el primero en compartir un momento de ${event.title}`
+      : count === 1
+        ? `El primer recuerdo de ${event.title}`
+        : `${count} recuerdos de ${event.title}`;
 
   return (
-    <section className="section" id="gallery">
+    <section style={styles.section} id="gallery">
       <div className="container">
+        {/* Header */}
         <div style={styles.head}>
-          <div>
-            <span className="eyebrow">Galería en vivo</span>
-            <h2 className="serif" style={styles.title}>
-              Las fotos aparecen mientras avanza el evento
-            </h2>
-            <p style={styles.subtitle}>
-              La vista se actualiza sola. Con moderación manual, las fotos quedan pendientes hasta
-              que alguien las aprueba.
+          <div style={styles.headCopy}>
+            <span style={styles.eyebrow}>Galería en vivo</span>
+            <h2 style={styles.title}>{headingText}</h2>
+          </div>
+          <div style={styles.countPill}>
+            <span style={styles.pulseDot} />
+            {count} foto{count !== 1 ? "s" : ""}
+          </div>
+        </div>
+
+        {count === 0 ? (
+          <div style={styles.empty}>
+            <span style={styles.emptyIcon}>📸</span>
+            <strong style={{ color: "#fff", fontSize: 18 }}>
+              La galería está esperando su primera foto
+            </strong>
+            <p style={{ margin: 0, color: "rgba(255,255,255,0.5)", lineHeight: 1.6, maxWidth: 380, textAlign: "center" }}>
+              En cuanto alguien publique, aparecerá aquí automáticamente.
             </p>
           </div>
-          <div className="pill" style={styles.countPill}>
-            <span className="pulse-dot" />
-            {photos.length} fotos visibles
-          </div>
-        </div>
-
-        <div className="rg-layout">
-          <article className="card glass rg-featured">
-            {featured ? (
-              <>
-                <div className="rg-featured-img-wrap">
-                  <Image
-                    src={publicStorageUrl(featured.storage_path)}
-                    alt="Foto destacada"
-                    fill
-                    sizes="(max-width: 820px) 100vw, 60vw"
-                    style={{ objectFit: "cover" }}
-                  />
-                </div>
-                <div style={styles.featuredOverlay}>
-                  <div className="pill" style={{ color: "#fff", background: "rgba(255,255,255,0.08)", borderColor: "rgba(255,255,255,0.15)" }}>
-                    {featured.is_anonymous ? "Anónimo" : featured.uploaded_by_name || "Invitado"}
-                  </div>
-                  <strong style={{ color: "#fff" }}>
-                    {featured.template_key ? `Plantilla ${featured.template_key}` : "Nueva foto"}
-                  </strong>
-                </div>
-              </>
-            ) : (
-              <div className="rg-empty">
-                <strong style={{ color: "#fff" }}>No hay fotos todavía</strong>
-                <p style={{ margin: 0, lineHeight: 1.7, color: "rgba(255,255,255,0.55)" }}>
-                  En cuanto alguien suba la primera foto, aparecerá aquí en grande.
-                </p>
-              </div>
-            )}
-          </article>
-
+        ) : (
           <div style={styles.grid}>
-            {rest.map((photo) => (
-              <article key={photo.id} className="card glass" style={styles.tile}>
-                <div style={styles.tileImgWrap}>
-                  <Image
-                    src={publicStorageUrl(photo.storage_path)}
-                    alt="Foto del evento"
-                    fill
-                    sizes="(max-width: 820px) 50vw, 28vw"
-                    style={{ objectFit: "cover" }}
-                  />
-                </div>
-                <div style={styles.tileMeta}>
-                  <strong style={{ color: "#fff", fontSize: 14 }}>
-                    {photo.is_anonymous ? "Anónimo" : photo.uploaded_by_name || "Invitado"}
-                  </strong>
-                  <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 12 }}>
-                    {new Date(photo.created_at).toLocaleTimeString("es-CO", {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </span>
-                </div>
-              </article>
+            {allPhotos.map((photo, i) => (
+              <GalleryTile key={photo.id} photo={photo} priority={i < 4} />
             ))}
           </div>
-        </div>
+        )}
       </div>
     </section>
   );
 }
 
+function GalleryTile({ photo, priority }: { photo: PhotoRecord; priority?: boolean }) {
+  const url = photo.public_url ?? publicStorageUrl(photo.storage_path);
+  const uploader = photo.is_anonymous ? null : photo.uploaded_by_name;
+
+  return (
+    <div style={styles.tile}>
+      <div style={styles.tileImg}>
+        <Image
+          src={url}
+          alt="Foto del evento"
+          fill
+          sizes="(max-width: 600px) 50vw, (max-width: 1024px) 33vw, 25vw"
+          style={{ objectFit: "cover" }}
+          priority={priority}
+        />
+        {uploader ? (
+          <div style={styles.tileName}>{uploader}</div>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
 const styles: Record<string, React.CSSProperties> = {
+  section: {
+    padding: "72px 0 80px",
+    background: "rgba(0,0,0,0.15)",
+  },
   head: {
     display: "flex",
     justifyContent: "space-between",
+    alignItems: "flex-end",
     gap: 16,
-    alignItems: "end",
     flexWrap: "wrap",
-    marginBottom: 22,
+    marginBottom: 32,
   },
-  title: {
-    fontSize: "clamp(28px, 5vw, 56px)",
-    lineHeight: 0.95,
-    margin: "10px 0 0",
-    maxWidth: 760,
-    color: "#ffffff",
-  },
-  subtitle: {
-    margin: "12px 0 0",
-    lineHeight: 1.7,
-    maxWidth: 720,
-    color: "rgba(255,255,255,0.6)",
-    fontSize: 15,
-  },
-  countPill: {
-    color: "rgba(255,255,255,0.75)",
-    background: "rgba(255,255,255,0.06)",
-    borderColor: "rgba(255,255,255,0.12)",
-    flexShrink: 0,
-  },
-  featuredOverlay: {
-    position: "absolute",
-    inset: "auto 18px 18px 18px",
-    padding: 18,
-    borderRadius: 22,
+  headCopy: {
     display: "grid",
     gap: 10,
-    background: "linear-gradient(180deg, rgba(8,12,23,0.08), rgba(8,12,23,0.84))",
+  },
+  eyebrow: {
+    display: "block",
+    fontSize: 11,
+    fontWeight: 700,
+    letterSpacing: "0.14em",
+    textTransform: "uppercase" as const,
+    color: "rgba(255,255,255,0.4)",
+  },
+  title: {
+    fontSize: "clamp(26px, 4.5vw, 52px)",
+    lineHeight: 0.95,
+    margin: 0,
+    color: "#ffffff",
+    fontWeight: 700,
+    letterSpacing: "-0.03em",
+    maxWidth: 700,
+  },
+  countPill: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 8,
+    padding: "8px 16px",
+    borderRadius: 999,
+    fontSize: 14,
+    fontWeight: 600,
+    color: "rgba(255,255,255,0.75)",
+    background: "rgba(255,255,255,0.06)",
+    border: "1px solid rgba(255,255,255,0.1)",
+    flexShrink: 0,
+  },
+  pulseDot: {
+    display: "inline-block",
+    width: 7,
+    height: 7,
+    borderRadius: "50%",
+    background: "#4ade80",
+    boxShadow: "0 0 0 3px rgba(74,222,128,0.2)",
+    animation: "pulse 2s ease-in-out infinite",
+  },
+  empty: {
+    display: "flex",
+    flexDirection: "column" as const,
+    alignItems: "center",
+    gap: 16,
+    padding: "72px 24px",
+    borderRadius: 28,
+    background: "rgba(255,255,255,0.03)",
+    border: "1px dashed rgba(255,255,255,0.1)",
+  },
+  emptyIcon: {
+    fontSize: 48,
   },
   grid: {
     display: "grid",
-    gap: 14,
-    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-    alignContent: "start",
+    gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
+    gap: 10,
   },
   tile: {
+    borderRadius: 18,
     overflow: "hidden",
-    borderRadius: 24,
+    background: "rgba(255,255,255,0.04)",
   },
-  tileImgWrap: {
+  tileImg: {
     position: "relative",
     width: "100%",
-    minHeight: 180,
+    paddingBottom: "120%", // 5:6 portrait aspect ratio
   },
-  tileMeta: {
-    display: "grid",
-    gap: 4,
-    padding: 12,
+  tileName: {
+    position: "absolute",
+    bottom: 10,
+    left: 10,
+    padding: "4px 10px",
+    borderRadius: 999,
+    fontSize: 12,
+    fontWeight: 600,
+    background: "rgba(0,0,0,0.55)",
+    color: "rgba(255,255,255,0.9)",
+    backdropFilter: "blur(8px)",
+    maxWidth: "calc(100% - 20px)",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap" as const,
   },
 };

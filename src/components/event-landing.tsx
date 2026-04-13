@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import type { EventRecord, PhotoRecord } from "@/types";
 import { formatDate } from "@/lib/utils";
 import { PhotoComposer } from "@/components/photo-composer";
@@ -28,6 +29,8 @@ export function EventLanding({
   event: EventRecord;
   initialPhotos: PhotoRecord[];
 }) {
+  const [livePhotos, setLivePhotos] = useState<PhotoRecord[]>([]);
+
   const theme = event.landing_config.theme;
   const sections = event.landing_config.sections;
   const coverUrl = theme.heroImage ?? event.cover_image_url ?? "";
@@ -111,13 +114,20 @@ export function EventLanding({
       {/* ── UPLOADER ─────────────────────────────────────────────────── */}
       <section id="uploader" style={styles.section}>
         <div className="container">
-          <PhotoComposer event={event} />
+          <PhotoComposer
+            event={event}
+            onUploaded={(photo) => {
+              if (photo.moderation_status === "approved") {
+                setLivePhotos((prev) => [photo, ...prev]);
+              }
+            }}
+          />
         </div>
       </section>
 
       {/* ── GALLERY ──────────────────────────────────────────────────── */}
       {hasGallery ? (
-        <RealtimeGallery event={event} initialPhotos={initialPhotos} />
+        <RealtimeGallery event={event} initialPhotos={initialPhotos} additionalPhotos={livePhotos} />
       ) : null}
     </main>
   );
