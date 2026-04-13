@@ -224,7 +224,7 @@ function Lightbox({
       onTouchEnd={(e) => {
         if (touchStartX.current === null) return;
         const dx = e.changedTouches[0].clientX - touchStartX.current;
-        if (Math.abs(dx) > 48) { dx < 0 ? next() : prev(); }
+        if (Math.abs(dx) > 48) { if (dx < 0) { next(); } else { prev(); } }
         touchStartX.current = null;
       }}
     >

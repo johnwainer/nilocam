@@ -33,8 +33,12 @@ export function GalleryDisplay({
   // Keep mutable refs so callbacks always see the latest values
   const photosRef = useRef(photos);
   const curRef = useRef(cur);
-  photosRef.current = photos;
-  curRef.current = cur;
+  // Sync refs after every render so async callbacks always see latest values
+  useEffect(() => {
+    photosRef.current = photos;
+    curRef.current = cur;
+  });
+
 
   // ── Prevent body scroll ──────────────────────────────────────────────────
   useEffect(() => {

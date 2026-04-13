@@ -15,7 +15,6 @@ import {
   TEMPLATES,
   eventTypePresetFromKey,
 } from "@/lib/constants";
-import type { FilterKey, TemplateKey } from "@/lib/image-tools";
 import { formatBytes, formatDate, publicStorageUrl, siteUrl, toSlug } from "@/lib/utils";
 import type { EventRecord, EventTypeKey, LandingTemplatePreset, PhotoRecord, WatermarkPosition } from "@/types";
 import { SpyCatIcon } from "@/components/top-nav";
@@ -1514,7 +1513,7 @@ export function AdminDashboard({
                           onClick={selectMode ? () => {
                             setSelectedPhotoIds((cur) => {
                               const next = new Set(cur);
-                              next.has(photo.id) ? next.delete(photo.id) : next.add(photo.id);
+                              if (next.has(photo.id)) { next.delete(photo.id); } else { next.add(photo.id); }
                               return next;
                             });
                           } : undefined}
