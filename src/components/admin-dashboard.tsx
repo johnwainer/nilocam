@@ -784,6 +784,79 @@ export function AdminDashboard({
                         <span>Mostrar términos y condiciones</span>
                       </label>
                     </div>
+
+                    {/* Filtros y marcos */}
+                    <div style={{ borderTop: "1px solid rgba(0,0,0,0.07)", paddingTop: 18, display: "grid", gap: 16 }}>
+                      <span className="label" style={{ margin: 0 }}>Filtros y marcos</span>
+
+                      {/* Filters mode */}
+                      <div style={s.field}>
+                        <span className="label">Filtros de color</span>
+                        <div style={s.modeChips}>
+                          {([
+                            { v: "allow",  label: "Invitado elige" },
+                            { v: "none",   label: "Sin filtros" },
+                            { v: "forced", label: "Fijar filtro" },
+                          ] as { v: "allow" | "none" | "forced"; label: string }[]).map(({ v, label }) => {
+                            const active = (selected.landing_config.filtersMode ?? "allow") === v;
+                            return (
+                              <button key={v} type="button" style={active ? s.modeChipActive : s.modeChip} onClick={() => updateLanding("filtersMode", v)}>
+                                {label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                        {(selected.landing_config.filtersMode ?? "allow") === "forced" && (
+                          <div style={{ marginTop: 12 }}>
+                            <span className="label" style={{ marginBottom: 10, display: "block" }}>Filtro para todos</span>
+                            <div style={s.filterGrid}>
+                              {FILTERS.map((f) => {
+                                const active = (selected.landing_config.forcedFilter ?? "none") === f.key;
+                                return (
+                                  <button key={f.key} type="button" style={active ? s.filterChipActive : s.filterChip} onClick={() => updateLanding("forcedFilter", f.key)}>
+                                    {f.label}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Templates mode */}
+                      <div style={s.field}>
+                        <span className="label">Marcos decorativos</span>
+                        <div style={s.modeChips}>
+                          {([
+                            { v: "allow",  label: "Invitado elige" },
+                            { v: "none",   label: "Sin marcos" },
+                            { v: "forced", label: "Fijar marco" },
+                          ] as { v: "allow" | "none" | "forced"; label: string }[]).map(({ v, label }) => {
+                            const active = (selected.landing_config.templatesMode ?? "allow") === v;
+                            return (
+                              <button key={v} type="button" style={active ? s.modeChipActive : s.modeChip} onClick={() => updateLanding("templatesMode", v)}>
+                                {label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                        {(selected.landing_config.templatesMode ?? "allow") === "forced" && (
+                          <div style={{ marginTop: 12 }}>
+                            <span className="label" style={{ marginBottom: 10, display: "block" }}>Marco para todos</span>
+                            <div style={s.filterGrid}>
+                              {TEMPLATES.map((t) => {
+                                const active = (selected.landing_config.forcedTemplate ?? "clean") === t.key;
+                                return (
+                                  <button key={t.key} type="button" style={active ? s.filterChipActive : s.filterChip} onClick={() => updateLanding("forcedTemplate", t.key)}>
+                                    {t.label}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
 
                   {/* Marca de agua */}
@@ -918,110 +991,6 @@ export function AdminDashboard({
                         </label>
                       </>
                     )}
-                  </div>
-
-                  {/* Filtros y marcos */}
-                  <div style={s.formSection}>
-                    <span className="eyebrow" style={s.sectionEyebrow}>
-                      Filtros y marcos
-                    </span>
-                    <p style={s.fieldHint}>
-                      Controla si los invitados pueden elegir filtros y marcos, si se deshabilitan o si aplicas uno fijo a todas las fotos.
-                    </p>
-
-                    {/* Filters mode */}
-                    <div style={s.field}>
-                      <span className="label">Filtros de color</span>
-                      <div style={s.modeChips}>
-                        {([
-                          { v: "allow",  label: "Invitado elige" },
-                          { v: "none",   label: "Sin filtros" },
-                          { v: "forced", label: "Fijar filtro" },
-                        ] as { v: "allow" | "none" | "forced"; label: string }[]).map(({ v, label }) => {
-                          const active = (selected.landing_config.filtersMode ?? "allow") === v;
-                          return (
-                            <button
-                              key={v}
-                              type="button"
-                              style={active ? s.modeChipActive : s.modeChip}
-                              onClick={() => updateLanding("filtersMode", v)}
-                            >
-                              {label}
-                            </button>
-                          );
-                        })}
-                      </div>
-
-                      {(selected.landing_config.filtersMode ?? "allow") === "forced" && (
-                        <div style={{ marginTop: 12 }}>
-                          <span className="label" style={{ marginBottom: 10, display: "block" }}>
-                            Filtro para todos
-                          </span>
-                          <div style={s.filterGrid}>
-                            {FILTERS.map((f) => {
-                              const active = (selected.landing_config.forcedFilter ?? "none") === f.key;
-                              return (
-                                <button
-                                  key={f.key}
-                                  type="button"
-                                  style={active ? s.filterChipActive : s.filterChip}
-                                  onClick={() => updateLanding("forcedFilter", f.key)}
-                                >
-                                  {f.label}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Templates mode */}
-                    <div style={s.field}>
-                      <span className="label">Marcos decorativos</span>
-                      <div style={s.modeChips}>
-                        {([
-                          { v: "allow",  label: "Invitado elige" },
-                          { v: "none",   label: "Sin marcos" },
-                          { v: "forced", label: "Fijar marco" },
-                        ] as { v: "allow" | "none" | "forced"; label: string }[]).map(({ v, label }) => {
-                          const active = (selected.landing_config.templatesMode ?? "allow") === v;
-                          return (
-                            <button
-                              key={v}
-                              type="button"
-                              style={active ? s.modeChipActive : s.modeChip}
-                              onClick={() => updateLanding("templatesMode", v)}
-                            >
-                              {label}
-                            </button>
-                          );
-                        })}
-                      </div>
-
-                      {(selected.landing_config.templatesMode ?? "allow") === "forced" && (
-                        <div style={{ marginTop: 12 }}>
-                          <span className="label" style={{ marginBottom: 10, display: "block" }}>
-                            Marco para todos
-                          </span>
-                          <div style={s.filterGrid}>
-                            {TEMPLATES.map((t) => {
-                              const active = (selected.landing_config.forcedTemplate ?? "clean") === t.key;
-                              return (
-                                <button
-                                  key={t.key}
-                                  type="button"
-                                  style={active ? s.filterChipActive : s.filterChip}
-                                  onClick={() => updateLanding("forcedTemplate", t.key)}
-                                >
-                                  {t.label}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      )}
-                    </div>
                   </div>
 
                   {/* Contenido */}
