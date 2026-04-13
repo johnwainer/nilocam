@@ -3,19 +3,18 @@
 import { useMemo, useState } from "react";
 import { QRCodeCard } from "@/components/qr-code-card";
 import { Button } from "@/components/button";
+import { BrandMark } from "@/components/brand-mark";
 import { buildThemeSeed, createDefaultSections, getEventType, getEventTypes } from "@/lib/event-types";
 import { saveEvent } from "@/lib/browser-store";
 import { buildEventUrl } from "@/lib/site";
-import type { EventRecord, EventVisibility } from "@/lib/types";
+import type { EventRecord, EventStore, EventVisibility } from "@/lib/types";
 import { clampText, slugify } from "@/lib/utils";
-import type { EventStore } from "@/lib/types";
 import {
   ArrowDown,
   ArrowUp,
   Eye,
   Plus,
   RefreshCw,
-  Settings,
   Sparkles,
   Trash2,
 } from "lucide-react";
@@ -76,9 +75,8 @@ export function AdminDashboard({ initialStore }: Props) {
 
   function handleCreateEvent() {
     const next = createEventDraft();
-    const nextStore = { ...store, events: [next, ...store.events] };
     saveEvent(next);
-    setStore(nextStore);
+    setStore((current) => ({ ...current, events: [next, ...current.events] }));
     setSelectedSlug(next.slug);
     setDraft(next);
   }
@@ -123,49 +121,59 @@ export function AdminDashboard({ initialStore }: Props) {
   }
 
   return (
-    <div className="mx-auto grid min-h-screen max-w-7xl gap-6 px-4 py-6 sm:px-6 lg:grid-cols-[0.75fr_1.25fr] lg:px-8">
-      <aside className="glass-card rounded-[34px] p-5">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-semibold text-white">Admin Nilo Cam</p>
-            <p className="text-xs text-white/50">Eventos, landing y QR</p>
+    <div className="mx-auto grid min-h-screen max-w-7xl gap-6 px-4 py-5 sm:px-6 lg:grid-cols-[0.75fr_1.25fr] lg:px-8">
+      <aside className="space-y-5">
+        <div className="panel rounded-[34px] p-5">
+          <BrandMark compact />
+          <div className="mt-5 flex items-center justify-between gap-3">
+            <div>
+              <p className="text-xs uppercase tracking-[0.24em] text-[var(--app-muted)]">Admin</p>
+              <p className="text-lg font-semibold text-black">Eventos y QR</p>
+            </div>
+            <Button tone="secondary" onClick={handleCreateEvent}>
+              <Plus className="h-4 w-4" />
+              Crear
+            </Button>
           </div>
-          <Button tone="secondary" onClick={handleCreateEvent}>
-            <Plus className="h-4 w-4" />
-            Crear
-          </Button>
         </div>
 
-        <div className="mt-5 space-y-3">
-          {store.events.map((event) => (
-            <button
-              key={event.id}
-              className={`w-full rounded-[24px] border p-4 text-left transition ${
-                selectedEvent?.slug === event.slug
-                  ? "border-white/20 bg-white/10"
-                  : "border-white/10 bg-white/5 hover:bg-white/8"
-              }`}
-              onClick={() => {
-                setSelectedSlug(event.slug);
-                setDraft(event);
-              }}
-            >
-              <p className="text-sm font-semibold text-white">{event.title}</p>
-              <p className="mt-1 text-xs text-white/50">{event.qrLabel}</p>
-            </button>
-          ))}
+        <div className="panel rounded-[34px] p-5">
+          <p className="text-xs uppercase tracking-[0.24em] text-[var(--app-muted)]">Eventos</p>
+          <div className="mt-4 space-y-3">
+            {store.events.map((event) => (
+              <button
+                key={event.id}
+                className={`w-full rounded-[24px] border px-4 py-4 text-left transition ${
+                  selectedEvent?.slug === event.slug
+                    ? "border-black bg-black text-white"
+                    : "border-[var(--app-border)] bg-white hover:bg-black/3"
+                }`}
+                onClick={() => {
+                  setSelectedSlug(event.slug);
+                  setDraft(event);
+                }}
+              >
+                <p className="text-sm font-semibold">{event.title}</p>
+                <p className={selectedEvent?.slug === event.slug ? "mt-1 text-xs text-white/70" : "mt-1 text-xs text-[var(--app-muted)]"}>
+                  {event.qrLabel}
+                </p>
+              </button>
+            ))}
+          </div>
         </div>
 
-        <div className="mt-6 rounded-[28px] border border-white/10 bg-white/5 p-4">
-          <div className="flex items-center gap-2 text-sm text-white">
+        <div className="panel rounded-[34px] p-5">
+          <div className="flex items-center gap-2 text-sm font-semibold text-black">
             <Sparkles className="h-4 w-4" />
-            Tipos listos
+            Tipos iniciales
           </div>
           <div className="mt-3 grid grid-cols-2 gap-2">
             {getEventTypes().map((type) => (
-              <div key={type.key} className="rounded-2xl border border-white/10 bg-black/15 p-3">
-                <p className="text-xs font-semibold text-white">{type.label}</p>
-                <p className="mt-1 text-[11px] leading-5 text-white/50">{clampText(type.description, 74)}</p>
+              <div key={type.key} className="rounded-2xl border border-[var(--app-border)] bg-black/3 p-3">
+                <p className="text-xs font-semibold text-black">{type.label}</p>
+                <p className="mt-1 text-[11px] leading-5 text-[var(--app-muted)]">
+                  {clampText(type.description, 74)}
+                </p>
               </div>
             ))}
           </div>
@@ -173,16 +181,16 @@ export function AdminDashboard({ initialStore }: Props) {
       </aside>
 
       <section className="space-y-6">
-        <div className="glass-card rounded-[34px] p-5">
+        <div className="panel rounded-[34px] p-5">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div className="max-w-2xl">
-              <p className="text-xs uppercase tracking-[0.24em] text-white/40">Constructor visual</p>
-              <h1 className="mt-3 font-[family-name:var(--font-space-grotesk)] text-4xl font-bold text-white">
+              <p className="text-xs uppercase tracking-[0.24em] text-[var(--app-muted)]">Constructor visual</p>
+              <h1 className="mt-3 font-[family-name:var(--font-space-grotesk)] text-4xl font-semibold text-black">
                 {draft.title}
               </h1>
-              <p className="mt-3 text-sm leading-7 text-white/65">
-                Edita el evento, cambia el landing según el tipo y define si las fotos se publican
-                directo o pasan por moderación.
+              <p className="mt-3 text-sm leading-7 text-[var(--app-muted)]">
+                Cada evento puede tener su landing propia, sus CTAs y su comportamiento de
+                publicación directa o moderada.
               </p>
             </div>
             <div className="flex gap-2">
@@ -194,57 +202,59 @@ export function AdminDashboard({ initialStore }: Props) {
                 onClick={() =>
                   navigator.clipboard.writeText(draft.publicUrl).then(() => {
                     setCopyMessage("URL copiada");
-                    setTimeout(() => setCopyMessage(""), 2000);
+                    setTimeout(() => setCopyMessage(""), 1800);
                   })
                 }
               >
-                <Settings className="h-4 w-4" />
                 {copyMessage || "Copiar URL"}
               </Button>
             </div>
           </div>
         </div>
 
-        <div className="grid gap-6 xl:grid-cols-[1fr_0.75fr]">
+        <div className="grid gap-6 xl:grid-cols-[1fr_0.76fr]">
           <div className="space-y-6">
-            <div className="glass-card rounded-[34px] p-5">
-              <h2 className="text-sm font-semibold text-white">Datos del evento</h2>
+            <div className="panel rounded-[34px] p-5">
+              <h2 className="text-sm font-semibold text-black">Datos del evento</h2>
               <div className="mt-4 grid gap-3 md:grid-cols-2">
                 <input
                   value={draft.title}
                   onChange={(event) => handleUpdateField("title", event.target.value)}
-                  className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none"
+                  className="rounded-2xl border border-[var(--app-border)] bg-white px-4 py-3 text-sm text-black outline-none"
                   placeholder="Título del evento"
                 />
                 <input
                   value={draft.slug}
                   onChange={(event) =>
-                    setDraft((current) => ({
-                      ...current,
-                      slug: slugify(event.target.value),
-                      publicUrl: buildEventUrl(slugify(event.target.value)),
-                      qrLabel: `nilo.cam/${slugify(event.target.value)}`,
-                    }))
+                    setDraft((current) => {
+                      const nextSlug = slugify(event.target.value);
+                      return {
+                        ...current,
+                        slug: nextSlug,
+                        publicUrl: buildEventUrl(nextSlug),
+                        qrLabel: `nilo.cam/${nextSlug}`,
+                      };
+                    })
                   }
-                  className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none"
+                  className="rounded-2xl border border-[var(--app-border)] bg-white px-4 py-3 text-sm text-black outline-none"
                   placeholder="slug"
                 />
                 <input
                   value={draft.dateLabel}
                   onChange={(event) => handleUpdateField("dateLabel", event.target.value)}
-                  className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none"
+                  className="rounded-2xl border border-[var(--app-border)] bg-white px-4 py-3 text-sm text-black outline-none"
                   placeholder="Fecha"
                 />
                 <input
                   value={draft.venue}
                   onChange={(event) => handleUpdateField("venue", event.target.value)}
-                  className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none"
+                  className="rounded-2xl border border-[var(--app-border)] bg-white px-4 py-3 text-sm text-black outline-none"
                   placeholder="Lugar"
                 />
                 <input
                   value={draft.organizer}
                   onChange={(event) => handleUpdateField("organizer", event.target.value)}
-                  className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none"
+                  className="rounded-2xl border border-[var(--app-border)] bg-white px-4 py-3 text-sm text-black outline-none"
                   placeholder="Dueño del evento"
                 />
                 <input
@@ -252,7 +262,7 @@ export function AdminDashboard({ initialStore }: Props) {
                   type="number"
                   min={1}
                   onChange={(event) => handleUpdateField("maxPhotoMb", Number(event.target.value))}
-                  className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none"
+                  className="rounded-2xl border border-[var(--app-border)] bg-white px-4 py-3 text-sm text-black outline-none"
                   placeholder="Máximo MB"
                 />
               </div>
@@ -261,10 +271,10 @@ export function AdminDashboard({ initialStore }: Props) {
                 <select
                   value={draft.eventType}
                   onChange={(event) => handleTypeChange(event.target.value as EventRecord["eventType"])}
-                  className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none"
+                  className="rounded-2xl border border-[var(--app-border)] bg-white px-4 py-3 text-sm text-black outline-none"
                 >
                   {getEventTypes().map((type) => (
-                    <option key={type.key} value={type.key} className="text-slate-950">
+                    <option key={type.key} value={type.key}>
                       {type.label}
                     </option>
                   ))}
@@ -274,40 +284,36 @@ export function AdminDashboard({ initialStore }: Props) {
                   onChange={(event) =>
                     handleUpdateField("visibility", event.target.value as EventVisibility)
                   }
-                  className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white outline-none"
+                  className="rounded-2xl border border-[var(--app-border)] bg-white px-4 py-3 text-sm text-black outline-none"
                 >
-                  <option value="moderated" className="text-slate-950">
-                    Con moderación
-                  </option>
-                  <option value="public" className="text-slate-950">
-                    Publicación directa
-                  </option>
+                  <option value="moderated">Con moderación</option>
+                  <option value="public">Publicación directa</option>
                 </select>
               </div>
             </div>
 
-            <div className="glass-card rounded-[34px] p-5">
-              <h2 className="text-sm font-semibold text-white">Constructor de landing</h2>
-              <p className="mt-1 text-xs text-white/50">
-                Puedes ocultar o reordenar secciones para que cada evento tenga su estructura.
+            <div className="panel rounded-[34px] p-5">
+              <h2 className="text-sm font-semibold text-black">Constructor del landing</h2>
+              <p className="mt-1 text-xs text-[var(--app-muted)]">
+                Reordena, oculta o muestra secciones para adaptar cada evento.
               </p>
               <div className="mt-4 space-y-3">
                 {draft.landingSections.map((section, index) => (
-                  <div key={section.id} className="rounded-[24px] border border-white/10 bg-white/5 p-4">
+                  <div key={section.id} className="rounded-[24px] border border-[var(--app-border)] bg-white p-4">
                     <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                       <div>
-                        <p className="text-sm font-semibold text-white">{section.title}</p>
-                        <p className="mt-1 text-xs text-white/50">{section.body}</p>
+                        <p className="text-sm font-semibold text-black">{section.title}</p>
+                        <p className="mt-1 text-xs text-[var(--app-muted)]">{section.body}</p>
                       </div>
                       <div className="flex items-center gap-2">
                         <button
-                          className="rounded-xl border border-white/10 bg-black/15 p-2 text-white/70"
+                          className="rounded-full border border-[var(--app-border)] bg-black/3 p-2 text-black transition hover:bg-black/8"
                           onClick={() => moveSection(section.id, -1)}
                         >
                           <ArrowUp className="h-4 w-4" />
                         </button>
                         <button
-                          className="rounded-xl border border-white/10 bg-black/15 p-2 text-white/70"
+                          className="rounded-full border border-[var(--app-border)] bg-black/3 p-2 text-black transition hover:bg-black/8"
                           onClick={() => moveSection(section.id, 1)}
                         >
                           <ArrowDown className="h-4 w-4" />
@@ -317,7 +323,7 @@ export function AdminDashboard({ initialStore }: Props) {
                         </Button>
                       </div>
                     </div>
-                    <p className="mt-3 text-[11px] uppercase tracking-[0.2em] text-white/35">
+                    <p className="mt-3 text-[11px] uppercase tracking-[0.2em] text-[var(--app-muted)]">
                       Bloque {index + 1} · {section.kind}
                     </p>
                   </div>
@@ -335,33 +341,33 @@ export function AdminDashboard({ initialStore }: Props) {
               }
             />
 
-            <div className="glass-card rounded-[34px] p-5">
-              <h2 className="text-sm font-semibold text-white">Resumen del evento</h2>
-              <div className="mt-4 grid gap-3 text-sm text-white/70">
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
-                  <p className="text-xs uppercase tracking-[0.2em] text-white/40">Landing</p>
+            <div className="panel rounded-[34px] p-5">
+              <h2 className="text-sm font-semibold text-black">Resumen</h2>
+              <div className="mt-4 grid gap-3 text-sm text-black">
+                <div className="rounded-2xl border border-[var(--app-border)] bg-black/3 p-3">
+                  <p className="text-xs uppercase tracking-[0.2em] text-[var(--app-muted)]">Landing</p>
                   <p className="mt-1">{draft.heroTagline}</p>
                 </div>
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
-                  <p className="text-xs uppercase tracking-[0.2em] text-white/40">Fotos</p>
+                <div className="rounded-2xl border border-[var(--app-border)] bg-black/3 p-3">
+                  <p className="text-xs uppercase tracking-[0.2em] text-[var(--app-muted)]">Fotos</p>
                   <p className="mt-1">
                     {draft.visibility === "public"
                       ? "Se publican al instante"
                       : "Primero pasan por moderación"}
                   </p>
                 </div>
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
-                  <p className="text-xs uppercase tracking-[0.2em] text-white/40">Upload</p>
-                  <p className="mt-1">Límite configurable de {draft.maxPhotoMb} MB por foto.</p>
+                <div className="rounded-2xl border border-[var(--app-border)] bg-black/3 p-3">
+                  <p className="text-xs uppercase tracking-[0.2em] text-[var(--app-muted)]">Límite</p>
+                  <p className="mt-1">Máximo {draft.maxPhotoMb} MB por foto.</p>
                 </div>
               </div>
             </div>
 
-            <div className="glass-card rounded-[34px] p-5">
+            <div className="panel rounded-[34px] p-5">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-semibold text-white">Fotos actuales</p>
-                  <p className="text-xs text-white/50">Total: {selectedPhotos.length}</p>
+                  <p className="text-sm font-semibold text-black">Fotos actuales</p>
+                  <p className="text-xs text-[var(--app-muted)]">Total: {selectedPhotos.length}</p>
                 </div>
                 <Button tone="secondary">
                   <Eye className="h-4 w-4" />
@@ -370,11 +376,13 @@ export function AdminDashboard({ initialStore }: Props) {
               </div>
               <div className="mt-4 space-y-3">
                 {selectedPhotos.slice(0, 4).map((photo) => (
-                  <div key={photo.id} className="flex gap-3 rounded-[22px] border border-white/10 bg-white/5 p-3">
+                  <div key={photo.id} className="flex gap-3 rounded-[22px] border border-[var(--app-border)] bg-white p-3">
                     <img src={photo.src} alt="" className="h-16 w-16 rounded-2xl object-cover" />
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-white">{photo.authorName}</p>
-                      <p className="text-xs text-white/45">{photo.status} · {photo.note || "Sin nota"}</p>
+                      <p className="truncate text-sm font-semibold text-black">{photo.authorName}</p>
+                      <p className="text-xs text-[var(--app-muted)]">
+                        {photo.status} · {photo.note || "Sin nota"}
+                      </p>
                     </div>
                     <Button tone="ghost" className="ml-auto h-10 w-10 px-0">
                       <Trash2 className="h-4 w-4" />

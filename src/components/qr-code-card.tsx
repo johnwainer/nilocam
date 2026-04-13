@@ -10,29 +10,29 @@ type Props = {
 
 export function QRCodeCard({ url, label, onCopy }: Props) {
   return (
-    <div className="glass-card rounded-[28px] p-5">
+    <div className="panel rounded-[32px] p-5">
       <div className="flex items-center gap-3">
-        <div className="rounded-2xl bg-white/10 p-3">
-          <ScanLine className="h-5 w-5 text-white" />
+        <div className="rounded-2xl border border-[var(--app-border)] bg-white p-3">
+          <ScanLine className="h-5 w-5 text-black" />
         </div>
         <div>
-          <p className="text-sm font-semibold text-white">QR del evento</p>
-          <p className="text-xs text-white/60">{label}</p>
+          <p className="text-sm font-semibold text-black">QR del evento</p>
+          <p className="text-xs text-[var(--app-muted)]">{label}</p>
         </div>
       </div>
 
-      <div className="mt-5 grid place-items-center rounded-[24px] bg-white p-5">
-        <QRCodeSVG value={url} size={176} bgColor="#ffffff" fgColor="#0a0f1d" />
+      <div className="mt-5 grid place-items-center rounded-[28px] border border-[var(--app-border)] bg-white p-5">
+        <QRCodeSVG value={url} size={176} bgColor="#ffffff" fgColor="#0b0b0c" />
       </div>
 
-      <div className="mt-4 rounded-2xl border border-white/10 bg-black/20 p-3">
+      <div className="mt-4 rounded-[22px] border border-[var(--app-border)] bg-black/3 p-3">
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
-            <p className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-white/50">
+            <p className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-[var(--app-muted)]">
               <Link2 className="h-3.5 w-3.5" />
               URL pública
             </p>
-            <p className="mt-1 truncate text-sm text-white">{url}</p>
+            <p className="mt-1 truncate text-sm text-black">{url}</p>
           </div>
           <Button
             tone="soft"
@@ -47,4 +47,3 @@ export function QRCodeCard({ url, label, onCopy }: Props) {
     </div>
   );
 }
-

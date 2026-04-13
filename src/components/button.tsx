@@ -9,11 +9,11 @@ type BaseProps = {
 
 const tones = {
   primary:
-    "bg-[var(--app-accent)] text-white shadow-lg shadow-indigo-500/20 hover:opacity-95",
+    "bg-[var(--app-accent)] text-white hover:bg-black/90 shadow-[0_14px_30px_rgba(17,17,17,0.12)]",
   secondary:
-    "bg-white/8 text-white ring-1 ring-white/12 hover:bg-white/12",
-  ghost: "bg-transparent text-[var(--app-fg)] hover:bg-white/8",
-  soft: "bg-white/10 text-white hover:bg-white/14",
+    "bg-white text-[var(--app-fg)] ring-1 ring-[var(--app-border)] hover:bg-black/5",
+  ghost: "bg-transparent text-[var(--app-fg)] hover:bg-black/5",
+  soft: "bg-black/5 text-[var(--app-fg)] hover:bg-black/8",
 };
 
 export function Button({
@@ -25,7 +25,7 @@ export function Button({
   return (
     <button
       className={cx(
-        "inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold transition",
+        "inline-flex items-center justify-center gap-2 rounded-full px-4 py-3 text-sm font-semibold transition duration-200",
         tones[tone],
         className,
       )}
@@ -45,7 +45,7 @@ export function LinkButton({
   return (
     <a
       className={cx(
-        "inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold transition",
+        "inline-flex items-center justify-center gap-2 rounded-full px-4 py-3 text-sm font-semibold transition duration-200",
         tones[tone],
         className,
       )}
@@ -55,4 +55,3 @@ export function LinkButton({
     </a>
   );
 }
-

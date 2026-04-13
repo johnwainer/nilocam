@@ -12,6 +12,7 @@ Sistema PWA para eventos con QR, landing personalizable, editor de fotos y muro 
 - Editor simple de filtros y plantillas
 - Galería en vivo con soporte de moderación
 - Base de datos preparada para Supabase
+- Diseño blanco y negro con logo del gato espía
 
 ## Ejecutar
 
@@ -26,6 +27,7 @@ El archivo `supabase/schema.sql` trae la base para eventos y fotos. Falta conect
 
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY` para los endpoints del servidor
 
 ## Siguiente paso recomendado
 

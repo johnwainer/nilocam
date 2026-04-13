@@ -1,11 +1,7 @@
 import type { EventRecord, EventStore, PhotoRecord } from "@/lib/types";
 import { initialStore } from "@/lib/mock-data";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
-import {
-  fetchStoreFromSupabase,
-  syncEventToSupabase,
-  syncPhotoToSupabase,
-} from "@/lib/supabase/data";
+import { fetchStoreFromSupabase } from "@/lib/supabase/data";
 
 const STORAGE_KEY = "nilo-cam-store";
 const CHANNEL_NAME = "nilo-cam-live";
@@ -139,4 +135,81 @@ export function subscribeToStore(listener: Listener) {
       void supabase.removeChannel(realtime);
     }
   };
+}
+
+async function syncEventToSupabase(event: EventRecord) {
+  const client = createSupabaseBrowserClient();
+  if (client) {
+    try {
+      await client.from("events").upsert({
+        id: event.id,
+        slug: event.slug,
+        title: event.title,
+        description: event.description,
+        event_type: event.eventType,
+        date_label: event.dateLabel,
+        venue: event.venue,
+        organizer: event.organizer,
+        public_url: event.publicUrl,
+        qr_label: event.qrLabel,
+        visibility: event.visibility,
+        allow_anonymous: event.allowAnonymous,
+        require_guest_name: event.requireGuestName,
+        max_photo_mb: event.maxPhotoMb,
+        highlight_limit: event.highlightLimit,
+        logo_text: event.logoText,
+        hero_tagline: event.heroTagline,
+        landing_sections: event.landingSections,
+        ctas: event.ctas,
+        theme: event.theme,
+        updated_at: new Date().toISOString(),
+      });
+      return;
+    } catch {
+      // Fall through to the API route.
+    }
+  }
+
+  try {
+    await fetch("/api/events", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(event),
+    });
+  } catch {
+    // Local-first fallback keeps the app usable even if Supabase is not configured yet.
+  }
+}
+
+async function syncPhotoToSupabase(photo: PhotoRecord) {
+  const client = createSupabaseBrowserClient();
+  if (client) {
+    try {
+      await client.from("photos").insert({
+        id: photo.id,
+        event_slug: photo.eventSlug,
+        src: photo.src,
+        author_name: photo.authorName,
+        anonymous: photo.anonymous,
+        note: photo.note,
+        status: photo.status,
+        filter: photo.filter,
+        template: photo.template,
+        created_at: photo.createdAt,
+      });
+      return;
+    } catch {
+      // Fall through to the API route.
+    }
+  }
+
+  try {
+    await fetch("/api/photos", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(photo),
+    });
+  } catch {
+    // Local-first fallback keeps the app usable even if Supabase is not configured yet.
+  }
 }

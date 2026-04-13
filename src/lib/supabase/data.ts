@@ -1,4 +1,3 @@
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { buildThemeSeed, createDefaultSections, getEventType } from "@/lib/event-types";
 import { buildEventUrl } from "@/lib/site";
@@ -111,51 +110,3 @@ export async function fetchPhotosBySlug(slug: string) {
   const store = await fetchStoreFromSupabase();
   return store.photos.filter((photo) => photo.eventSlug === slug);
 }
-
-export async function syncEventToSupabase(event: EventRecord) {
-  const client = createSupabaseBrowserClient();
-  if (!client) return;
-
-  await client.from("events").upsert({
-    id: event.id,
-    slug: event.slug,
-    title: event.title,
-    description: event.description,
-    event_type: event.eventType,
-    date_label: event.dateLabel,
-    venue: event.venue,
-    organizer: event.organizer,
-    public_url: event.publicUrl,
-    qr_label: event.qrLabel,
-    visibility: event.visibility,
-    allow_anonymous: event.allowAnonymous,
-    require_guest_name: event.requireGuestName,
-    max_photo_mb: event.maxPhotoMb,
-    highlight_limit: event.highlightLimit,
-    logo_text: event.logoText,
-    hero_tagline: event.heroTagline,
-    landing_sections: event.landingSections,
-    ctas: event.ctas,
-    theme: event.theme,
-    updated_at: new Date().toISOString(),
-  });
-}
-
-export async function syncPhotoToSupabase(photo: PhotoRecord) {
-  const client = createSupabaseBrowserClient();
-  if (!client) return;
-
-  await client.from("photos").insert({
-    id: photo.id,
-    event_slug: photo.eventSlug,
-    src: photo.src,
-    author_name: photo.authorName,
-    anonymous: photo.anonymous,
-    note: photo.note,
-    status: photo.status,
-    filter: photo.filter,
-    template: photo.template,
-    created_at: photo.createdAt,
-  });
-}
-

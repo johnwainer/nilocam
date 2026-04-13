@@ -102,12 +102,12 @@ export function PhotoEditor({ file, onCancel, onSave }: Props) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/80 px-4 py-6 backdrop-blur-sm">
-      <div className="glass-card w-full max-w-5xl overflow-hidden rounded-[32px]">
-        <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/35 px-4 py-6 backdrop-blur-sm">
+      <div className="panel w-full max-w-5xl overflow-hidden rounded-[32px]">
+        <div className="flex items-center justify-between border-b border-[var(--app-border)] px-5 py-4">
           <div>
-            <p className="text-sm font-semibold text-white">Editar foto</p>
-            <p className="text-xs text-white/50">Aplica filtro o plantilla antes de publicar</p>
+            <p className="text-sm font-semibold text-black">Editar foto</p>
+            <p className="text-xs text-[var(--app-muted)]">Aplica filtro o plantilla antes de publicar</p>
           </div>
           <Button tone="ghost" onClick={onCancel}>
             <X className="h-4 w-4" />
@@ -116,8 +116,8 @@ export function PhotoEditor({ file, onCancel, onSave }: Props) {
         </div>
 
         <div className="grid gap-0 lg:grid-cols-[1.2fr_0.8fr]">
-          <div className="bg-black/40 p-4">
-            <div className="overflow-hidden rounded-[28px] border border-white/10">
+          <div className="bg-black/3 p-4">
+            <div className="overflow-hidden rounded-[28px] border border-[var(--app-border)] bg-white">
               <img
                 src={previewUrl}
                 alt="Vista previa"
@@ -130,7 +130,7 @@ export function PhotoEditor({ file, onCancel, onSave }: Props) {
 
           <div className="space-y-5 p-5">
             <div>
-              <div className="mb-3 flex items-center gap-2 text-xs uppercase tracking-[0.24em] text-white/45">
+              <div className="mb-3 flex items-center gap-2 text-xs uppercase tracking-[0.24em] text-[var(--app-muted)]">
                 <Sparkles className="h-3.5 w-3.5" />
                 Filtros
               </div>
@@ -141,8 +141,8 @@ export function PhotoEditor({ file, onCancel, onSave }: Props) {
                     className={cx(
                       "rounded-full border px-3 py-2 text-xs font-semibold transition",
                       item.id === filter
-                        ? "border-white bg-white text-slate-950"
-                        : "border-white/10 bg-white/5 text-white hover:bg-white/10",
+                        ? "border-black bg-black text-white"
+                        : "border-[var(--app-border)] bg-white text-black hover:bg-black/5",
                     )}
                     onClick={() => setFilter(item.id)}
                   >
@@ -153,7 +153,7 @@ export function PhotoEditor({ file, onCancel, onSave }: Props) {
             </div>
 
             <div>
-              <div className="mb-3 flex items-center gap-2 text-xs uppercase tracking-[0.24em] text-white/45">
+              <div className="mb-3 flex items-center gap-2 text-xs uppercase tracking-[0.24em] text-[var(--app-muted)]">
                 <ImageUp className="h-3.5 w-3.5" />
                 Plantillas
               </div>
@@ -164,8 +164,8 @@ export function PhotoEditor({ file, onCancel, onSave }: Props) {
                     className={cx(
                       "rounded-2xl border px-3 py-3 text-left text-sm transition",
                       item.id === template
-                        ? "border-[var(--app-accent)] bg-[var(--app-accent)]/18 text-white"
-                        : "border-white/10 bg-white/5 text-white/80 hover:bg-white/10",
+                        ? "border-black bg-black text-white"
+                        : "border-[var(--app-border)] bg-white text-black hover:bg-black/5",
                     )}
                     onClick={() => setTemplate(item.id)}
                   >
@@ -175,9 +175,9 @@ export function PhotoEditor({ file, onCancel, onSave }: Props) {
               </div>
             </div>
 
-            <div className="rounded-[24px] border border-white/10 bg-white/5 p-4">
-              <p className="text-sm font-semibold text-white">Resultado</p>
-              <p className="mt-1 text-xs text-white/55">
+            <div className="rounded-[24px] border border-[var(--app-border)] bg-black/3 p-4">
+              <p className="text-sm font-semibold text-black">Resultado</p>
+              <p className="mt-1 text-xs text-[var(--app-muted)]">
                 Filtro: {selectedFilter.label}. Plantilla: {template}.
               </p>
             </div>

@@ -15,8 +15,12 @@ const manrope = Manrope({
 export const metadata: Metadata = {
   title: "Nilo Cam",
   description:
-    "Eventos con QR para tomar, subir y compartir fotos en tiempo real.",
+    "Fotos en vivo para eventos con QR, landing personalizable y admin.",
   metadataBase: new URL("https://nilo-cam.vercel.app"),
+};
+
+export const viewport = {
+  themeColor: "#ffffff",
 };
 
 export default function RootLayout({
@@ -26,7 +30,7 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="en"
+      lang="es"
       className={`${spaceGrotesk.variable} ${manrope.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-[var(--app-bg)] text-[var(--app-fg)]">
