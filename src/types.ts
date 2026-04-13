@@ -57,6 +57,8 @@ export type EventLandingConfig = {
   watermarkOpacity?: number;  // 0.1–1.0
   // Active design template key
   templateKey?: string;
+  // Gallery display mode
+  galleryMode?: "grid" | "slider";
   // Filter & template policy
   // "allow"  → guest chooses freely (default)
   // "none"   → no filter/template applied, picker hidden

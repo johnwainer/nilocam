@@ -1221,6 +1221,38 @@ export function AdminDashboard({
                     </div>
 
                     <div style={s.field}>
+                      <span className="label">Modo de la galería de fotos</span>
+                      <div style={s.modeChips}>
+                        {([
+                          { v: "grid",   label: "Cuadrícula", desc: "Masonry de todas las fotos" },
+                          { v: "slider", label: "Slider",     desc: "Una foto a la vez con flechas" },
+                        ] as { v: "grid" | "slider"; label: string; desc: string }[]).map(({ v, label, desc }) => {
+                          const active = (selected.landing_config.galleryMode ?? "grid") === v;
+                          return (
+                            <button
+                              key={v}
+                              type="button"
+                              style={{
+                                ...(active ? s.modeChipActive : s.modeChip),
+                                borderRadius: 14,
+                                display: "flex",
+                                flexDirection: "column",
+                                alignItems: "flex-start",
+                                padding: "12px 18px",
+                                gap: 2,
+                                minWidth: 140,
+                              }}
+                              onClick={() => updateLanding("galleryMode", v)}
+                            >
+                              <span style={{ fontWeight: 700 }}>{label}</span>
+                              <span style={{ fontSize: 12, opacity: 0.65 }}>{desc}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <div style={s.field}>
                       <span className="label">Secciones visibles en la landing</span>
                       <div style={s.sectionChips}>
                         {(

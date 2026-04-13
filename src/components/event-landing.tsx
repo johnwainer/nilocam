@@ -201,6 +201,7 @@ export function EventLanding({
             event={event}
             initialPhotos={initialPhotos}
             additionalPhotos={livePhotos}
+            mode={cfg.galleryMode ?? "grid"}
           />
         </div>
       )}

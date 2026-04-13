@@ -36,6 +36,7 @@ const DEMO_EVENT: EventRecord = {
     showTerms: false,
     filtersMode: "allow",
     forcedFilter: null,
+    galleryMode: "slider",
     templatesMode: "allow",
     forcedTemplate: null,
     templateKey: "midnight",

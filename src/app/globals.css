@@ -637,6 +637,30 @@ img {
   to   { opacity: 1; transform: scale(1); }
 }
 
+/* ─── Slider entrance animations ───────────────────────────────────── */
+@keyframes sliderInRight {
+  from { opacity: 0; transform: translateX(40px) scale(0.98); }
+  to   { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+@keyframes sliderInLeft {
+  from { opacity: 0; transform: translateX(-40px) scale(0.98); }
+  to   { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+/* Arrow hover state */
+.rg-slider-card {
+  /* handled via inline animationName */
+}
+
+/* Tighten slider on mobile */
+@media (max-width: 640px) {
+  .rg-slider-card {
+    aspect-ratio: 3/4 !important;
+    border-radius: 14px !important;
+  }
+}
+
 .lb-backdrop {
   position: fixed;
   inset: 0;

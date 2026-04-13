@@ -125,6 +125,7 @@ export const DEFAULT_LANDING_CONFIG: EventLandingConfig = {
   showNameField: true,
   showAnonymousToggle: true,
   showTerms: true,
+  galleryMode: "grid",
   filtersMode: "allow",
   forcedFilter: null,
   templatesMode: "allow",

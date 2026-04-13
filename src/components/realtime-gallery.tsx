@@ -12,13 +12,14 @@ export function RealtimeGallery({
   event,
   initialPhotos,
   additionalPhotos,
+  mode = "grid",
 }: {
   event: EventRecord;
   initialPhotos: PhotoRecord[];
   additionalPhotos?: PhotoRecord[];
+  mode?: "grid" | "slider";
 }) {
   const [photos, setPhotos] = useState<PhotoRecord[]>(initialPhotos);
-  // IDs that arrived via realtime (animate as "new")
   const [freshIds, setFreshIds] = useState<Set<string>>(new Set());
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
@@ -58,7 +59,6 @@ export function RealtimeGallery({
     return [...extra, ...photos].slice(0, 60);
   }, [photos, additionalPhotos]);
 
-  // Mark additionalPhotos as fresh too (just uploaded)
   useEffect(() => {
     if (!additionalPhotos?.length) return;
     setFreshIds((cur) => {
@@ -93,23 +93,27 @@ export function RealtimeGallery({
           </div>
         </div>
 
-        {/* ── Masonry grid ── */}
-        <div className="rg-masonry">
-          {allPhotos.map((photo, i) => (
-            <GalleryTile
-              key={photo.id}
-              photo={photo}
-              index={i}
-              priority={i < 6}
-              isFresh={freshIds.has(photo.id)}
-              onClick={() => openLightbox(i)}
-            />
-          ))}
-        </div>
+        {/* ── Grid or Slider ── */}
+        {mode === "slider" ? (
+          <SliderView photos={allPhotos} freshIds={freshIds} />
+        ) : (
+          <div className="rg-masonry">
+            {allPhotos.map((photo, i) => (
+              <GalleryTile
+                key={photo.id}
+                photo={photo}
+                index={i}
+                priority={i < 6}
+                isFresh={freshIds.has(photo.id)}
+                onClick={() => openLightbox(i)}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
-      {/* ── Lightbox ── */}
-      {lightboxIndex !== null && (
+      {/* ── Lightbox (grid mode only) ── */}
+      {mode !== "slider" && lightboxIndex !== null && (
         <Lightbox
           photos={allPhotos}
           startIndex={lightboxIndex}
@@ -117,6 +121,175 @@ export function RealtimeGallery({
         />
       )}
     </section>
+  );
+}
+
+// ── Slider view ───────────────────────────────────────────────────────────────
+
+function SliderView({
+  photos,
+  freshIds,
+}: {
+  photos: PhotoRecord[];
+  freshIds: Set<string>;
+}) {
+  const [index, setIndex] = useState(0);
+  const [animKey, setAnimKey] = useState(0);
+  const [animDir, setAnimDir] = useState<"left" | "right">("right");
+  const touchStartX = useRef<number | null>(null);
+  const prevLengthRef = useRef(photos.length);
+
+  const count = photos.length;
+
+  // When new photo arrives at front of array, keep visual index on same photo
+  useEffect(() => {
+    const prev = prevLengthRef.current;
+    if (photos.length > prev) {
+      const added = photos.length - prev;
+      setIndex((i) => Math.min(i + added, photos.length - 1));
+    }
+    prevLengthRef.current = photos.length;
+  }, [photos.length]);
+
+  const go = useCallback(
+    (newIndex: number, dir: "left" | "right") => {
+      setAnimDir(dir);
+      setIndex(newIndex);
+      setAnimKey((k) => k + 1);
+    },
+    []
+  );
+
+  const prev = useCallback(() => {
+    go(index > 0 ? index - 1 : count - 1, "left");
+  }, [index, count, go]);
+
+  const next = useCallback(() => {
+    go(index < count - 1 ? index + 1 : 0, "right");
+  }, [index, count, go]);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "ArrowLeft") prev();
+      if (e.key === "ArrowRight") next();
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [prev, next]);
+
+  if (count === 0) return null;
+
+  const safeIndex = Math.min(index, count - 1);
+  const photo = photos[safeIndex];
+  const url = photo.public_url ?? publicStorageUrl(photo.storage_path);
+  const uploader = photo.is_anonymous ? null : photo.uploaded_by_name;
+  const isNew = freshIds.has(photo.id);
+
+  // Dots: show up to 9, then just counter
+  const showDots = count <= 9;
+
+  return (
+    <div style={sl.root}>
+      {/* Counter */}
+      <div style={sl.counter}>
+        {safeIndex + 1} <span style={{ opacity: 0.4 }}>/</span> {count}
+      </div>
+
+      {/* Main row: prev | image | next */}
+      <div style={sl.row}>
+        {/* Prev arrow */}
+        <button
+          style={sl.arrow}
+          onClick={prev}
+          aria-label="Anterior"
+          disabled={count < 2}
+          type="button"
+        >
+          <ChevronLeftIcon />
+        </button>
+
+        {/* Photo card */}
+        <div
+          className="rg-slider-card"
+          key={animKey}
+          style={{
+            ...sl.card,
+            animationName: `sliderIn${animDir === "right" ? "Right" : "Left"}`,
+          }}
+          onTouchStart={(e) => { touchStartX.current = e.touches[0].clientX; }}
+          onTouchEnd={(e) => {
+            if (touchStartX.current === null) return;
+            const dx = e.changedTouches[0].clientX - touchStartX.current;
+            if (Math.abs(dx) > 48) { if (dx < 0) { next(); } else { prev(); } }
+            touchStartX.current = null;
+          }}
+        >
+          {/* New photo badge */}
+          {isNew && (
+            <div style={sl.newBadge}>Nueva foto</div>
+          )}
+
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={url}
+            alt={uploader ? `Foto de ${uploader}` : "Foto del evento"}
+            style={sl.img}
+          />
+
+          {/* Caption overlay */}
+          {uploader && (
+            <div style={sl.caption}>
+              <span style={sl.captionName}>{uploader}</span>
+            </div>
+          )}
+        </div>
+
+        {/* Next arrow */}
+        <button
+          style={sl.arrow}
+          onClick={next}
+          aria-label="Siguiente"
+          disabled={count < 2}
+          type="button"
+        >
+          <ChevronRightIcon />
+        </button>
+      </div>
+
+      {/* Dots / strip */}
+      {showDots ? (
+        <div style={sl.dots}>
+          {photos.map((p, i) => (
+            <button
+              key={p.id}
+              type="button"
+              aria-label={`Foto ${i + 1}`}
+              style={{
+                ...sl.dot,
+                ...(i === safeIndex ? sl.dotActive : {}),
+              }}
+              onClick={() => go(i, i > safeIndex ? "right" : "left")}
+            />
+          ))}
+        </div>
+      ) : (
+        <div style={sl.dots}>
+          {/* Strip of lines for > 9 photos */}
+          {Array.from({ length: Math.min(count, 24) }).map((_, i) => (
+            <button
+              key={i}
+              type="button"
+              aria-label={`Foto ${i + 1}`}
+              style={{
+                ...sl.strip,
+                ...(i === safeIndex ? sl.stripActive : {}),
+              }}
+              onClick={() => go(i, i > safeIndex ? "right" : "left")}
+            />
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -137,8 +310,6 @@ function GalleryTile({
 }) {
   const url = photo.public_url ?? publicStorageUrl(photo.storage_path);
   const uploader = photo.is_anonymous ? null : photo.uploaded_by_name;
-
-  // Stagger entrance: cap at first 16 tiles, fresh ones use delay 0
   const delay = isFresh ? 0 : Math.min(index, 16) * 55;
 
   return (
@@ -160,8 +331,6 @@ function GalleryTile({
         {uploader ? (
           <div style={s.tileName}>{uploader}</div>
         ) : null}
-
-        {/* Hover zoom hint */}
         <div className="rg-zoom-hint" style={s.tileZoomHint}>
           <ZoomIcon />
         </div>
@@ -182,7 +351,7 @@ function Lightbox({
   onClose: () => void;
 }) {
   const [index, setIndex] = useState(startIndex);
-  const [imgKey, setImgKey] = useState(0); // forces re-animation on nav
+  const [imgKey, setImgKey] = useState(0);
   const touchStartX = useRef<number | null>(null);
 
   const prev = useCallback(() => {
@@ -195,7 +364,6 @@ function Lightbox({
     setImgKey((k) => k + 1);
   }, [photos.length]);
 
-  // Keyboard navigation
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -206,7 +374,6 @@ function Lightbox({
     return () => window.removeEventListener("keydown", handler);
   }, [onClose, prev, next]);
 
-  // Prevent body scroll while open
   useEffect(() => {
     document.body.style.overflow = "hidden";
     return () => { document.body.style.overflow = ""; };
@@ -228,7 +395,6 @@ function Lightbox({
         touchStartX.current = null;
       }}
     >
-      {/* Close */}
       <button
         style={s.lbClose}
         onClick={(e) => { e.stopPropagation(); onClose(); }}
@@ -237,14 +403,12 @@ function Lightbox({
         ✕
       </button>
 
-      {/* Counter */}
       {photos.length > 1 && (
         <div style={s.lbCounter}>
           {index + 1} / {photos.length}
         </div>
       )}
 
-      {/* Prev arrow */}
       {photos.length > 1 && (
         <button
           style={{ ...s.lbArrow, left: 16 }}
@@ -255,7 +419,6 @@ function Lightbox({
         </button>
       )}
 
-      {/* Image */}
       <div
         key={imgKey}
         className="lb-img-wrap"
@@ -273,7 +436,6 @@ function Lightbox({
         )}
       </div>
 
-      {/* Next arrow */}
       {photos.length > 1 && (
         <button
           style={{ ...s.lbArrow, right: 16 }}
@@ -284,6 +446,24 @@ function Lightbox({
         </button>
       )}
     </div>
+  );
+}
+
+// ── Icons ─────────────────────────────────────────────────────────────────────
+
+function ChevronLeftIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <polyline points="15 18 9 12 15 6" />
+    </svg>
+  );
+}
+
+function ChevronRightIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <polyline points="9 18 15 12 9 6" />
+    </svg>
   );
 }
 
@@ -298,10 +478,10 @@ function ZoomIcon() {
   );
 }
 
+// ── Styles ────────────────────────────────────────────────────────────────────
+
 const s: Record<string, React.CSSProperties> = {
-  section: {
-    padding: "64px 0 80px",
-  },
+  section: { padding: "64px 0 80px" },
   head: {
     display: "flex",
     justifyContent: "space-between",
@@ -383,7 +563,6 @@ const s: Record<string, React.CSSProperties> = {
     justifyContent: "center",
     opacity: 0,
     transition: "opacity 200ms ease",
-    // CSS class handles hover — done via .rg-tile:hover override below
     pointerEvents: "none",
   },
   // Lightbox
@@ -458,5 +637,133 @@ const s: Record<string, React.CSSProperties> = {
     fontWeight: 600,
     color: "rgba(255,255,255,0.55)",
     letterSpacing: "0.03em",
+  },
+};
+
+// Slider-specific styles
+const sl: Record<string, React.CSSProperties> = {
+  root: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: 20,
+    padding: "0 0 12px",
+  },
+  counter: {
+    fontSize: 13,
+    fontWeight: 600,
+    letterSpacing: "0.06em",
+    color: "rgba(255,255,255,0.4)",
+    alignSelf: "flex-end",
+    paddingRight: 4,
+  },
+  row: {
+    display: "flex",
+    alignItems: "center",
+    gap: 16,
+    width: "100%",
+    justifyContent: "center",
+  },
+  arrow: {
+    flexShrink: 0,
+    width: 52,
+    height: 52,
+    borderRadius: 999,
+    background: "rgba(255,255,255,0.06)",
+    border: "1px solid rgba(255,255,255,0.1)",
+    color: "#fff",
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    transition: "background 150ms ease, transform 100ms ease",
+  } as React.CSSProperties,
+  card: {
+    position: "relative",
+    flex: "1 1 0",
+    maxWidth: 760,
+    borderRadius: 20,
+    overflow: "hidden",
+    background: "rgba(255,255,255,0.03)",
+    border: "1px solid rgba(255,255,255,0.07)",
+    aspectRatio: "4/3",
+    animationDuration: "320ms",
+    animationTimingFunction: "cubic-bezier(0.22, 1, 0.36, 1)",
+    animationFillMode: "both",
+  } as React.CSSProperties,
+  img: {
+    width: "100%",
+    height: "100%",
+    objectFit: "cover",
+    display: "block",
+  },
+  caption: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: "40px 20px 16px",
+    background: "linear-gradient(0deg, rgba(0,0,0,0.72) 0%, transparent 100%)",
+    display: "flex",
+    alignItems: "flex-end",
+    gap: 8,
+  },
+  captionName: {
+    fontSize: 14,
+    fontWeight: 600,
+    color: "rgba(255,255,255,0.88)",
+    letterSpacing: "0.01em",
+  },
+  newBadge: {
+    position: "absolute",
+    top: 14,
+    right: 14,
+    padding: "5px 11px",
+    borderRadius: 999,
+    background: "rgba(74,222,128,0.15)",
+    border: "1px solid rgba(74,222,128,0.35)",
+    color: "#4ade80",
+    fontSize: 11,
+    fontWeight: 700,
+    letterSpacing: "0.1em",
+    zIndex: 2,
+  },
+  dots: {
+    display: "flex",
+    alignItems: "center",
+    gap: 7,
+    flexWrap: "wrap",
+    justifyContent: "center",
+    maxWidth: 760,
+  },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 999,
+    background: "rgba(255,255,255,0.2)",
+    border: "none",
+    cursor: "pointer",
+    padding: 0,
+    transition: "background 200ms ease, transform 200ms ease",
+    flexShrink: 0,
+  },
+  dotActive: {
+    background: "#ffffff",
+    transform: "scale(1.25)",
+  },
+  strip: {
+    width: 20,
+    height: 3,
+    borderRadius: 999,
+    background: "rgba(255,255,255,0.15)",
+    border: "none",
+    cursor: "pointer",
+    padding: 0,
+    transition: "background 200ms ease",
+    flexShrink: 0,
+  },
+  stripActive: {
+    background: "#ffffff",
+    width: 28,
   },
 };
