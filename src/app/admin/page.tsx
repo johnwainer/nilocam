@@ -11,10 +11,29 @@ export default async function AdminPage() {
     return <AdminLogin />;
   }
 
-  const { data: events } = await supabase
+  // Determine role: super_admin sees all events, owners see only theirs
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("email", user.email)
+    .single();
+
+  const isSuperAdmin = profile?.role === "super_admin";
+
+  const baseQuery = supabase
     .from("events")
     .select("*")
     .order("updated_at", { ascending: false });
 
-  return <AdminDashboard userEmail={user.email} initialEvents={(events ?? []) as never} />;
+  const { data: events } = isSuperAdmin
+    ? await baseQuery
+    : await baseQuery.eq("owner_email", user.email);
+
+  return (
+    <AdminDashboard
+      userEmail={user.email}
+      initialEvents={(events ?? []) as never}
+      isSuperAdmin={isSuperAdmin}
+    />
+  );
 }

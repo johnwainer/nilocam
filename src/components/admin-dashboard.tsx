@@ -49,6 +49,53 @@ const STATUS_CFG = {
   },
 } as const;
 
+/** Suggested slug prefix per event type */
+const SLUG_PREFIX: Record<EventTypeKey, string> = {
+  matrimonio: "boda",
+  cumpleanos: "cumple",
+  quinceanos: "xv",
+  "despedida-soltera": "despedida",
+  "despedida-soltero": "despedida",
+  "baby-shower": "baby",
+  aniversario: "aniversario",
+  graduacion: "graduacion",
+  corporativo: "evento",
+  familia: "reunion",
+};
+
+/** Allow dashes while typing — only strip trailing dash on blur */
+function sanitizeSlugInput(value: string): string {
+  return value
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9-]/g, "-")
+    .replace(/-{2,}/g, "-")
+    .replace(/^-+/, "");
+}
+
+/** Check Supabase for an available slug, append suffix if taken */
+async function generateAvailableSlug(base: string): Promise<string> {
+  const baseSlug = toSlug(base);
+  const { data } = await supabase
+    .from("events")
+    .select("slug")
+    .eq("slug", baseSlug)
+    .maybeSingle();
+  if (!data) return baseSlug;
+
+  for (let i = 2; i <= 99; i++) {
+    const candidate = `${baseSlug}-${i}`;
+    const { data: taken } = await supabase
+      .from("events")
+      .select("slug")
+      .eq("slug", candidate)
+      .maybeSingle();
+    if (!taken) return candidate;
+  }
+  return `${baseSlug}-${Date.now().toString(36)}`;
+}
+
 const emptyEvent: EventRecord = {
   id: "",
   slug: "",
@@ -68,18 +115,24 @@ const emptyEvent: EventRecord = {
   updated_at: new Date().toISOString(),
 };
 
-function createDraftEvent(ownerEmail: string): EventRecord {
-  const preset = eventTypePresetFromKey("matrimonio");
+/** Create a fully pre-filled draft based on the selected event type */
+function createDraftEvent(ownerEmail: string, typeKey: EventTypeKey = "matrimonio"): EventRecord {
+  const preset = eventTypePresetFromKey(typeKey);
+  const year = new Date().getFullYear();
   return {
     ...emptyEvent,
     id: crypto.randomUUID(),
+    slug: "", // filled when createNew() resolves the available slug
     event_type_key: preset.key,
+    title: preset.sampleTitle,
+    subtitle: preset.sampleSubtitle,
     owner_email: ownerEmail,
     landing_config: {
       ...DEFAULT_LANDING_CONFIG,
-      heroEyebrow: preset.name,
-      heroTitle: "",
-      heroSubtitle: "",
+      heroEyebrow: `${preset.name} · ${year}`,
+      heroTitle: preset.sampleTitle,
+      heroSubtitle: preset.sampleSubtitle,
+      introCopy: DEFAULT_LANDING_CONFIG.introCopy,
       theme: {
         ...DEFAULT_LANDING_CONFIG.theme,
         accent: preset.accent,
@@ -95,13 +148,14 @@ function createDraftEvent(ownerEmail: string): EventRecord {
 export function AdminDashboard({
   userEmail,
   initialEvents,
+  isSuperAdmin = false,
 }: {
   userEmail: string;
   initialEvents: EventRecord[];
+  isSuperAdmin?: boolean;
 }) {
   const router = useRouter();
 
-  // Stable initial state
   const initialDraft = initialEvents[0] ?? createDraftEvent(userEmail);
   const [events, setEvents] = useState<EventRecord[]>(
     initialEvents.length > 0 ? initialEvents : [initialDraft]
@@ -112,11 +166,14 @@ export function AdminDashboard({
   // Photo management
   const [photos, setPhotos] = useState<PhotoRecord[]>([]);
   const [photosLoading, setPhotosLoading] = useState(false);
-  const [photoFilter, setPhotoFilter] = useState<"all" | "pending" | "approved" | "rejected">("all");
+  const [photoFilter, setPhotoFilter] = useState<"all" | "pending" | "approved" | "rejected">(
+    "all"
+  );
   const [deletingPhotoId, setDeletingPhotoId] = useState<string | null>(null);
 
   // Saving / deleting
   const [saving, setSaving] = useState(false);
+  const [creating, setCreating] = useState(false);
   const [deletingEvent, setDeletingEvent] = useState(false);
   const [confirmDeleteEvent, setConfirmDeleteEvent] = useState(false);
 
@@ -184,7 +241,9 @@ export function AdminDashboard({
     });
     const json = await res.json();
     if (json.ok) {
-      setPhotos((cur) => cur.map((p) => (p.id === photoId ? { ...p, moderation_status: status } : p)));
+      setPhotos((cur) =>
+        cur.map((p) => (p.id === photoId ? { ...p, moderation_status: status } : p))
+      );
     } else {
       setNotice({ text: json.message ?? "Error al moderar foto.", ok: false });
     }
@@ -204,13 +263,27 @@ export function AdminDashboard({
 
   // ── event ops ─────────────────────────────────────────────────────────────
 
-  const createNew = () => {
-    const draft = createDraftEvent(userEmail);
-    draft.slug = toSlug(`nuevo-evento-${Date.now().toString(36)}`);
-    setEvents((cur) => [draft, ...cur]);
-    setSelectedId(draft.id);
-    setTab("evento");
-    setNotice({ text: "Borrador creado. Completa los datos y guarda.", ok: true });
+  const createNew = async () => {
+    setCreating(true);
+    try {
+      const typeKey = selected?.event_type_key ?? "matrimonio";
+      const prefix = SLUG_PREFIX[typeKey] ?? "evento";
+      const year = new Date().getFullYear();
+      const slug = await generateAvailableSlug(`${prefix}-${year}`);
+
+      const draft = createDraftEvent(userEmail, typeKey);
+      draft.slug = slug;
+
+      setEvents((cur) => [draft, ...cur]);
+      setSelectedId(draft.id);
+      setTab("evento");
+      setNotice({
+        text: "Borrador creado con plantilla inicial. Personaliza el título, el slug y guarda.",
+        ok: true,
+      });
+    } finally {
+      setCreating(false);
+    }
   };
 
   const saveEvent = async () => {
@@ -222,7 +295,7 @@ export function AdminDashboard({
     setNotice(null);
     const payload = {
       id: selected.id || crypto.randomUUID(),
-      slug: selected.slug,
+      slug: toSlug(selected.slug), // final cleanup on save
       title: selected.title,
       subtitle: selected.subtitle,
       event_type_key: selected.event_type_key,
@@ -302,6 +375,7 @@ export function AdminDashboard({
 
   const applyPreset = (key: EventTypeKey) => {
     const preset = eventTypePresetFromKey(key);
+    const year = new Date().getFullYear();
     setEvents((cur) =>
       cur.map((e) =>
         e.id === selected.id
@@ -312,7 +386,7 @@ export function AdminDashboard({
               subtitle: preset.sampleSubtitle,
               landing_config: {
                 ...e.landing_config,
-                heroEyebrow: preset.name,
+                heroEyebrow: `${preset.name} · ${year}`,
                 heroTitle: preset.sampleTitle,
                 heroSubtitle: preset.sampleSubtitle,
                 theme: {
@@ -356,7 +430,7 @@ export function AdminDashboard({
         <div style={s.headerBrand}>
           <strong style={s.headerTitle}>{APP_NAME}</strong>
           <span className="pill" style={s.adminPill}>
-            Panel admin
+            {isSuperAdmin ? "Super admin" : "Panel admin"}
           </span>
         </div>
         <div style={s.headerRight}>
@@ -375,9 +449,10 @@ export function AdminDashboard({
             className="btn btn-primary"
             style={s.createBtn}
             onClick={createNew}
+            disabled={creating}
             type="button"
           >
-            + Nuevo evento
+            {creating ? "Generando..." : "+ Nuevo evento"}
           </button>
           <div style={s.eventList}>
             {events.map((event) => (
@@ -392,6 +467,9 @@ export function AdminDashboard({
               >
                 <strong style={s.eventItemTitle}>{event.title || "Nuevo evento"}</strong>
                 <span style={s.eventItemSlug}>{event.slug || "sin slug"}</span>
+                {event.owner_email && isSuperAdmin && (
+                  <span style={s.eventItemOwner}>{event.owner_email}</span>
+                )}
                 <span className="pill" style={s.eventItemPill}>
                   {eventTypePresetFromKey(event.event_type_key).name}
                 </span>
@@ -510,13 +588,19 @@ export function AdminDashboard({
                       </label>
                     </div>
 
+                    {/* Slug — allow dashes while typing; strip trailing on blur */}
                     <label style={s.field}>
                       <span className="label">Slug (URL del evento)</span>
                       <input
                         className="input"
                         placeholder="boda-laura-mateo-2026"
                         value={selected.slug}
-                        onChange={(e) => updateSelected("slug", toSlug(e.target.value))}
+                        onChange={(e) =>
+                          updateSelected("slug", sanitizeSlugInput(e.target.value))
+                        }
+                        onBlur={(e) =>
+                          updateSelected("slug", toSlug(e.target.value))
+                        }
                       />
                       <span style={s.fieldHint}>
                         {siteUrl(`/event/${selected.slug || "tu-slug"}`)}
@@ -539,27 +623,6 @@ export function AdminDashboard({
                         />
                       </label>
                       <label style={s.fieldHalf}>
-                        <span className="label">Correo del organizador</span>
-                        <input
-                          className="input"
-                          type="email"
-                          value={selected.owner_email ?? userEmail}
-                          onChange={(e) => updateSelected("owner_email", e.target.value)}
-                        />
-                      </label>
-                    </div>
-
-                    <div style={s.fieldRow}>
-                      <label style={s.fieldHalf}>
-                        <span className="label">Lugar / Venue</span>
-                        <input
-                          className="input"
-                          placeholder="Club El Nogal"
-                          value={selected.venue_name ?? ""}
-                          onChange={(e) => updateSelected("venue_name", e.target.value)}
-                        />
-                      </label>
-                      <label style={s.fieldHalf}>
                         <span className="label">Ciudad</span>
                         <input
                           className="input"
@@ -569,9 +632,58 @@ export function AdminDashboard({
                         />
                       </label>
                     </div>
+
+                    <label style={s.field}>
+                      <span className="label">Lugar / Venue</span>
+                      <input
+                        className="input"
+                        placeholder="Club El Nogal"
+                        value={selected.venue_name ?? ""}
+                        onChange={(e) => updateSelected("venue_name", e.target.value)}
+                      />
+                    </label>
                   </div>
 
-                  {/* Subida */}
+                  {/* Responsable */}
+                  <div style={s.formSection}>
+                    <div style={s.responsableHeader}>
+                      <span className="eyebrow">Responsable del evento</span>
+                      <span className="pill" style={s.responsablePill}>
+                        Acceso a edición
+                      </span>
+                    </div>
+
+                    <label style={s.field}>
+                      <span className="label">Correo electrónico del responsable</span>
+                      <input
+                        className="input"
+                        type="email"
+                        placeholder="responsable@ejemplo.com"
+                        value={selected.owner_email ?? userEmail}
+                        onChange={(e) => updateSelected("owner_email", e.target.value)}
+                        disabled={!isSuperAdmin}
+                        style={!isSuperAdmin ? s.inputDisabled : undefined}
+                      />
+                      <span style={s.fieldHint}>
+                        {isSuperAdmin
+                          ? "Esta persona podrá iniciar sesión en /admin y editar la landing de este evento."
+                          : "El responsable eres tú. Solo un super admin puede reasignar eventos."}
+                      </span>
+                    </label>
+
+                    {isSuperAdmin && (
+                      <div style={s.responsableTip}>
+                        <strong style={{ fontSize: 13 }}>¿El responsable aún no tiene cuenta?</strong>
+                        <p style={{ margin: "4px 0 0", fontSize: 13, lineHeight: 1.55 }}>
+                          Pídele que se registre en{" "}
+                          <strong>{siteUrl("/auth")}</strong> con ese correo. Al iniciar sesión
+                          verá este evento en su panel y podrá editarlo.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Subida de fotos */}
                   <div style={s.formSection}>
                     <span className="eyebrow" style={s.sectionEyebrow}>
                       Subida de fotos
@@ -736,7 +848,15 @@ export function AdminDashboard({
                       <span className="label">Secciones visibles en la landing</span>
                       <div style={s.sectionChips}>
                         {(
-                          ["hero", "ctas", "how-it-works", "gallery", "privacy", "event-info", "support"] as const
+                          [
+                            "hero",
+                            "ctas",
+                            "how-it-works",
+                            "gallery",
+                            "privacy",
+                            "event-info",
+                            "support",
+                          ] as const
                         ).map((sec) => {
                           const active = selected.landing_config.sections.includes(sec);
                           return (
@@ -789,11 +909,7 @@ export function AdminDashboard({
                       <span style={s.urlText}>
                         {siteUrl(`/event/${selected.slug || "tu-slug"}`)}
                       </span>
-                      <button
-                        type="button"
-                        style={s.copyBtn}
-                        onClick={copyUrl}
-                      >
+                      <button type="button" style={s.copyBtn} onClick={copyUrl}>
                         {copyDone ? "¡Copiada!" : "Copiar"}
                       </button>
                     </div>
@@ -862,6 +978,16 @@ export function AdminDashboard({
                           </strong>
                         </div>
                       )}
+                      {selected.owner_email && (
+                        <div style={s.statRow}>
+                          <span className="muted" style={s.statLabel}>
+                            Responsable
+                          </span>
+                          <strong style={{ ...s.statValue, wordBreak: "break-all" }}>
+                            {selected.owner_email}
+                          </strong>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -911,7 +1037,7 @@ export function AdminDashboard({
                   </button>
                 </div>
 
-                {/* Photo grid */}
+                {/* Grid */}
                 {photosLoading ? (
                   <div style={s.centerState}>
                     <p className="muted">Cargando fotos...</p>
@@ -925,7 +1051,7 @@ export function AdminDashboard({
                     </strong>
                     <p className="muted" style={s.emptyText}>
                       {photoFilter === "pending"
-                        ? "Cuando los invitados suban fotos en modo manual, aparecerán aquí para que las apruebes o rechaces."
+                        ? "Cuando los invitados suban fotos en modo manual, aparecerán aquí para aprobar o rechazar."
                         : "Las fotos aparecerán aquí cuando los invitados comiencen a subir."}
                     </p>
                   </div>
@@ -936,7 +1062,6 @@ export function AdminDashboard({
                       const confirming = deletingPhotoId === photo.id;
                       return (
                         <div key={photo.id} className="card" style={s.photoCard}>
-                          {/* Thumbnail */}
                           <div style={s.photoImgWrap}>
                             <Image
                               src={publicStorageUrl(photo.storage_path)}
@@ -958,7 +1083,6 @@ export function AdminDashboard({
                             </div>
                           </div>
 
-                          {/* Meta */}
                           <div style={s.photoMeta}>
                             <strong style={s.photoAuthor}>
                               {photo.is_anonymous
@@ -980,7 +1104,6 @@ export function AdminDashboard({
                             )}
                           </div>
 
-                          {/* Actions */}
                           <div style={s.photoActions}>
                             {confirming ? (
                               <>
@@ -1031,7 +1154,11 @@ export function AdminDashboard({
                                 )}
                                 <button
                                   type="button"
-                                  style={{ ...s.actionNeutral, marginLeft: "auto", color: "#dc2626" }}
+                                  style={{
+                                    ...s.actionNeutral,
+                                    marginLeft: "auto",
+                                    color: "#dc2626",
+                                  }}
                                   onClick={() => setDeletingPhotoId(photo.id)}
                                 >
                                   Eliminar
@@ -1089,7 +1216,6 @@ export function AdminDashboard({
 // ─── styles ──────────────────────────────────────────────────────────────────
 
 const s: Record<string, React.CSSProperties> = {
-  // Layout
   shell: {
     height: "100vh",
     display: "flex",
@@ -1109,37 +1235,15 @@ const s: Record<string, React.CSSProperties> = {
     justifyContent: "space-between",
     padding: "0 20px",
   },
-  headerBrand: {
-    display: "flex",
-    alignItems: "center",
-    gap: 10,
-  },
-  headerTitle: {
-    fontSize: 15,
-    letterSpacing: "-0.02em",
-  },
-  adminPill: {
-    fontSize: 11,
-    padding: "3px 10px",
-  },
-  headerRight: {
-    display: "flex",
-    alignItems: "center",
-    gap: 12,
-  },
-  headerEmail: {
-    fontSize: 13,
-    color: "var(--muted)",
-  },
-  headerBtn: {
-    fontSize: 13,
-    padding: "7px 14px",
-  },
-  body: {
-    flex: 1,
-    display: "flex",
-    overflow: "hidden",
-  },
+  headerBrand: { display: "flex", alignItems: "center", gap: 10 },
+  headerTitle: { fontSize: 15, letterSpacing: "-0.02em" },
+  adminPill: { fontSize: 11, padding: "3px 10px" },
+  headerRight: { display: "flex", alignItems: "center", gap: 12 },
+  headerEmail: { fontSize: 13, color: "var(--muted)" },
+  headerBtn: { fontSize: 13, padding: "7px 14px" },
+
+  body: { flex: 1, display: "flex", overflow: "hidden" },
+
   sidebar: {
     width: 256,
     flexShrink: 0,
@@ -1151,17 +1255,8 @@ const s: Record<string, React.CSSProperties> = {
     padding: 14,
     gap: 6,
   },
-  createBtn: {
-    width: "100%",
-    fontSize: 14,
-    padding: "11px 16px",
-    marginBottom: 6,
-  },
-  eventList: {
-    display: "flex",
-    flexDirection: "column",
-    gap: 5,
-  },
+  createBtn: { width: "100%", fontSize: 14, padding: "11px 16px", marginBottom: 6 },
+  eventList: { display: "flex", flexDirection: "column", gap: 5 },
   eventItem: {
     padding: "11px 13px",
     borderRadius: 18,
@@ -1184,36 +1279,14 @@ const s: Record<string, React.CSSProperties> = {
     color: "var(--text)",
     cursor: "pointer",
   },
-  eventItemTitle: {
-    fontSize: 13,
-    lineHeight: 1.2,
-    letterSpacing: "-0.01em",
-  },
-  eventItemSlug: {
-    fontSize: 11,
-    color: "var(--muted)",
-  },
-  eventItemPill: {
-    fontSize: 11,
-    padding: "3px 9px",
-    marginTop: 3,
-    width: "fit-content",
-  },
+  eventItemTitle: { fontSize: 13, lineHeight: 1.2, letterSpacing: "-0.01em" },
+  eventItemSlug: { fontSize: 11, color: "var(--muted)" },
+  eventItemOwner: { fontSize: 10, color: "var(--muted-2)", wordBreak: "break-all" },
+  eventItemPill: { fontSize: 11, padding: "3px 9px", marginTop: 3, width: "fit-content" },
 
-  // Main area
-  mainWrap: {
-    flex: 1,
-    overflowY: "auto",
-    padding: "24px 28px",
-  },
-  main: {
-    maxWidth: 1200,
-    margin: "0 auto",
-    display: "grid",
-    gap: 20,
-  },
+  mainWrap: { flex: 1, overflowY: "auto", padding: "24px 28px" },
+  main: { maxWidth: 1200, margin: "0 auto", display: "grid", gap: 20 },
 
-  // Event header
   eventHeader: {
     display: "flex",
     alignItems: "flex-start",
@@ -1234,18 +1307,9 @@ const s: Record<string, React.CSSProperties> = {
     alignItems: "center",
     flexWrap: "wrap",
   },
-  headerActionBtn: {
-    fontSize: 14,
-    padding: "10px 18px",
-  },
+  headerActionBtn: { fontSize: 14, padding: "10px 18px" },
 
-  // Notice
-  notice: {
-    borderRadius: 16,
-    padding: "12px 16px",
-    fontSize: 14,
-    lineHeight: 1.5,
-  },
+  notice: { borderRadius: 16, padding: "12px 16px", fontSize: 14, lineHeight: 1.5 },
   noticeOk: {
     background: "rgba(0,0,0,0.03)",
     border: "1px solid rgba(0,0,0,0.08)",
@@ -1257,7 +1321,6 @@ const s: Record<string, React.CSSProperties> = {
     color: "#8b1a1a",
   },
 
-  // Tabs
   tabBar: {
     display: "flex",
     gap: 4,
@@ -1303,19 +1366,9 @@ const s: Record<string, React.CSSProperties> = {
     fontWeight: 700,
   },
 
-  // Editor grid
-  editorGrid: {
-    display: "grid",
-    gridTemplateColumns: "1fr 300px",
-    gap: 20,
-    alignItems: "start",
-  },
+  editorGrid: { display: "grid", gridTemplateColumns: "1fr 300px", gap: 20, alignItems: "start" },
 
-  // Form
-  form: {
-    display: "grid",
-    gap: 14,
-  },
+  form: { display: "grid", gap: 14 },
   formSection: {
     background: "#ffffff",
     borderRadius: 24,
@@ -1324,33 +1377,12 @@ const s: Record<string, React.CSSProperties> = {
     display: "grid",
     gap: 14,
   },
-  sectionEyebrow: {
-    marginBottom: 4,
-  },
-  field: {
-    display: "grid",
-    gap: 8,
-  },
-  fieldRow: {
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr",
-    gap: 12,
-  },
-  fieldHalf: {
-    display: "grid",
-    gap: 8,
-  },
-  fieldHint: {
-    fontSize: 11,
-    color: "var(--muted)",
-    lineHeight: 1.4,
-    wordBreak: "break-all",
-  },
-  checkGrid: {
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr",
-    gap: 10,
-  },
+  sectionEyebrow: { marginBottom: 4 },
+  field: { display: "grid", gap: 8 },
+  fieldRow: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 },
+  fieldHalf: { display: "grid", gap: 8 },
+  fieldHint: { fontSize: 11, color: "var(--muted)", lineHeight: 1.4, wordBreak: "break-all" },
+  checkGrid: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 },
   checkRow: {
     display: "flex",
     alignItems: "center",
@@ -1358,8 +1390,27 @@ const s: Record<string, React.CSSProperties> = {
     fontSize: 14,
     color: "var(--muted)",
     cursor: "pointer",
-    userSelect: "none",
+    userSelect: "none" as const,
   },
+  inputDisabled: { opacity: 0.55, cursor: "not-allowed" },
+
+  // Responsable section
+  responsableHeader: { display: "flex", alignItems: "center", gap: 10 },
+  responsablePill: {
+    fontSize: 11,
+    padding: "3px 10px",
+    background: "rgba(59,130,246,0.08)",
+    border: "1px solid rgba(59,130,246,0.2)",
+    color: "#1e40af",
+  },
+  responsableTip: {
+    background: "rgba(59,130,246,0.04)",
+    border: "1px solid rgba(59,130,246,0.12)",
+    borderRadius: 16,
+    padding: "12px 14px",
+    color: "var(--text)",
+  },
+
   colorPickerRow: {
     display: "flex",
     alignItems: "center",
@@ -1369,26 +1420,9 @@ const s: Record<string, React.CSSProperties> = {
     border: "1px solid rgba(0,0,0,0.08)",
     background: "#ffffff",
   },
-  colorInput: {
-    width: 34,
-    height: 34,
-    border: "none",
-    borderRadius: 8,
-    cursor: "pointer",
-    padding: 0,
-    background: "none",
-  },
-  colorHex: {
-    fontSize: 13,
-    color: "var(--muted)",
-    fontFamily: "monospace",
-  },
-  sectionChips: {
-    display: "flex",
-    flexWrap: "wrap",
-    gap: 7,
-    marginTop: 6,
-  },
+  colorInput: { width: 34, height: 34, border: "none", borderRadius: 8, cursor: "pointer", padding: 0, background: "none" },
+  colorHex: { fontSize: 13, color: "var(--muted)", fontFamily: "monospace" },
+  sectionChips: { display: "flex", flexWrap: "wrap", gap: 7, marginTop: 6 },
   chip: {
     padding: "7px 13px",
     borderRadius: 999,
@@ -1410,7 +1444,6 @@ const s: Record<string, React.CSSProperties> = {
     cursor: "pointer",
   },
 
-  // Danger zone
   dangerZone: {
     background: "rgba(239,68,68,0.04)",
     border: "1px solid rgba(239,68,68,0.14)",
@@ -1421,11 +1454,7 @@ const s: Record<string, React.CSSProperties> = {
     justifyContent: "space-between",
     gap: 14,
   },
-  dangerText: {
-    margin: "4px 0 0",
-    fontSize: 13,
-    lineHeight: 1.5,
-  },
+  dangerText: { margin: "4px 0 0", fontSize: 13, lineHeight: 1.5 },
   dangerBtn: {
     padding: "9px 16px",
     borderRadius: 999,
@@ -1438,19 +1467,8 @@ const s: Record<string, React.CSSProperties> = {
     flexShrink: 0,
   },
 
-  // Preview column
-  previewCol: {
-    position: "sticky",
-    top: 0,
-    alignSelf: "start",
-  },
-  previewCard: {
-    padding: 20,
-    display: "grid",
-    gap: 16,
-    background: "#ffffff",
-    borderRadius: 24,
-  },
+  previewCol: { position: "sticky", top: 0, alignSelf: "start" },
+  previewCard: { padding: 20, display: "grid", gap: 16, background: "#ffffff", borderRadius: 24 },
   urlBox: {
     display: "flex",
     alignItems: "flex-start",
@@ -1459,13 +1477,7 @@ const s: Record<string, React.CSSProperties> = {
     borderRadius: 14,
     padding: "10px 12px",
   },
-  urlText: {
-    fontSize: 11,
-    color: "var(--muted)",
-    wordBreak: "break-all",
-    flex: 1,
-    lineHeight: 1.4,
-  },
+  urlText: { fontSize: 11, color: "var(--muted)", wordBreak: "break-all", flex: 1, lineHeight: 1.4 },
   copyBtn: {
     padding: "6px 12px",
     borderRadius: 999,
@@ -1485,36 +1497,13 @@ const s: Record<string, React.CSSProperties> = {
     borderRadius: 18,
     border: "1px solid rgba(0,0,0,0.07)",
   },
-  qrPlaceholder: {
-    padding: "28px 16px",
-    textAlign: "center",
-    borderRadius: 18,
-    border: "1px dashed rgba(0,0,0,0.12)",
-  },
-  statsList: {
-    display: "grid",
-    gap: 10,
-  },
-  statRow: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    gap: 8,
-    fontSize: 13,
-  },
-  statLabel: {
-    fontSize: 13,
-  },
-  statValue: {
-    fontSize: 13,
-    letterSpacing: "-0.02em",
-  },
+  qrPlaceholder: { padding: "28px 16px", textAlign: "center", borderRadius: 18, border: "1px dashed rgba(0,0,0,0.12)" },
+  statsList: { display: "grid", gap: 10 },
+  statRow: { display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, fontSize: 13 },
+  statLabel: { fontSize: 13 },
+  statValue: { fontSize: 13, letterSpacing: "-0.02em" },
 
-  // Photos tab
-  photosPanel: {
-    display: "grid",
-    gap: 16,
-  },
+  photosPanel: { display: "grid", gap: 16 },
   filterBar: {
     display: "flex",
     gap: 6,
@@ -1551,20 +1540,9 @@ const s: Record<string, React.CSSProperties> = {
     fontWeight: 700,
     cursor: "pointer",
   },
-  filterCount: {
-    background: "rgba(0,0,0,0.06)",
-    borderRadius: 999,
-    padding: "1px 7px",
-    fontSize: 11,
-    fontWeight: 700,
-  },
-  filterCountActive: {
-    background: "rgba(0,0,0,0.12)",
-  },
-  filterCountPending: {
-    background: "rgba(245,158,11,0.15)",
-    color: "#78350f",
-  },
+  filterCount: { background: "rgba(0,0,0,0.06)", borderRadius: 999, padding: "1px 7px", fontSize: 11, fontWeight: 700 },
+  filterCountActive: { background: "rgba(0,0,0,0.12)" },
+  filterCountPending: { background: "rgba(245,158,11,0.15)", color: "#78350f" },
   refreshBtn: {
     marginLeft: "auto",
     padding: "7px 13px",
@@ -1576,10 +1554,7 @@ const s: Record<string, React.CSSProperties> = {
     fontWeight: 600,
     cursor: "pointer",
   },
-  centerState: {
-    padding: "52px 0",
-    textAlign: "center",
-  },
+  centerState: { padding: "52px 0", textAlign: "center" },
   emptyPhotos: {
     padding: "36px 24px",
     textAlign: "center",
@@ -1589,25 +1564,9 @@ const s: Record<string, React.CSSProperties> = {
     display: "grid",
     gap: 10,
   },
-  emptyText: {
-    margin: 0,
-    lineHeight: 1.65,
-    maxWidth: 440,
-    justifySelf: "center",
-    fontSize: 14,
-  },
-  photoGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
-    gap: 14,
-  },
-  photoCard: {
-    overflow: "hidden",
-    background: "#ffffff",
-    borderRadius: 22,
-    display: "flex",
-    flexDirection: "column",
-  },
+  emptyText: { margin: 0, lineHeight: 1.65, maxWidth: 440, justifySelf: "center", fontSize: 14 },
+  photoGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 14 },
+  photoCard: { overflow: "hidden", background: "#ffffff", borderRadius: 22, display: "flex", flexDirection: "column" },
   photoImgWrap: {
     position: "relative",
     width: "100%",
@@ -1616,48 +1575,13 @@ const s: Record<string, React.CSSProperties> = {
     overflow: "hidden",
     flexShrink: 0,
   },
-  statusBadge: {
-    position: "absolute",
-    top: 8,
-    right: 8,
-    borderRadius: 999,
-    padding: "3px 9px",
-    fontSize: 11,
-    fontWeight: 700,
-    zIndex: 1,
-  },
-  photoMeta: {
-    padding: "11px 13px 8px",
-    display: "grid",
-    gap: 3,
-    borderBottom: "1px solid rgba(0,0,0,0.06)",
-  },
-  photoAuthor: {
-    fontSize: 13,
-    lineHeight: 1.2,
-  },
-  photoTime: {
-    fontSize: 11,
-  },
-  filterPill: {
-    fontSize: 10,
-    padding: "2px 8px",
-    marginTop: 2,
-    width: "fit-content",
-  },
-  photoActions: {
-    padding: "9px 12px",
-    display: "flex",
-    gap: 5,
-    flexWrap: "wrap",
-    alignItems: "center",
-  },
-  confirmText: {
-    fontSize: 12,
-    color: "#7f1d1d",
-    fontWeight: 600,
-    flex: 1,
-  },
+  statusBadge: { position: "absolute", top: 8, right: 8, borderRadius: 999, padding: "3px 9px", fontSize: 11, fontWeight: 700, zIndex: 1 },
+  photoMeta: { padding: "11px 13px 8px", display: "grid", gap: 3, borderBottom: "1px solid rgba(0,0,0,0.06)" },
+  photoAuthor: { fontSize: 13, lineHeight: 1.2 },
+  photoTime: { fontSize: 11 },
+  filterPill: { fontSize: 10, padding: "2px 8px", marginTop: 2, width: "fit-content" },
+  photoActions: { padding: "9px 12px", display: "flex", gap: 5, flexWrap: "wrap", alignItems: "center" },
+  confirmText: { fontSize: 12, color: "#7f1d1d", fontWeight: 600, flex: 1 },
   actionApprove: {
     padding: "5px 11px",
     borderRadius: 999,
@@ -1699,7 +1623,6 @@ const s: Record<string, React.CSSProperties> = {
     cursor: "pointer",
   },
 
-  // Modal
   modalOverlay: {
     position: "fixed",
     inset: 0,
@@ -1719,23 +1642,9 @@ const s: Record<string, React.CSSProperties> = {
     border: "1px solid rgba(0,0,0,0.08)",
     boxShadow: "0 32px 80px rgba(0,0,0,0.18)",
   },
-  modalTitle: {
-    fontSize: 26,
-    lineHeight: 1.08,
-    margin: 0,
-    letterSpacing: "-0.04em",
-  },
-  modalBody: {
-    margin: "14px 0 0",
-    lineHeight: 1.65,
-    fontSize: 15,
-  },
-  modalActions: {
-    display: "flex",
-    gap: 10,
-    marginTop: 24,
-    justifyContent: "flex-end",
-  },
+  modalTitle: { fontSize: 26, lineHeight: 1.08, margin: 0, letterSpacing: "-0.04em" },
+  modalBody: { margin: "14px 0 0", lineHeight: 1.65, fontSize: 15 },
+  modalActions: { display: "flex", gap: 10, marginTop: 24, justifyContent: "flex-end" },
   modalDangerBtn: {
     padding: "12px 20px",
     borderRadius: 999,
