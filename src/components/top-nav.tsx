@@ -57,12 +57,12 @@ export function TopNav() {
 
           {/* Center links */}
           <div className="nav-links" style={s.centerLinks}>
-            <a href="/#como-funciona" style={s.navLink} className="nav-link">
+            <Link href="/#como-funciona" style={s.navLink} className="nav-link">
               Cómo funciona
-            </a>
-            <a href="/#tipos" style={s.navLink} className="nav-link">
+            </Link>
+            <Link href="/#tipos" style={s.navLink} className="nav-link">
               Eventos
-            </a>
+            </Link>
             <Link href="/event/demo-nilo-cam" style={s.navLink} className="nav-link">
               Demo
             </Link>
