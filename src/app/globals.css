@@ -235,6 +235,22 @@ img {
   border: 0;
 }
 
+/* ── Top nav ────────────────────────────────────────────── */
+.nav-link:hover {
+  color: var(--text);
+  background: rgba(0, 0, 0, 0.05);
+}
+
+@media (max-width: 760px) {
+  .nav-links {
+    display: none !important;
+  }
+
+  .nav-link-admin {
+    display: none !important;
+  }
+}
+
 /* ── Landing hero ──────────────────────────────────────── */
 .lh-section {
   padding-top: 80px;

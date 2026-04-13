@@ -44,7 +44,7 @@ export default function HomePage() {
       <LandingHero />
 
       {/* ── Cómo funciona ─────────────────────────────────── */}
-      <section className="section">
+      <section className="section" id="como-funciona">
         <div className="container">
           <div style={styles.sectionHead}>
             <span className="eyebrow">Cómo funciona</span>
@@ -113,7 +113,7 @@ export default function HomePage() {
       </section>
 
       {/* ── Tipos de evento ───────────────────────────────── */}
-      <section className="section">
+      <section className="section" id="tipos">
         <div className="container">
           <div style={styles.sectionHead}>
             <span className="eyebrow">10 tipos de evento</span>
