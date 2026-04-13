@@ -33,6 +33,8 @@ export type LandingTheme = {
   heroImage?: string;
 };
 
+export type WatermarkPosition = "top-left" | "top-right" | "bottom-left" | "bottom-right";
+
 export type EventLandingConfig = {
   sections: LandingSection[];
   heroEyebrow: string;
@@ -48,6 +50,11 @@ export type EventLandingConfig = {
   showAnonymousToggle: boolean;
   showTerms: boolean;
   theme: LandingTheme;
+  // Watermark / brand overlay
+  watermarkUrl?: string | null;
+  watermarkPosition?: WatermarkPosition;
+  watermarkSize?: number;     // 5–40 (% of output image width)
+  watermarkOpacity?: number;  // 0.1–1.0
 };
 
 export type EventRecord = {

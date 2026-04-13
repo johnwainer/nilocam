@@ -1,7 +1,15 @@
 import { FILTERS, TEMPLATES } from "@/lib/constants";
+import type { WatermarkPosition } from "@/types";
 
 export type TemplateKey = (typeof TEMPLATES)[number]["key"];
 export type FilterKey = (typeof FILTERS)[number]["key"];
+
+export type WatermarkConfig = {
+  url: string;
+  position: WatermarkPosition;
+  size: number;    // 5–40 (% of output image width)
+  opacity: number; // 0.1–1.0
+};
 
 export async function fileToImageBitmap(file: File) {
   const url = URL.createObjectURL(file);
@@ -40,6 +48,16 @@ async function canvasToBlob(canvas: HTMLCanvasElement, quality: number) {
   });
 }
 
+async function loadImage(url: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = url;
+  });
+}
+
 export async function renderEditedImage(
   source: File,
   options: {
@@ -47,6 +65,7 @@ export async function renderEditedImage(
     template: TemplateKey;
     title?: string;
     subtitle?: string;
+    watermark?: WatermarkConfig;
   }
 ) {
   const img = await fileToImageBitmap(source);
@@ -114,6 +133,31 @@ export async function renderEditedImage(
     ctx.fillStyle = "#fff";
     ctx.font = "800 44px Manrope, system-ui, sans-serif";
     ctx.fillText(options.title || "Nilo Cam", 66, 94);
+  }
+
+  // ── Watermark overlay ──────────────────────────────────────────────────
+  if (options.watermark?.url) {
+    try {
+      const wm = options.watermark;
+      const wmImg = await loadImage(wm.url);
+      const margin = 40;
+      const wmW = Math.round(outputWidth * (wm.size / 100));
+      const wmH = Math.round(wmW * (wmImg.naturalHeight / wmImg.naturalWidth));
+      let wx = margin;
+      let wy = margin;
+      if (wm.position === "top-right") wx = outputWidth - wmW - margin;
+      if (wm.position === "bottom-left") wy = outputHeight - wmH - margin;
+      if (wm.position === "bottom-right") {
+        wx = outputWidth - wmW - margin;
+        wy = outputHeight - wmH - margin;
+      }
+      ctx.save();
+      ctx.globalAlpha = wm.opacity;
+      ctx.drawImage(wmImg, wx, wy, wmW, wmH);
+      ctx.restore();
+    } catch {
+      // If watermark fails to load, continue without it
+    }
   }
 
   const qualitySequence = [0.92, 0.82, 0.72];

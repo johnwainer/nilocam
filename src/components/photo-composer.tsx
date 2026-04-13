@@ -75,11 +75,21 @@ export function PhotoComposer({ event, onUploaded }: ComposerProps) {
     setIsSaving(true);
     setError(null);
     try {
+      const wm = event.landing_config.watermarkUrl
+        ? {
+            url: event.landing_config.watermarkUrl,
+            position: event.landing_config.watermarkPosition ?? "bottom-right",
+            size: event.landing_config.watermarkSize ?? 18,
+            opacity: event.landing_config.watermarkOpacity ?? 0.7,
+          }
+        : undefined;
+
       const editedBlob = await renderEditedImage(file, {
         filter,
         template,
         title: event.title,
         subtitle: event.subtitle ?? event.landing_config.heroSubtitle,
+        watermark: wm,
       });
 
       const path = `${event.id}/${crypto.randomUUID()}.jpg`;

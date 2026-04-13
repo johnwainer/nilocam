@@ -1,18 +1,19 @@
 "use client";
 
 import Image from "next/image";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { QRCodeCanvas } from "qrcode.react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 import {
   APP_NAME,
   DEFAULT_LANDING_CONFIG,
+  EVENT_BUCKET,
   EVENT_TYPES,
   eventTypePresetFromKey,
 } from "@/lib/constants";
 import { formatBytes, formatDate, publicStorageUrl, siteUrl, toSlug } from "@/lib/utils";
-import type { EventRecord, EventTypeKey, PhotoRecord } from "@/types";
+import type { EventRecord, EventTypeKey, PhotoRecord, WatermarkPosition } from "@/types";
 
 const supabase = createSupabaseBrowserClient();
 
@@ -180,6 +181,10 @@ export function AdminDashboard({
   // Feedback
   const [notice, setNotice] = useState<{ text: string; ok: boolean } | null>(null);
   const [copyDone, setCopyDone] = useState(false);
+
+  // Watermark upload
+  const [watermarkUploading, setWatermarkUploading] = useState(false);
+  const watermarkInputRef = useRef<HTMLInputElement | null>(null);
 
   // ── derived ────────────────────────────────────────────────────────────────
 
@@ -400,6 +405,29 @@ export function AdminDashboard({
           : e
       )
     );
+  };
+
+  const uploadWatermark = async (file: File) => {
+    if (!selected.id) return;
+    setWatermarkUploading(true);
+    try {
+      const ext = file.name.split(".").pop() ?? "png";
+      const path = `watermarks/${selected.id}.${ext}`;
+      const { error } = await supabase.storage
+        .from(EVENT_BUCKET)
+        .upload(path, file, { upsert: true, contentType: file.type });
+      if (error) throw error;
+      const url = publicStorageUrl(path);
+      updateLanding("watermarkUrl", url);
+      if (!selected.landing_config.watermarkPosition) updateLanding("watermarkPosition", "bottom-right");
+      if (!selected.landing_config.watermarkSize) updateLanding("watermarkSize", 18);
+      if (!selected.landing_config.watermarkOpacity) updateLanding("watermarkOpacity", 0.75);
+      setNotice({ text: "Marca de agua subida. Guarda el evento para aplicar.", ok: true });
+    } catch (err) {
+      setNotice({ text: err instanceof Error ? err.message : "Error al subir la imagen.", ok: false });
+    } finally {
+      setWatermarkUploading(false);
+    }
   };
 
   const copyUrl = async () => {
@@ -753,6 +781,140 @@ export function AdminDashboard({
                         <span>Mostrar términos y condiciones</span>
                       </label>
                     </div>
+                  </div>
+
+                  {/* Marca de agua */}
+                  <div style={s.formSection}>
+                    <span className="eyebrow" style={s.sectionEyebrow}>
+                      Marca de agua
+                    </span>
+                    <p style={s.fieldHint}>
+                      Se aplicará sobre cada foto que suba un invitado. Sube un PNG con fondo transparente para mejor resultado.
+                    </p>
+
+                    {selected.landing_config.watermarkUrl ? (
+                      <div style={s.wmPreviewRow}>
+                        <div style={s.wmPreviewBox}>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={selected.landing_config.watermarkUrl}
+                            alt="Marca de agua"
+                            style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }}
+                          />
+                        </div>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                          <button
+                            className="btn btn-secondary"
+                            style={s.wmBtn}
+                            type="button"
+                            onClick={() => watermarkInputRef.current?.click()}
+                            disabled={watermarkUploading}
+                          >
+                            {watermarkUploading ? "Subiendo…" : "Cambiar imagen"}
+                          </button>
+                          <button
+                            className="btn btn-ghost"
+                            style={s.wmBtn}
+                            type="button"
+                            onClick={() => {
+                              updateLanding("watermarkUrl", null);
+                            }}
+                          >
+                            Quitar marca
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        className="btn btn-secondary"
+                        style={{ width: "100%", padding: "18px 0", borderRadius: 16, border: "1.5px dashed rgba(0,0,0,0.15)" }}
+                        type="button"
+                        onClick={() => watermarkInputRef.current?.click()}
+                        disabled={watermarkUploading}
+                      >
+                        {watermarkUploading ? "Subiendo…" : "+ Subir imagen de marca de agua"}
+                      </button>
+                    )}
+
+                    <input
+                      ref={watermarkInputRef}
+                      type="file"
+                      accept="image/png,image/svg+xml,image/jpeg,image/webp"
+                      className="sr-only"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) uploadWatermark(f);
+                        e.target.value = "";
+                      }}
+                    />
+
+                    {selected.landing_config.watermarkUrl && (
+                      <>
+                        {/* Corner selector */}
+                        <div style={s.field}>
+                          <span className="label">Esquina</span>
+                          <div style={s.wmCornerGrid}>
+                            {(["top-left", "top-right", "bottom-left", "bottom-right"] as WatermarkPosition[]).map((pos) => {
+                              const labels: Record<WatermarkPosition, string> = {
+                                "top-left": "↖ Sup. izq.",
+                                "top-right": "↗ Sup. der.",
+                                "bottom-left": "↙ Inf. izq.",
+                                "bottom-right": "↘ Inf. der.",
+                              };
+                              const active = (selected.landing_config.watermarkPosition ?? "bottom-right") === pos;
+                              return (
+                                <button
+                                  key={pos}
+                                  type="button"
+                                  onClick={() => updateLanding("watermarkPosition", pos)}
+                                  style={active ? s.wmCornerActive : s.wmCorner}
+                                >
+                                  {labels[pos]}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* Size slider */}
+                        <label style={s.field}>
+                          <span className="label">
+                            Tamaño — <strong>{selected.landing_config.watermarkSize ?? 18}%</strong> del ancho de la foto
+                          </span>
+                          <input
+                            type="range"
+                            min={5}
+                            max={40}
+                            step={1}
+                            value={selected.landing_config.watermarkSize ?? 18}
+                            onChange={(e) => updateLanding("watermarkSize", Number(e.target.value))}
+                            style={{ width: "100%", accentColor: "#111" }}
+                          />
+                          <div style={s.sliderLabels}>
+                            <span>5%</span><span>40%</span>
+                          </div>
+                        </label>
+
+                        {/* Opacity slider */}
+                        <label style={s.field}>
+                          <span className="label">
+                            Opacidad — <strong>{Math.round((selected.landing_config.watermarkOpacity ?? 0.75) * 100)}%</strong>
+                          </span>
+                          <input
+                            type="range"
+                            min={10}
+                            max={100}
+                            step={5}
+                            value={Math.round((selected.landing_config.watermarkOpacity ?? 0.75) * 100)}
+                            onChange={(e) => updateLanding("watermarkOpacity", Number(e.target.value) / 100)}
+                            style={{ width: "100%", accentColor: "#111" }}
+                          />
+                          <div style={s.sliderLabels}>
+                            <span>10%</span><span>100%</span>
+                          </div>
+                        </label>
+                      </>
+                    )}
                   </div>
 
                   {/* Contenido */}
@@ -1455,6 +1617,57 @@ const s: Record<string, React.CSSProperties> = {
     gap: 14,
   },
   dangerText: { margin: "4px 0 0", fontSize: 13, lineHeight: 1.5 },
+
+  // Watermark
+  wmPreviewRow: { display: "flex", gap: 14, alignItems: "flex-start" },
+  wmPreviewBox: {
+    width: 120,
+    height: 80,
+    borderRadius: 12,
+    border: "1px solid rgba(0,0,0,0.08)",
+    background: "repeating-conic-gradient(#e5e5e5 0% 25%, #fff 0% 50%) 0 0 / 12px 12px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
+    flexShrink: 0,
+  },
+  wmBtn: { fontSize: 13, padding: "8px 14px" },
+  wmCornerGrid: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr",
+    gap: 8,
+    marginTop: 4,
+  },
+  wmCorner: {
+    padding: "10px 12px",
+    borderRadius: 12,
+    border: "1px solid rgba(0,0,0,0.08)",
+    background: "rgba(0,0,0,0.03)",
+    color: "var(--muted)",
+    fontSize: 13,
+    fontWeight: 600,
+    cursor: "pointer",
+    textAlign: "center" as const,
+  },
+  wmCornerActive: {
+    padding: "10px 12px",
+    borderRadius: 12,
+    border: "1px solid rgba(0,0,0,0.25)",
+    background: "#111",
+    color: "#fff",
+    fontSize: 13,
+    fontWeight: 700,
+    cursor: "pointer",
+    textAlign: "center" as const,
+  },
+  sliderLabels: {
+    display: "flex",
+    justifyContent: "space-between",
+    fontSize: 11,
+    color: "var(--muted)",
+    marginTop: 4,
+  },
   dangerBtn: {
     padding: "9px 16px",
     borderRadius: 999,
