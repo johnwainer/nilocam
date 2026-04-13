@@ -59,6 +59,7 @@ export default function HomePage() {
             {howItWorks.map((item, i) => (
               <div
                 key={item.step}
+                className="home-step-row"
                 style={{
                   ...styles.stepRow,
                   borderBottom:
@@ -121,7 +122,7 @@ export default function HomePage() {
               Hecho para cada ocasión.
             </h2>
           </div>
-          <div style={styles.cards}>
+          <div className="home-event-cards" style={styles.cards}>
             {EVENT_TYPES.map((item, index) => (
               <article
                 key={item.key}
@@ -140,7 +141,7 @@ export default function HomePage() {
       </section>
 
       {/* ── Demo CTA ──────────────────────────────────────── */}
-      <section className="section" id="demo" style={styles.demoSection}>
+      <section className="section demo-section" id="demo" style={styles.demoSection}>
         <div className="container">
           <div style={styles.demoCta}>
             <div style={styles.demoLeft}>
@@ -305,7 +306,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   demoCta: {
     display: "flex",
-    alignItems: "flex-end",
+    alignItems: "flex-start",
     justifyContent: "space-between",
     gap: 40,
     flexWrap: "wrap",
@@ -317,7 +318,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   demoTitle: {
     margin: 0,
-    fontSize: "clamp(52px, 7vw, 104px)",
+    fontSize: "clamp(36px, 9vw, 104px)",
     lineHeight: 0.88,
     letterSpacing: "-0.05em",
     color: "#ffffff",

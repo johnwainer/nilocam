@@ -605,7 +605,7 @@ export function AdminDashboard({
         </aside>
 
         {/* ── Main ── */}
-        <div style={s.mainWrap}>
+        <div className="admin-main-wrap" style={s.mainWrap}>
           <div style={s.main}>
             {/* Event header */}
             <div style={s.eventHeader}>
@@ -681,7 +681,7 @@ export function AdminDashboard({
 
             {/* ── EVENTO TAB ── */}
             {tab === "evento" && (
-              <div style={s.editorGrid}>
+              <div className="admin-editor-grid" style={s.editorGrid}>
                 {/* Left: form */}
                 <div style={s.form}>
                   {/* Identidad */}
@@ -705,7 +705,7 @@ export function AdminDashboard({
                       </select>
                     </label>
 
-                    <div style={s.fieldRow}>
+                    <div className="admin-field-row" style={s.fieldRow}>
                       <label style={s.fieldHalf}>
                         <span className="label">Título del evento</span>
                         <input
@@ -745,7 +745,7 @@ export function AdminDashboard({
                       </span>
                     </label>
 
-                    <div style={s.fieldRow}>
+                    <div className="admin-field-row" style={s.fieldRow}>
                       <label style={s.fieldHalf}>
                         <span className="label">Fecha del evento</span>
                         <input
@@ -827,7 +827,7 @@ export function AdminDashboard({
                       Subida de fotos
                     </span>
 
-                    <div style={s.fieldRow}>
+                    <div className="admin-field-row" style={s.fieldRow}>
                       <label style={s.fieldHalf}>
                         <span className="label">Moderación</span>
                         <select
@@ -857,7 +857,7 @@ export function AdminDashboard({
                       </label>
                     </div>
 
-                    <div style={s.checkGrid}>
+                    <div className="admin-check-grid" style={s.checkGrid}>
                       <label style={s.checkRow}>
                         <input
                           type="checkbox"
@@ -1106,7 +1106,7 @@ export function AdminDashboard({
                       Contenido de la landing
                     </span>
 
-                    <div style={s.fieldRow}>
+                    <div className="admin-field-row" style={s.fieldRow}>
                       <label style={s.fieldHalf}>
                         <span className="label">Hero title</span>
                         <input
@@ -1186,7 +1186,7 @@ export function AdminDashboard({
                       </div>
                     </div>
 
-                    <div style={s.fieldRow}>
+                    <div className="admin-field-row" style={s.fieldRow}>
                       <label style={s.fieldHalf}>
                         <span className="label">Color de acento</span>
                         <div style={s.colorPickerRow}>
@@ -1258,7 +1258,7 @@ export function AdminDashboard({
                   </div>
 
                   {/* Danger zone */}
-                  <div style={s.dangerZone}>
+                  <div className="admin-danger-zone" style={s.dangerZone}>
                     <div>
                       <strong style={{ fontSize: 14 }}>Eliminar evento</strong>
                       <p className="muted" style={s.dangerText}>
@@ -1277,7 +1277,7 @@ export function AdminDashboard({
                 </div>
 
                 {/* Right: QR preview */}
-                <div style={s.previewCol}>
+                <div className="admin-preview-col" style={s.previewCol}>
                   <div className="card" style={s.previewCard}>
                     <span className="eyebrow">Vista rápida</span>
 
@@ -1496,7 +1496,7 @@ export function AdminDashboard({
                     </p>
                   </div>
                 ) : (
-                  <div style={s.photoGrid}>
+                  <div className="admin-photo-grid" style={s.photoGrid}>
                     {filteredPhotos.map((photo) => {
                       const cfg = STATUS_CFG[photo.moderation_status] ?? STATUS_CFG.pending;
                       const confirming = deletingPhotoId === photo.id;

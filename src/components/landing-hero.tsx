@@ -126,7 +126,7 @@ export function LandingHero() {
 
 const s: Record<string, React.CSSProperties> = {
   title: {
-    fontSize: "clamp(72px, 10vw, 148px)",
+    fontSize: "clamp(38px, 10vw, 148px)",
     lineHeight: 0.88,
     margin: 0,
     letterSpacing: "-0.05em",

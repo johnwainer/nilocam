@@ -661,6 +661,81 @@ img {
   to   { width: 100%; }
 }
 
+/* ─── Home page mobile ───────────────────────────────────────────────────── */
+
+/* Event type cards: 2 columns on phone */
+@media (max-width: 500px) {
+  .home-event-cards {
+    grid-template-columns: 1fr 1fr !important;
+  }
+}
+
+/* Step rows: tighten spacing and shrink number column */
+@media (max-width: 640px) {
+  .home-step-row {
+    gap: 20px !important;
+    padding-top: 28px !important;
+    padding-bottom: 28px !important;
+    grid-template-columns: minmax(48px, 64px) 1fr !important;
+  }
+}
+
+/* Demo CTA section: reduce vertical padding */
+@media (max-width: 640px) {
+  .demo-section {
+    padding-top: 52px !important;
+    padding-bottom: 52px !important;
+  }
+}
+
+/* Stats strip: tighter padding on phone */
+@media (max-width: 500px) {
+  .lh-stats > div:not(.lh-stat-div) {
+    padding: 16px 20px !important;
+  }
+}
+
+/* ─── Admin content responsive ───────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  /* Reduce main area padding */
+  .admin-main-wrap {
+    padding: 16px 14px !important;
+  }
+
+  /* Collapse 2-column editor (form + QR card) to 1 column */
+  .admin-editor-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* QR preview card: remove sticky, show below form */
+  .admin-preview-col {
+    position: static !important;
+  }
+
+  /* All 2-column form rows → single column */
+  .admin-field-row {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Checkboxes grid → single column */
+  .admin-check-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Photo grid: tighter columns on mobile */
+  .admin-photo-grid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)) !important;
+  }
+
+  /* Danger zone: stack vertically */
+  .admin-danger-zone {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 12px !important;
+  }
+}
+
 /* ─── Gallery Display — responsive for 9:16 and 16:9 ────────────────────── */
 
 /* Hide keyboard hints on devices with no fine pointer (TVs, touch screens) */
