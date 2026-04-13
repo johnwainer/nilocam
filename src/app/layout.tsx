@@ -13,8 +13,12 @@ export const metadata: Metadata = {
   description: APP_TAGLINE,
   manifest: "/manifest.webmanifest",
   icons: {
-    icon: "/icon-192.svg",
-    apple: "/apple-touch-icon.svg",
+    icon: [
+      { url: "/icon-192.svg", type: "image/svg+xml" },
+      { url: "/icon-512.svg", sizes: "512x512", type: "image/svg+xml" },
+    ],
+    apple: { url: "/apple-touch-icon.svg", sizes: "180x180", type: "image/svg+xml" },
+    shortcut: "/icon-192.svg",
   },
   openGraph: {
     type: "website",
