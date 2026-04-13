@@ -1379,7 +1379,7 @@ export function AdminDashboard({
 
 const s: Record<string, React.CSSProperties> = {
   shell: {
-    height: "100vh",
+    height: "100dvh",
     display: "flex",
     flexDirection: "column",
     overflow: "hidden",
@@ -1404,7 +1404,7 @@ const s: Record<string, React.CSSProperties> = {
   headerEmail: { fontSize: 13, color: "var(--muted)" },
   headerBtn: { fontSize: 13, padding: "7px 14px" },
 
-  body: { flex: 1, display: "flex", overflow: "hidden" },
+  body: { flex: 1, display: "flex", overflow: "hidden", minHeight: 0 },
 
   sidebar: {
     width: 256,
@@ -1416,6 +1416,7 @@ const s: Record<string, React.CSSProperties> = {
     overflowY: "auto",
     padding: 14,
     gap: 6,
+    minHeight: 0,
   },
   createBtn: { width: "100%", fontSize: 14, padding: "11px 16px", marginBottom: 6 },
   eventList: { display: "flex", flexDirection: "column", gap: 5 },
@@ -1446,7 +1447,7 @@ const s: Record<string, React.CSSProperties> = {
   eventItemOwner: { fontSize: 10, color: "var(--muted-2)", wordBreak: "break-all" },
   eventItemPill: { fontSize: 11, padding: "3px 9px", marginTop: 3, width: "fit-content" },
 
-  mainWrap: { flex: 1, overflowY: "auto", padding: "24px 28px" },
+  mainWrap: { flex: 1, overflowY: "auto", padding: "24px 28px", minHeight: 0 },
   main: { maxWidth: 1200, margin: "0 auto", display: "grid", gap: 20 },
 
   eventHeader: {

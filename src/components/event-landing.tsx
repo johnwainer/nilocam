@@ -6,6 +6,17 @@ import { formatDate } from "@/lib/utils";
 import { PhotoComposer } from "@/components/photo-composer";
 import { RealtimeGallery } from "@/components/realtime-gallery";
 
+/** Returns true if the hex color is too dark to show a dark-colored badge/button on it */
+function isDark(hex: string): boolean {
+  const h = hex.replace("#", "");
+  if (h.length < 6) return true;
+  const r = parseInt(h.slice(0, 2), 16);
+  const g = parseInt(h.slice(2, 4), 16);
+  const b = parseInt(h.slice(4, 6), 16);
+  // Perceived brightness (0–255)
+  return (r * 299 + g * 587 + b * 114) / 1000 < 80;
+}
+
 function CalendarIcon() {
   return (
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ flexShrink: 0 }}>
@@ -33,6 +44,7 @@ export function EventLanding({
 
   const theme = event.landing_config.theme;
   const sections = event.landing_config.sections;
+  const accentDark = isDark(theme.accent);
   const coverUrl = theme.heroImage ?? event.cover_image_url ?? "";
   const hasGallery = sections.includes("gallery");
 
@@ -58,7 +70,12 @@ export function EventLanding({
         <div className="container el-hero-content" style={styles.heroContent}>
           {/* ── left / main copy ── */}
           <div style={styles.heroCopy}>
-            <span style={styles.eventTypeBadge}>
+            <span style={{
+              ...styles.eventTypeBadge,
+              background: `${theme.accent}22`,
+              border: `1px solid ${theme.accent}66`,
+              color: accentDark ? "rgba(255,255,255,0.75)" : theme.accent,
+            }}>
               {event.event_type_key.replaceAll("-", " ")}
             </span>
 
@@ -87,11 +104,18 @@ export function EventLanding({
             </div>
 
             <div style={styles.ctaRow}>
-              <a style={styles.ctaPrimary} href="#uploader">
+              <a style={{
+                ...styles.ctaPrimary,
+                background: accentDark ? "#ffffff" : theme.accent,
+                color: accentDark ? "#060a18" : "#ffffff",
+              }} href="#uploader">
                 {event.landing_config.primaryCta ?? "Subir mi foto"}
               </a>
               {hasGallery ? (
-                <a style={styles.ctaGhost} href="#gallery">
+                <a style={{
+                  ...styles.ctaGhost,
+                  borderColor: accentDark ? "rgba(255,255,255,0.28)" : `${theme.accent}88`,
+                }} href="#gallery">
                   Ver galería
                 </a>
               ) : null}
