@@ -174,6 +174,11 @@ export function AdminDashboard({
   const [photoFilter, setPhotoFilter] = useState<"all" | "pending" | "approved" | "rejected">(
     "all"
   );
+
+  // Selection + export
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedPhotoIds, setSelectedPhotoIds] = useState<Set<string>>(new Set());
+  const [exportState, setExportState] = useState<{ done: number; total: number } | null>(null);
   const [deletingPhotoId, setDeletingPhotoId] = useState<string | null>(null);
 
   // Saving / deleting
@@ -454,6 +459,49 @@ export function AdminDashboard({
     link.download = `qr-${selected.slug}.png`;
     link.href = canvas.toDataURL("image/png");
     link.click();
+  };
+
+  const exportPhotos = async (ids: string[]) => {
+    if (ids.length === 0) return;
+    setExportState({ done: 0, total: ids.length });
+    try {
+      const JSZip = (await import("jszip")).default;
+      const zip = new JSZip();
+      let done = 0;
+
+      // Fetch all in parallel (JPEG files are already compressed — use store level)
+      await Promise.all(
+        ids.map(async (id, i) => {
+          const photo = photos.find((p) => p.id === id);
+          if (!photo) return;
+          try {
+            const url = publicStorageUrl(photo.storage_path);
+            const resp = await fetch(url);
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            const blob = await resp.blob();
+            const uploader = photo.is_anonymous
+              ? "anonimo"
+              : (photo.uploaded_by_name ?? "invitado").replace(/[^a-z0-9]/gi, "_").toLowerCase();
+            zip.file(`${String(i + 1).padStart(3, "0")}_${uploader}.jpg`, blob, { binary: true, compression: "STORE" });
+          } catch { /* skip failed fetch */ } finally {
+            done++;
+            setExportState({ done, total: ids.length });
+          }
+        })
+      );
+
+      const content = await zip.generateAsync({ type: "blob" });
+      const url = URL.createObjectURL(content);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${selected.slug || "fotos"}-nilo-cam.zip`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setNotice({ text: err instanceof Error ? err.message : "Error al exportar.", ok: false });
+    } finally {
+      setExportState(null);
+    }
   };
 
   // ── render ─────────────────────────────────────────────────────────────────
@@ -1305,6 +1353,70 @@ export function AdminDashboard({
                   </button>
                 </div>
 
+                {/* Export toolbar */}
+                {filteredPhotos.length > 0 && (
+                  <div style={s.exportBar}>
+                    {/* Select mode toggle */}
+                    <button
+                      type="button"
+                      style={selectMode ? s.exportBtnActive : s.exportBtn}
+                      onClick={() => {
+                        setSelectMode((v) => !v);
+                        setSelectedPhotoIds(new Set());
+                      }}
+                    >
+                      {selectMode ? "Cancelar selección" : "Seleccionar"}
+                    </button>
+
+                    {selectMode && (
+                      <>
+                        <button
+                          type="button"
+                          style={s.exportBtn}
+                          onClick={() => {
+                            if (selectedPhotoIds.size === filteredPhotos.length) {
+                              setSelectedPhotoIds(new Set());
+                            } else {
+                              setSelectedPhotoIds(new Set(filteredPhotos.map((p) => p.id)));
+                            }
+                          }}
+                        >
+                          {selectedPhotoIds.size === filteredPhotos.length
+                            ? "Deseleccionar todas"
+                            : "Seleccionar todas"}
+                        </button>
+
+                        {selectedPhotoIds.size > 0 && (
+                          <button
+                            type="button"
+                            style={s.exportBtnPrimary}
+                            disabled={!!exportState}
+                            onClick={() => exportPhotos([...selectedPhotoIds])}
+                          >
+                            {exportState
+                              ? `Exportando ${exportState.done}/${exportState.total}…`
+                              : `↓ Exportar ${selectedPhotoIds.size} foto${selectedPhotoIds.size > 1 ? "s" : ""}`}
+                          </button>
+                        )}
+                      </>
+                    )}
+
+                    {/* Always available: export all visible */}
+                    {!selectMode && (
+                      <button
+                        type="button"
+                        style={s.exportBtnPrimary}
+                        disabled={!!exportState}
+                        onClick={() => exportPhotos(filteredPhotos.map((p) => p.id))}
+                      >
+                        {exportState
+                          ? `Exportando ${exportState.done}/${exportState.total}…`
+                          : `↓ Exportar ${filteredPhotos.length === photos.length ? "todas" : filteredPhotos.length} (ZIP)`}
+                      </button>
+                    )}
+                  </div>
+                )}
+
                 {/* Grid */}
                 {photosLoading ? (
                   <div style={s.centerState}>
@@ -1328,8 +1440,24 @@ export function AdminDashboard({
                     {filteredPhotos.map((photo) => {
                       const cfg = STATUS_CFG[photo.moderation_status] ?? STATUS_CFG.pending;
                       const confirming = deletingPhotoId === photo.id;
+                      const isSelected = selectedPhotoIds.has(photo.id);
                       return (
-                        <div key={photo.id} className="card" style={s.photoCard}>
+                        <div
+                          key={photo.id}
+                          className="card"
+                          style={{
+                            ...s.photoCard,
+                            outline: isSelected ? "2.5px solid #111" : "none",
+                            outlineOffset: 2,
+                          }}
+                          onClick={selectMode ? () => {
+                            setSelectedPhotoIds((cur) => {
+                              const next = new Set(cur);
+                              next.has(photo.id) ? next.delete(photo.id) : next.add(photo.id);
+                              return next;
+                            });
+                          } : undefined}
+                        >
                           <div style={s.photoImgWrap}>
                             <Image
                               src={publicStorageUrl(photo.storage_path)}
@@ -1349,6 +1477,20 @@ export function AdminDashboard({
                             >
                               {cfg.label}
                             </div>
+                            {/* Selection checkbox */}
+                            {selectMode && (
+                              <div style={{
+                                ...s.selectionCheck,
+                                background: isSelected ? "#111" : "rgba(255,255,255,0.85)",
+                                border: isSelected ? "2px solid #111" : "2px solid rgba(0,0,0,0.2)",
+                              }}>
+                                {isSelected && (
+                                  <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
+                                    <polyline points="2,6 5,9 10,3" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                  </svg>
+                                )}
+                              </div>
+                            )}
                           </div>
 
                           <div style={s.photoMeta}>
@@ -1882,6 +2024,62 @@ const s: Record<string, React.CSSProperties> = {
     fontWeight: 700,
     cursor: "pointer",
     flexShrink: 0,
+  },
+
+  // Export toolbar
+  exportBar: {
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    flexWrap: "wrap" as const,
+    padding: "10px 0 2px",
+  },
+  exportBtn: {
+    padding: "8px 16px",
+    borderRadius: 999,
+    border: "1px solid rgba(0,0,0,0.12)",
+    background: "transparent",
+    color: "var(--text)",
+    fontSize: 13,
+    fontWeight: 600,
+    cursor: "pointer",
+  },
+  exportBtnActive: {
+    padding: "8px 16px",
+    borderRadius: 999,
+    border: "1px solid rgba(0,0,0,0.5)",
+    background: "rgba(0,0,0,0.06)",
+    color: "var(--text)",
+    fontSize: 13,
+    fontWeight: 700,
+    cursor: "pointer",
+  },
+  exportBtnPrimary: {
+    padding: "8px 18px",
+    borderRadius: 999,
+    border: "none",
+    background: "#111111",
+    color: "#ffffff",
+    fontSize: 13,
+    fontWeight: 700,
+    cursor: "pointer",
+    marginLeft: "auto",
+  },
+
+  // Selection checkbox overlay on photo card
+  selectionCheck: {
+    position: "absolute",
+    top: 8,
+    left: 8,
+    width: 22,
+    height: 22,
+    borderRadius: 6,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    transition: "background 150ms ease, border 150ms ease",
+    zIndex: 5,
+    cursor: "pointer",
   },
 
   previewCol: { position: "sticky", top: 0, alignSelf: "start" },
