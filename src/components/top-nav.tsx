@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { APP_NAME } from "@/lib/constants";
+import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 
 export function SpyCatIcon({ size = 32 }: { size?: number }) {
   return (
@@ -54,7 +56,25 @@ export function SpyCatIcon({ size = 32 }: { size?: number }) {
   );
 }
 
+const supabase = createSupabaseBrowserClient();
+
 export function TopNav() {
+  const [loggedIn, setLoggedIn] = useState(false);
+
+  useEffect(() => {
+    // Check initial session
+    supabase.auth.getUser().then(({ data }) => {
+      setLoggedIn(!!data.user);
+    });
+
+    // Keep in sync with auth changes (login / logout)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setLoggedIn(!!session?.user);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
   return (
     <header style={s.header}>
       <div className="container">
@@ -78,14 +98,17 @@ export function TopNav() {
             </Link>
           </div>
 
-          {/* Actions */}
+          {/* Actions — swap based on auth state */}
           <div style={s.actions}>
-            <Link href="/auth" style={s.navLink} className="nav-link nav-link-admin">
-              Admin
-            </Link>
-            <Link href="/auth" className="btn btn-primary" style={s.cta}>
-              Empezar
-            </Link>
+            {loggedIn ? (
+              <Link href="/admin" className="btn btn-primary" style={s.cta}>
+                Admin
+              </Link>
+            ) : (
+              <Link href="/auth" className="btn btn-primary" style={s.cta}>
+                Empezar
+              </Link>
+            )}
           </div>
         </nav>
       </div>
