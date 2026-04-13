@@ -1,21 +1,9 @@
 <svg width="180" height="180" viewBox="0 0 180 180" fill="none" xmlns="http://www.w3.org/2000/svg">
 <rect width="180" height="180" rx="40" fill="#F5F5F7"/>
 <rect x="28" y="28" width="124" height="124" rx="34" fill="#111111"/>
-<!-- ears -->
 <path d="M59 74L47 54L67 57L90 40L113 57L133 54L121 74" stroke="#F5F5F7" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
-<!-- pupils -->
 <circle cx="75" cy="93" r="5" fill="#F5F5F7"/>
 <circle cx="105" cy="93" r="5" fill="#F5F5F7"/>
-<!-- glasses frames -->
-<circle cx="75" cy="93" r="11" stroke="#F5F5F7" stroke-width="3.5" fill="none"/>
-<circle cx="105" cy="93" r="11" stroke="#F5F5F7" stroke-width="3.5" fill="none"/>
-<!-- bridge -->
-<path d="M86 93L94 93" stroke="#F5F5F7" stroke-width="3.5" stroke-linecap="round"/>
-<!-- arms -->
-<path d="M64 93L51 91" stroke="#F5F5F7" stroke-width="3.5" stroke-linecap="round"/>
-<path d="M116 93L129 91" stroke="#F5F5F7" stroke-width="3.5" stroke-linecap="round"/>
-<!-- nose -->
-<path d="M86 104C89.5 108 92.5 108 96 104" stroke="#F5F5F7" stroke-width="4.5" stroke-linecap="round"/>
-<!-- smile -->
+<path d="M86 104C89.5 108 92.5 108 96 104" stroke="#F5F5F7" stroke-width="5" stroke-linecap="round"/>
 <path d="M70 120C82 112 98 112 110 120" stroke="#F5F5F7" stroke-width="4.5" stroke-linecap="round"/>
 </svg>

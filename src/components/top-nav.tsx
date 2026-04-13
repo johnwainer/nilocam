@@ -22,22 +22,21 @@ function SpyCatIcon({ size = 32 }: { size?: number }) {
         strokeLinecap="round"
         strokeLinejoin="round"
       />
-      {/* pupils */}
-      <circle cx="11" cy="18" r="1.8" fill="#F5F5F7" />
-      <circle cx="21" cy="18" r="1.8" fill="#F5F5F7" />
-      {/* glasses frames */}
-      <circle cx="11" cy="18" r="3.8" stroke="#F5F5F7" strokeWidth="1.7" />
-      <circle cx="21" cy="18" r="3.8" stroke="#F5F5F7" strokeWidth="1.7" />
-      {/* bridge */}
-      <path d="M14.8 18H17.2" stroke="#F5F5F7" strokeWidth="1.7" strokeLinecap="round" />
-      {/* arms */}
-      <path d="M7.2 18L5 17.4" stroke="#F5F5F7" strokeWidth="1.7" strokeLinecap="round" />
-      <path d="M24.8 18L27 17.4" stroke="#F5F5F7" strokeWidth="1.7" strokeLinecap="round" />
+      {/* eyes */}
+      <circle cx="13" cy="19" r="2.2" fill="#F5F5F7" />
+      <circle cx="21" cy="19" r="2.2" fill="#F5F5F7" />
       {/* nose */}
       <path
-        d="M14 21.5C15 23 17 23 18 21.5"
+        d="M15 22C15.8 23 17.2 23 18 22"
         stroke="#F5F5F7"
-        strokeWidth="1.4"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+      {/* smile */}
+      <path
+        d="M11.5 25C13.5 23 18.5 23 20.5 25"
+        stroke="#F5F5F7"
+        strokeWidth="1.5"
         strokeLinecap="round"
       />
     </svg>

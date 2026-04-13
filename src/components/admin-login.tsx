@@ -8,20 +8,20 @@ const supabase = createSupabaseBrowserClient();
 
 type Mode = "login" | "access" | "reset";
 
-const modeCopy: Record<Mode, { title: string; text: string; primary: string }> = {
+const copy: Record<Mode, { title: string; subtitle: string; primary: string }> = {
   login: {
-    title: "Entra al panel",
-    text: "Accede con tu correo y contraseña para gestionar eventos, moderación y URLs del QR.",
-    primary: "Entrar",
+    title: "Bienvenido de vuelta.",
+    subtitle: "Ingresa con tu correo y contraseña para gestionar eventos y fotos.",
+    primary: "Iniciar sesión",
   },
   access: {
-    title: "Crear o reparar acceso",
-    text: "Si ya existe tu usuario en la base, definimos la contraseña y dejamos la cuenta lista sin confirmaciones.",
-    primary: "Crear acceso",
+    title: "Crear cuenta.",
+    subtitle: "Completa los campos para registrarte y acceder al panel.",
+    primary: "Crear cuenta",
   },
   reset: {
-    title: "Recupera tu contraseña",
-    text: "Te enviaremos un enlace para restablecerla y volver a entrar al panel.",
+    title: "Recuperar contraseña.",
+    subtitle: "Te enviaremos un enlace a tu correo para restablecerla.",
     primary: "Enviar enlace",
   },
 };
@@ -33,16 +33,18 @@ export function AdminLogin() {
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [isSending, setIsSending] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
+  const [message, setMessage] = useState<{ text: string; ok: boolean } | null>(null);
 
   const origin =
     typeof window !== "undefined" && window.location.origin
       ? window.location.origin
       : "https://nilocam.vercel.app";
 
-  const resetForm = () => {
-    setPassword("");
+  const switchMode = (next: Mode) => {
+    setMode(next);
     setMessage(null);
+    setPassword("");
+    if (next !== "access") setDisplayName("");
   };
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
@@ -52,16 +54,8 @@ export function AdminLogin() {
 
     try {
       if (mode === "login") {
-        const { error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-
-        if (error) {
-          setMessage(error.message);
-          return;
-        }
-
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) { setMessage({ text: error.message, ok: false }); return; }
         router.push("/admin");
         router.refresh();
         return;
@@ -71,33 +65,20 @@ export function AdminLogin() {
         const response = await fetch("/api/auth/bootstrap", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            email,
-            password,
-            displayName,
-          }),
+          body: JSON.stringify({ email, password, displayName }),
         });
-
         const payload = (await response.json().catch(() => null)) as
           | { ok: true; message?: string }
           | { ok: false; message?: string }
           | null;
 
         if (!response.ok || !payload?.ok) {
-          setMessage(payload?.message || "No pudimos crear el acceso.");
+          setMessage({ text: payload?.message || "No pudimos crear el acceso.", ok: false });
           return;
         }
 
-        const { error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-
-        if (error) {
-          setMessage(error.message);
-          return;
-        }
-
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) { setMessage({ text: error.message, ok: false }); return; }
         router.push("/admin");
         router.refresh();
         return;
@@ -106,258 +87,236 @@ export function AdminLogin() {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${origin}/auth/callback?next=/auth/reset`,
       });
-
-      if (error) {
-        setMessage(error.message);
-        return;
-      }
-
-      setMessage("Te enviamos un enlace para restablecer tu contraseña.");
+      if (error) { setMessage({ text: error.message, ok: false }); return; }
+      setMessage({ text: "Enlace enviado. Revisa tu correo.", ok: true });
     } finally {
       setIsSending(false);
     }
   };
 
   return (
-    <main className="container section">
-      <div className="card glass" style={styles.shell}>
-        <div style={styles.hero}>
-          <span className="eyebrow">Acceso profesional</span>
-          <h1 className="serif" style={styles.title}>
-            Administra eventos, fotos y QR desde una cuenta normal
-          </h1>
-          <p className="muted" style={styles.text}>
-            El acceso usa email y contraseña, con perfiles guardados en Supabase. Sin links mágicos para entrar al
-            panel.
-          </p>
+    <main style={s.page}>
+      <div style={s.wrap}>
 
-          <div style={styles.bullets}>
-            <div className="card" style={styles.bullet}>
-              <strong>Login simple</strong>
-              <span className="muted">Entrar con email y contraseña.</span>
-            </div>
-            <div className="card" style={styles.bullet}>
-              <strong>Registro real</strong>
-              <span className="muted">Cuenta vinculada a `profiles` en la DB.</span>
-            </div>
-            <div className="card" style={styles.bullet}>
-              <strong>Recuperación</strong>
-              <span className="muted">Enlace para restablecer contraseña cuando lo necesites.</span>
-            </div>
-          </div>
+        {/* Heading block */}
+        <div style={s.heading}>
+          <span className="eyebrow">Panel de administración</span>
+          <h1 className="serif" style={s.title}>{copy[mode].title}</h1>
+          <p className="muted" style={s.subtitle}>{copy[mode].subtitle}</p>
         </div>
 
-          <div className="card glass" style={styles.formCard}>
-          <div style={styles.tabs}>
-            {(["login", "access", "reset"] as Mode[]).map((item) => (
-              <button
-                key={item}
-                type="button"
-                className="btn"
-                style={mode === item ? styles.tabActive : styles.tab}
-                onClick={() => {
-                  setMode(item);
-                  setMessage(null);
-                  if (item !== "access") setDisplayName("");
-                  if (item === "login") resetForm();
-                }}
-              >
-                {item === "login" ? "Entrar" : item === "access" ? "Crear acceso" : "Recuperar"}
-              </button>
-            ))}
+        {/* Segmented toggle — only for login / access */}
+        {mode !== "reset" && (
+          <div style={s.segment}>
+            <button
+              type="button"
+              style={{ ...s.segBtn, ...(mode === "login" ? s.segActive : {}) }}
+              onClick={() => switchMode("login")}
+            >
+              Iniciar sesión
+            </button>
+            <button
+              type="button"
+              style={{ ...s.segBtn, ...(mode === "access" ? s.segActive : {}) }}
+              onClick={() => switchMode("access")}
+            >
+              Crear cuenta
+            </button>
           </div>
+        )}
 
-          <div style={styles.copyBlock}>
-            <h2 className="serif" style={styles.formTitle}>
-              {modeCopy[mode].title}
-            </h2>
-            <p className="muted" style={styles.formText}>
-              {modeCopy[mode].text}
-            </p>
-          </div>
+        {/* Form card */}
+        <div className="card" style={s.card}>
+          <form onSubmit={submit} style={s.form}>
 
-          <form onSubmit={submit} style={styles.form}>
-            {mode === "access" ? (
-              <label>
+            {mode === "access" && (
+              <label style={s.fieldWrap}>
                 <span className="label">Nombre visible</span>
                 <input
                   className="input"
                   type="text"
-                  placeholder="Ej: John Wainer"
+                  placeholder="Tu nombre completo"
                   value={displayName}
-                  onChange={(event) => setDisplayName(event.target.value)}
+                  onChange={(e) => setDisplayName(e.target.value)}
                   autoComplete="name"
                 />
               </label>
-            ) : null}
+            )}
 
-            <label>
-              <span className="label">Correo</span>
+            <label style={s.fieldWrap}>
+              <span className="label">Correo electrónico</span>
               <input
                 className="input"
                 type="email"
                 placeholder="tu@correo.com"
                 value={email}
-                onChange={(event) => setEmail(event.target.value)}
+                onChange={(e) => setEmail(e.target.value)}
                 autoComplete="email"
                 required
               />
             </label>
 
-            {mode !== "reset" ? (
-              <label>
+            {mode !== "reset" && (
+              <label style={s.fieldWrap}>
                 <span className="label">Contraseña</span>
                 <input
                   className="input"
                   type="password"
-                  placeholder="••••••••"
+                  placeholder="Mínimo 8 caracteres"
                   value={password}
-                  onChange={(event) => setPassword(event.target.value)}
+                  onChange={(e) => setPassword(e.target.value)}
                   autoComplete={mode === "access" ? "new-password" : "current-password"}
                   minLength={8}
                   required
                 />
               </label>
-            ) : null}
+            )}
 
-            {mode === "access" ? (
-              <p className="muted" style={styles.note}>
-                No pedimos confirmación por email. Si tu usuario ya existe en `profiles`, creamos o reparamos el
-                acceso y entras enseguida.
-              </p>
-            ) : null}
-
-            <button className="btn btn-primary" type="submit" disabled={isSending}>
-              {isSending ? "Procesando..." : modeCopy[mode].primary}
+            <button
+              className="btn btn-primary"
+              type="submit"
+              disabled={isSending}
+              style={s.submitBtn}
+            >
+              {isSending ? "Procesando…" : copy[mode].primary}
             </button>
           </form>
 
-          <div style={styles.footerRow}>
-            {mode !== "login" ? (
-              <button type="button" className="btn btn-ghost" onClick={() => setMode("login")}>
-                Volver a entrar
-              </button>
-            ) : null}
-            {mode !== "access" ? (
+          {/* Footer links */}
+          <div style={s.footer}>
+            {mode === "login" && (
               <button
                 type="button"
-                className="btn btn-secondary"
-                onClick={() => {
-                  setMode("access");
-                  setMessage(null);
-                }}
+                style={s.footerLink}
+                onClick={() => switchMode("reset")}
               >
-                Crear acceso
+                ¿Olvidaste tu contraseña?
               </button>
-            ) : null}
+            )}
+            {mode === "reset" && (
+              <button
+                type="button"
+                style={s.footerLink}
+                onClick={() => switchMode("login")}
+              >
+                ← Volver a iniciar sesión
+              </button>
+            )}
           </div>
 
-          {message ? <div style={styles.message}>{message}</div> : null}
+          {message && (
+            <div style={{ ...s.alert, ...(message.ok ? s.alertOk : s.alertErr) }}>
+              {message.text}
+            </div>
+          )}
         </div>
+
       </div>
     </main>
   );
 }
 
-const styles: Record<string, React.CSSProperties> = {
-  shell: {
-    padding: 18,
-    borderRadius: 34,
-    display: "grid",
-    gap: 18,
-    gridTemplateColumns: "1.08fr 0.92fr",
-    alignItems: "start",
+const s: Record<string, React.CSSProperties> = {
+  page: {
+    minHeight: "calc(100vh - 56px)",
+    display: "flex",
+    alignItems: "center",
+    padding: "48px 0 72px",
   },
-  hero: {
-    padding: 18,
+  wrap: {
+    width: "min(420px, calc(100% - 32px))",
+    margin: "0 auto",
     display: "grid",
-    gap: 16,
-    alignContent: "start",
+    gap: 20,
+  },
+  heading: {
+    display: "grid",
+    gap: 10,
   },
   title: {
-    fontSize: "clamp(40px, 4.4vw, 70px)",
+    fontSize: "clamp(36px, 5vw, 52px)",
+    lineHeight: 0.92,
     margin: 0,
-    lineHeight: 0.94,
     letterSpacing: "-0.05em",
-    maxWidth: 680,
   },
-  text: {
-    fontSize: 18,
-    lineHeight: 1.75,
+  subtitle: {
+    fontSize: 15,
+    lineHeight: 1.65,
     margin: 0,
-    maxWidth: 620,
   },
-  bullets: {
+  segment: {
     display: "grid",
-    gap: 12,
-    gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-    marginTop: 10,
+    gridTemplateColumns: "1fr 1fr",
+    background: "rgba(0,0,0,0.05)",
+    borderRadius: 999,
+    padding: 4,
+    gap: 4,
   },
-  bullet: {
-    padding: 16,
-    borderRadius: 22,
+  segBtn: {
+    borderRadius: 999,
+    padding: "10px 16px",
+    fontSize: 14,
+    fontWeight: 700,
+    cursor: "pointer",
+    border: "1px solid transparent",
+    background: "transparent",
+    color: "var(--muted)",
+    transition: "all 180ms ease",
+  },
+  segActive: {
+    background: "#ffffff",
+    color: "#111111",
+    border: "1px solid rgba(0,0,0,0.08)",
+    boxShadow: "0 2px 10px rgba(0,0,0,0.08)",
+  },
+  card: {
+    padding: "28px 28px 24px",
+    borderRadius: 28,
+    display: "grid",
+    gap: 20,
+    background: "linear-gradient(180deg, rgba(255,255,255,0.97), rgba(255,255,255,0.84))",
+  },
+  form: {
+    display: "grid",
+    gap: 14,
+  },
+  fieldWrap: {
     display: "grid",
     gap: 6,
   },
-  formCard: {
-    padding: 20,
-    borderRadius: 28,
-    display: "grid",
-    gap: 16,
-    background: "linear-gradient(180deg, rgba(255,255,255,0.96), rgba(255,255,255,0.82))",
+  submitBtn: {
+    width: "100%",
+    marginTop: 4,
+    padding: "14px 20px",
+    fontSize: 15,
   },
-  tabs: {
+  footer: {
     display: "flex",
-    gap: 10,
-    flexWrap: "wrap",
+    justifyContent: "center",
+    marginTop: -8,
   },
-  tab: {
-    padding: "10px 14px",
-    borderRadius: 999,
+  footerLink: {
+    background: "none",
+    border: "none",
+    cursor: "pointer",
+    fontSize: 13,
+    color: "var(--muted)",
+    padding: "4px 8px",
+  },
+  alert: {
+    borderRadius: 16,
+    padding: "12px 16px",
+    fontSize: 14,
+    lineHeight: 1.55,
+  },
+  alertOk: {
     background: "rgba(0,0,0,0.03)",
     border: "1px solid rgba(0,0,0,0.08)",
     color: "var(--text)",
   },
-  tabActive: {
-    padding: "10px 14px",
-    borderRadius: 999,
-    background: "rgba(0,0,0,0.08)",
-    border: "1px solid rgba(0,0,0,0.16)",
-    color: "var(--text)",
-  },
-  copyBlock: {
-    display: "grid",
-    gap: 8,
-  },
-  formTitle: {
-    fontSize: "clamp(30px, 3vw, 42px)",
-    margin: 0,
-    lineHeight: 0.96,
-    letterSpacing: "-0.04em",
-  },
-  formText: {
-    margin: 0,
-    lineHeight: 1.7,
-  },
-  form: {
-    display: "grid",
-    gap: 12,
-  },
-  note: {
-    margin: 0,
-    fontSize: 13,
-    lineHeight: 1.55,
-  },
-  footerRow: {
-    display: "flex",
-    gap: 10,
-    flexWrap: "wrap",
-  },
-  message: {
-    borderRadius: 18,
-    padding: 14,
-    background: "rgba(0,0,0,0.04)",
-    border: "1px solid rgba(0,0,0,0.08)",
-    color: "var(--text)",
+  alertErr: {
+    background: "rgba(200,50,50,0.06)",
+    border: "1px solid rgba(200,50,50,0.18)",
+    color: "#8b1a1a",
   },
 };
