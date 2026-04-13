@@ -158,9 +158,14 @@ export const FILTERS = [
 ];
 
 export const TEMPLATES = [
-  { key: "clean", label: "Limpio" },
-  { key: "film", label: "Film" },
-  { key: "frame", label: "Marco" },
+  { key: "clean",    label: "Limpio" },
+  { key: "film",     label: "Cine" },
+  { key: "frame",    label: "Marco" },
+  { key: "polaroid", label: "Polaroid" },
+  { key: "vignette", label: "Viñeta" },
+  { key: "minimal",  label: "Minimal" },
+  { key: "double",   label: "Doble" },
+  { key: "corner",   label: "Esquinas" },
 ];
 
 export const MODERATION_COPY: Record<"auto" | "manual", string> = {

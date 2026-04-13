@@ -235,23 +235,11 @@ export function PhotoComposer({ event, onUploaded, compact, accentColor }: Compo
                     style={{ objectFit: "cover", filter: FILTER_CSS[filter], transition: "filter 200ms ease" }}
                   />
 
-                  {/* ── Template overlays (decorative only, no text) ── */}
-                  {template === "film" && (
-                    <>
-                      <div style={styles.tmplFilmTop} />
-                      <div style={styles.tmplFilmBottom} />
-                    </>
-                  )}
-                  {template === "frame" && (
-                    <>
-                      <div style={styles.tmplFrameOuter} />
-                      <div style={styles.tmplFrameInner} />
-                      <div style={{ ...styles.tmplCorner, top: 14, left: 14 }} />
-                      <div style={{ ...styles.tmplCorner, top: 14, right: 14, borderLeft: "none", borderRight: "2px solid rgba(212,163,115,0.85)" }} />
-                      <div style={{ ...styles.tmplCorner, bottom: 14, left: 14, borderTop: "none", borderBottom: "2px solid rgba(212,163,115,0.85)" }} />
-                      <div style={{ ...styles.tmplCorner, bottom: 14, right: 14, borderLeft: "none", borderRight: "2px solid rgba(212,163,115,0.85)", borderTop: "none", borderBottom: "2px solid rgba(212,163,115,0.85)" }} />
-                    </>
-                  )}
+                  {/* ── Template overlays ── */}
+                  <TemplateOverlay template={template} />
+
+                  {/* ── Watermark preview ── */}
+                  <WatermarkPreview event={event} />
 
                   {/* Filter + template name badge */}
                   <div style={styles.filterNameBadge}>
@@ -374,6 +362,133 @@ export function PhotoComposer({ event, onUploaded, compact, accentColor }: Compo
   );
 }
 
+// ── Template overlay component ──────────────────────────────────────────────
+
+function TemplateOverlay({ template }: { template: TemplateKey }) {
+  const base: React.CSSProperties = { position: "absolute", pointerEvents: "none", zIndex: 3 };
+
+  if (template === "film") return (
+    <>
+      <div style={{ ...base, inset: "0 0 auto 0", height: "13%", background: "linear-gradient(180deg, rgba(0,0,0,0.82) 0%, transparent 100%)" }} />
+      <div style={{ ...base, inset: "auto 0 0 0", height: "13%", background: "linear-gradient(0deg, rgba(0,0,0,0.82) 0%, transparent 100%)" }} />
+    </>
+  );
+
+  if (template === "frame") return (
+    <>
+      <div style={{ ...base, inset: 5, border: "1.5px solid rgba(255,255,255,0.2)", borderRadius: 7 }} />
+      <div style={{ ...base, inset: 9, border: "2px solid rgba(212,163,115,0.85)", borderRadius: 4 }} />
+      {/* Corners */}
+      {([
+        { top: 13, left: 13 },
+        { top: 13, right: 13 },
+        { bottom: 13, left: 13 },
+        { bottom: 13, right: 13 },
+      ] as React.CSSProperties[]).map((pos, i) => {
+        const isRight = "right" in pos;
+        const isBottom = "bottom" in pos;
+        return (
+          <div key={i} style={{
+            ...base, zIndex: 4, ...pos,
+            width: 16, height: 16,
+            borderTop: isBottom ? "none" : "2px solid rgba(212,163,115,0.9)",
+            borderBottom: isBottom ? "2px solid rgba(212,163,115,0.9)" : "none",
+            borderLeft: isRight ? "none" : "2px solid rgba(212,163,115,0.9)",
+            borderRight: isRight ? "2px solid rgba(212,163,115,0.9)" : "none",
+          }} />
+        );
+      })}
+    </>
+  );
+
+  if (template === "polaroid") return (
+    <>
+      {/* White mat strips — thin on top/sides, thick on bottom */}
+      <div style={{ ...base, inset: "0 0 auto 0", height: "4%", background: "#fafaf8" }} />
+      <div style={{ ...base, inset: "auto 0 0 0", height: "15%", background: "#fafaf8" }} />
+      <div style={{ ...base, inset: "4% auto 15% 0", width: "4%", background: "#fafaf8" }} />
+      <div style={{ ...base, inset: "4% 0 15% auto", width: "4%", background: "#fafaf8" }} />
+    </>
+  );
+
+  if (template === "vignette") return (
+    <div style={{ ...base, inset: 0, background: "radial-gradient(ellipse at 50% 50%, transparent 40%, rgba(0,0,0,0.68) 100%)" }} />
+  );
+
+  if (template === "minimal") return (
+    <div style={{ ...base, inset: 7, border: "1.5px solid rgba(255,255,255,0.55)", borderRadius: 5 }} />
+  );
+
+  if (template === "double") return (
+    <>
+      <div style={{ ...base, inset: 6, border: "1px solid rgba(255,255,255,0.28)", borderRadius: 7 }} />
+      <div style={{ ...base, inset: 11, border: "1.5px solid rgba(255,255,255,0.60)", borderRadius: 4 }} />
+    </>
+  );
+
+  if (template === "corner") return (
+    <>
+      {([
+        { top: 7, left: 7 },
+        { top: 7, right: 7 },
+        { bottom: 7, left: 7 },
+        { bottom: 7, right: 7 },
+      ] as React.CSSProperties[]).map((pos, i) => {
+        const isRight = "right" in pos;
+        const isBottom = "bottom" in pos;
+        return (
+          <div key={i} style={{
+            ...base, zIndex: 4, ...pos,
+            width: 20, height: 20,
+            borderTop: isBottom ? "none" : "2.5px solid rgba(255,255,255,0.82)",
+            borderBottom: isBottom ? "2.5px solid rgba(255,255,255,0.82)" : "none",
+            borderLeft: isRight ? "none" : "2.5px solid rgba(255,255,255,0.82)",
+            borderRight: isRight ? "2.5px solid rgba(255,255,255,0.82)" : "none",
+          }} />
+        );
+      })}
+    </>
+  );
+
+  return null; // clean
+}
+
+// ── Watermark preview overlay ────────────────────────────────────────────────
+
+function WatermarkPreview({ event }: { event: EventRecord }) {
+  const wUrl = event.landing_config.watermarkUrl;
+  if (!wUrl) return null;
+
+  const pos = event.landing_config.watermarkPosition ?? "bottom-right";
+  const size = event.landing_config.watermarkSize ?? 18;
+  const opacity = event.landing_config.watermarkOpacity ?? 0.75;
+
+  const margin = "8px";
+  const posStyle: React.CSSProperties =
+    pos === "top-left"     ? { top: margin, left: margin } :
+    pos === "top-right"    ? { top: margin, right: margin } :
+    pos === "bottom-left"  ? { bottom: margin, left: margin } :
+                             { bottom: margin, right: margin };
+
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={wUrl}
+      alt=""
+      aria-hidden="true"
+      style={{
+        position: "absolute",
+        ...posStyle,
+        width: `${size}%`,
+        opacity,
+        pointerEvents: "none",
+        zIndex: 8,
+        display: "block",
+      }}
+    />
+  );
+}
+
 function CameraIcon() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -482,60 +597,17 @@ const styles: Record<string, React.CSSProperties> = {
   },
   filterNameBadge: {
     position: "absolute",
-    top: 12,
-    left: 12,
-    padding: "5px 12px",
+    top: 10,
+    left: 10,
+    padding: "4px 10px",
     borderRadius: 999,
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: 700,
     background: "rgba(0,0,0,0.55)",
     color: "#ffffff",
     backdropFilter: "blur(8px)",
     letterSpacing: "0.04em",
-    zIndex: 4,
-  },
-  // template: film — cinematic letterbox bars
-  tmplFilmTop: {
-    position: "absolute",
-    top: 0, left: 0, right: 0,
-    height: "14%",
-    background: "linear-gradient(180deg, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0) 100%)",
-    zIndex: 3,
-    pointerEvents: "none",
-  },
-  tmplFilmBottom: {
-    position: "absolute",
-    bottom: 0, left: 0, right: 0,
-    height: "14%",
-    background: "linear-gradient(0deg, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0) 100%)",
-    zIndex: 3,
-    pointerEvents: "none",
-  },
-  // template: frame — double golden border + corner ornaments
-  tmplFrameOuter: {
-    position: "absolute",
-    inset: 6,
-    border: "1.5px solid rgba(255,255,255,0.2)",
-    borderRadius: 8,
-    zIndex: 3,
-    pointerEvents: "none",
-  },
-  tmplFrameInner: {
-    position: "absolute",
-    inset: 10,
-    border: "2px solid rgba(212,163,115,0.85)",
-    borderRadius: 5,
-    zIndex: 3,
-    pointerEvents: "none",
-  },
-  tmplCorner: {
-    position: "absolute",
-    width: 18,
-    height: 18,
-    borderTop: "2px solid rgba(212,163,115,0.85)",
-    borderLeft: "2px solid rgba(212,163,115,0.85)",
-    zIndex: 4,
-    pointerEvents: "none",
+    zIndex: 10,
   },
   filterScrollOuter: {
     background: "rgba(0,0,0,0.6)",
