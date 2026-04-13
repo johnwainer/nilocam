@@ -3,16 +3,16 @@ import { APP_NAME } from "@/lib/constants";
 
 const slides = [
   {
-    title: "Una experiencia tipo Apple para eventos",
-    subtitle: "Blanco y negro, brutalmente limpia y con foco en imágenes grandes.",
+    title: "Tu evento tiene su propia pantalla.",
+    subtitle: "Un QR abre una landing personalizada, lista para recibir fotos desde el primer segundo.",
   },
   {
-    title: "Cada QR abre un evento único",
-    subtitle: "Landing editable, moderación por evento y fotos en tiempo real.",
+    title: "Cada foto, vista por todos.",
+    subtitle: "Lo que captura un invitado aparece en la galería al instante, sin esperar.",
   },
   {
-    title: "Tomar o subir fotos sin fricción",
-    subtitle: "PWA, iPhone, Android y una galería destacada en vivo.",
+    title: "Funciona en cualquier teléfono.",
+    subtitle: "iPhone, Android, cualquier browser moderno. Sin descargar nada, sin registrarse.",
   },
 ];
 
@@ -21,13 +21,13 @@ export function LandingHero() {
     <section className="section landing-hero-section" style={styles.section}>
       <div className="container landing-hero-wrap" style={styles.wrap}>
         <div className="landing-hero-copy" style={styles.copy}>
-          <span className="pill">PWA · sin instalar nada · QR por evento</span>
+          <span className="pill">Sin app · Sin registro · Solo el QR</span>
           <h1 className="serif" style={styles.title}>
-            Fotos para eventos con una estética blanca, negra y muy visual
+            La galería viva de tu evento.
           </h1>
           <p className="muted" style={styles.lead}>
-            {APP_NAME} abre una experiencia moderna donde los invitados toman o suben fotos y las ven
-            aparecer en tiempo real dentro de una landing personalizada.
+            {APP_NAME} convierte un código QR en una experiencia inmersiva: los invitados capturan el momento
+            y sus fotos aparecen en pantalla grande, en tiempo real, mientras todo sucede.
           </p>
           <div className="landing-hero-actions" style={styles.actions}>
             <Link href="/auth" className="btn btn-primary">
@@ -40,16 +40,16 @@ export function LandingHero() {
 
           <div className="landing-hero-stats" style={styles.statsRow}>
             <div className="card" style={styles.stat}>
-              <strong>10 tipos</strong>
-              <span className="muted">de evento listos</span>
+              <strong>Sin fricción</strong>
+              <span className="muted">el invitado entiende todo al instante</span>
             </div>
             <div className="card" style={styles.stat}>
-              <strong>Realtime</strong>
-              <span className="muted">fotos en vivo</span>
+              <strong>En vivo</strong>
+              <span className="muted">fotos que aparecen al segundo</span>
             </div>
             <div className="card" style={styles.stat}>
-              <strong>Editor</strong>
-              <span className="muted">visual y editable</span>
+              <strong>Tu marca</strong>
+              <span className="muted">landing 100% personalizable</span>
             </div>
           </div>
         </div>
@@ -80,7 +80,7 @@ export function LandingHero() {
           <div className="card landing-hero-device" style={styles.device}>
             <div style={styles.deviceTop}>
               <span className="pulse-dot" />
-              <span>Galería destacada en vivo</span>
+              <span>Transmitiendo en vivo</span>
             </div>
             <div className="landing-hero-device-grid" style={styles.deviceGrid}>
               {["A", "B", "C"].map((item) => (

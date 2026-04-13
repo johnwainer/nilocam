@@ -6,14 +6,14 @@ import { EVENT_TYPES } from "@/lib/constants";
 
 const featuredSlides = [
   {
-    title: "Cada evento tiene su URL",
-    text: "Compártela en el QR, en la mesa o en una pantalla. Funciona sin instalar nada.",
+    title: "Una URL. Una identidad.",
+    text: "Cada evento vive en su propia landing: título, estilo y galería en un solo lugar. Lista para compartir en segundos.",
     image:
       "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1400&q=80",
   },
   {
-    title: "Las fotos aparecen en vivo",
-    text: "Lo que sube o se toma se ve destacado al instante en la landing del evento.",
+    title: "Inmediato. Sin espera.",
+    text: "La foto que toma un invitado aparece en pantalla grande antes de que baje el teléfono.",
     image:
       "https://images.unsplash.com/photo-1506869640319-fe1a24fd76dc?auto=format&fit=crop&w=1400&q=80",
   },
@@ -22,18 +22,18 @@ const featuredSlides = [
 const howItWorks = [
   {
     step: "1",
-    title: "Creas el evento",
-    text: "El admin arma el título, estilo, moderación, límite de peso y URL personalizada.",
+    title: "Diseñas la experiencia",
+    text: "Elige el nombre, el estilo visual, el tipo de evento y cómo quieres moderar las fotos. Listo en minutos, sin tecnicismos.",
   },
   {
     step: "2",
-    title: "Compartes el QR",
-    text: "La gente entra desde iPhone o Android sin registro obligatorio y sin descargar nada.",
+    title: "Un QR lo activa todo",
+    text: "Imprímelo, proyéctalo o compártelo por mensaje. Al abrirlo, el invitado ya está dentro, sin apps ni cuentas.",
   },
   {
     step: "3",
-    title: "Recibes fotos en vivo",
-    text: "Las imágenes pasan por filtros/plantillas y aparecen destacadas en la landing.",
+    title: "Las fotos llegan solas",
+    text: "Cada captura aparece destacada en la galería del evento, en vivo, mientras todo sucede a tu alrededor.",
   },
 ];
 
@@ -46,13 +46,12 @@ export default function HomePage() {
       <section className="section">
         <div className="container">
           <div style={styles.sectionHead}>
-            <span className="eyebrow">Cómo se usa</span>
+            <span className="eyebrow">Cómo funciona</span>
             <h2 className="serif" style={styles.h2}>
-              Entiende la app en 10 segundos
+              Tan simple que no necesita manual.
             </h2>
             <p className="muted" style={styles.lead}>
-              Nilo Cam convierte un QR en un álbum vivo para eventos: creas una landing, la compartes y las
-              fotos empiezan a aparecer en tiempo real.
+              Tres pasos. Un QR. Y un evento que se documenta solo mientras tus invitados disfrutan.
             </p>
           </div>
           <div style={styles.stepGrid}>
@@ -88,9 +87,9 @@ export default function HomePage() {
       <section className="section">
         <div className="container">
           <div style={styles.sectionHead}>
-            <span className="eyebrow">10 tipos de evento listos</span>
+            <span className="eyebrow">10 tipos de evento</span>
             <h2 className="serif" style={styles.h2}>
-              Plantillas editoriales, limpias y listas para personalizar
+              Hecho para cada ocasión.
             </h2>
           </div>
           <div style={styles.cards}>
@@ -117,11 +116,11 @@ export default function HomePage() {
             <div style={styles.demoCopy}>
               <span className="eyebrow">Demostración</span>
               <h3 className="serif" style={styles.demoTitle}>
-                Una experiencia que el invitado entiende al instante
+                Vívelo antes de crearlo.
               </h3>
               <p className="muted" style={styles.demoText}>
-                El QR lleva a una URL limpia. El invitado toca &quot;Tomar foto&quot; o &quot;Subir foto&quot;,
-                decide si firma su nombre y ve su foto aparecer dentro del evento.
+                Abre la demo y experimenta el flujo completo: escaneas, capturas el momento y ves tu foto
+                aparecer en la galería del evento. En segundos, como debería ser siempre.
               </p>
             </div>
             <div style={styles.demoActions}>

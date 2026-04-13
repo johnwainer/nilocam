@@ -18,17 +18,17 @@ export function EventLanding({
     {
       step: "1",
       title: "Escanea el QR",
-      text: "Abres la landing del evento desde tu celular, sin instalar nada.",
+      text: "En un segundo estás dentro del evento. Sin apps, sin registros, sin fricción.",
     },
     {
       step: "2",
-      title: "Toma o sube la foto",
-      text: "Puedes usar la cámara o elegir una imagen de tu galería.",
+      title: "Captura el momento",
+      text: "Usa la cámara directamente o sube una foto ya tomada. Tan fácil como debería ser.",
     },
     {
       step: "3",
-      title: "Aparece en vivo",
-      text: "La foto se publica o pasa a moderación según la configuración.",
+      title: "Aparece en pantalla",
+      text: "Tu foto se suma a la galería del evento en tiempo real, visible para todos.",
     },
   ];
 
@@ -92,7 +92,7 @@ export function EventLanding({
                 </div>
                 <div className="card glass" style={styles.metaCard}>
                   <span className="muted">Moderación</span>
-                  <strong>{event.moderation_mode === "auto" ? "Automática" : "Manual"}</strong>
+                  <strong>{event.moderation_mode === "auto" ? "Instantánea" : "Por aprobación"}</strong>
                 </div>
               </div>
             </div>
@@ -120,13 +120,13 @@ export function EventLanding({
               <div style={styles.bigStrip}>
                 <div style={styles.bigStripImage} />
                 <div style={styles.bigStripText}>
-                  <span className="eyebrow">Slide destacado</span>
+                  <span className="eyebrow">Así funciona</span>
                   <h2 className="serif" style={styles.bigStripTitle}>
-                    Una sola acción, muchas fotos vivas
+                    Un gesto. Mil recuerdos.
                   </h2>
                   <p className="muted" style={styles.bigStripCopy}>
-                    Cada invitado entiende qué hacer en segundos: escanear, capturar y ver el resultado dentro
-                    del evento.
+                    Escanear, capturar y aparecer en vivo: tres pasos que cualquier invitado entiende de forma
+                    instintiva, sin que nadie tenga que explicar nada.
                   </p>
                 </div>
               </div>
@@ -149,21 +149,21 @@ export function EventLanding({
             <div style={styles.infoGrid}>
               {sections.includes("how-it-works") ? (
                 <article className="card glass" style={styles.infoCard}>
-                  <span className="eyebrow">Cómo funciona</span>
+                  <span className="eyebrow">Sin fricción</span>
                   <h3 className="serif" style={styles.infoTitle}>
-                    Escanea, toma o sube, y listo
+                    Nadie necesita instrucciones.
                   </h3>
                   <p className="muted" style={styles.infoText}>
-                    No hay registro obligatorio. Si el evento lo permite, el invitado puede dejar su nombre o
-                    subir como anónimo. Todo queda asociado al evento.
+                    Sin registro obligatorio. Puedes firmar tu foto con tu nombre o subir de forma anónima.
+                    La experiencia está diseñada para que todo fluya sin que nadie tenga que explicar nada.
                   </p>
                 </article>
               ) : null}
               {sections.includes("privacy") ? (
                 <article className="card glass" style={styles.infoCard}>
-                  <span className="eyebrow">Privacidad</span>
+                  <span className="eyebrow">Tu control, tus reglas.</span>
                   <h3 className="serif" style={styles.infoTitle}>
-                    Moderación y términos
+                    Moderación pensada para el organizador.
                   </h3>
                   <p className="muted" style={styles.infoText}>
                     {event.landing_config.privacyCopy}
@@ -172,25 +172,25 @@ export function EventLanding({
               ) : null}
               {sections.includes("event-info") ? (
                 <article className="card glass" style={styles.infoCard}>
-                  <span className="eyebrow">Límite</span>
+                  <span className="eyebrow">Ligero por diseño.</span>
                   <h3 className="serif" style={styles.infoTitle}>
-                    Peso máximo configurable
+                    Rápido de subir, fácil de ver.
                   </h3>
                   <p className="muted" style={styles.infoText}>
-                    Este evento acepta hasta {event.max_upload_mb} MB por foto. El admin puede cambiarlo cuando
-                    quiera.
+                    Este evento acepta fotos de hasta {event.max_upload_mb} MB. Un límite pensado para que
+                    la galería cargue rápido en cualquier conexión.
                   </p>
                 </article>
               ) : null}
               {sections.includes("support") ? (
                 <article className="card glass" style={styles.infoCard}>
-                  <span className="eyebrow">Soporte</span>
+                  <span className="eyebrow">Siempre hay solución.</span>
                   <h3 className="serif" style={styles.infoTitle}>
-                    Si algo no queda claro
+                    Algo no funcionó. Sin problema.
                   </h3>
                   <p className="muted" style={styles.infoText}>
-                    Vuelve a escanear el QR o pide ayuda al staff. La experiencia está pensada para resolverse
-                    sin explicación larga.
+                    Vuelve a escanear el QR o acércate al staff. La experiencia está pensada para resolverse
+                    sola, sin manuales ni tutoriales.
                   </p>
                 </article>
               ) : null}
