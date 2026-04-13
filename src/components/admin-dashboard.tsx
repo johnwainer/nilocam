@@ -11,12 +11,13 @@ import {
   EVENT_BUCKET,
   EVENT_TYPES,
   FILTERS,
+  LANDING_TEMPLATES,
   TEMPLATES,
   eventTypePresetFromKey,
 } from "@/lib/constants";
 import type { FilterKey, TemplateKey } from "@/lib/image-tools";
 import { formatBytes, formatDate, publicStorageUrl, siteUrl, toSlug } from "@/lib/utils";
-import type { EventRecord, EventTypeKey, PhotoRecord, WatermarkPosition } from "@/types";
+import type { EventRecord, EventTypeKey, LandingTemplatePreset, PhotoRecord, WatermarkPosition } from "@/types";
 import { SpyCatIcon } from "@/components/top-nav";
 
 const supabase = createSupabaseBrowserClient();
@@ -412,6 +413,23 @@ export function AdminDashboard({
                   accentSoft: preset.accentSoft,
                   heroImage: preset.heroImage,
                 },
+              },
+            }
+          : e
+      )
+    );
+  };
+
+  const applyTemplate = (t: LandingTemplatePreset) => {
+    setEvents((cur) =>
+      cur.map((e) =>
+        e.id === selected.id
+          ? {
+              ...e,
+              landing_config: {
+                ...e.landing_config,
+                templateKey: t.key,
+                theme: { ...e.landing_config.theme, ...t.theme },
               },
             }
           : e
@@ -1126,6 +1144,37 @@ export function AdminDashboard({
                       Apariencia
                     </span>
 
+                    {/* Template picker */}
+                    <div style={s.field}>
+                      <span className="label">Plantilla de diseño</span>
+                      <p style={s.fieldHint}>Elige una plantilla prediseñada como base. Luego puedes ajustar los colores.</p>
+                      <div style={s.templateGrid}>
+                        {LANDING_TEMPLATES.map((t) => {
+                          const active = (selected.landing_config.templateKey ?? "") === t.key;
+                          return (
+                            <button
+                              key={t.key}
+                              type="button"
+                              style={{
+                                ...s.templateCard,
+                                outline: active ? "2.5px solid #111" : "2px solid transparent",
+                                outlineOffset: 2,
+                              }}
+                              onClick={() => applyTemplate(t)}
+                              title={t.description}
+                            >
+                              <TemplateMiniPreview theme={t.theme} />
+                              <span style={{
+                                ...s.templateLabel,
+                                fontWeight: active ? 700 : 600,
+                                color: active ? "#111" : "var(--muted)",
+                              }}>{t.name}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
                     <div style={s.fieldRow}>
                       <label style={s.fieldHalf}>
                         <span className="label">Color de acento</span>
@@ -1640,6 +1689,36 @@ function HamburgerIcon({ open }: { open: boolean }) {
       <span style={{ ...bar, opacity: open ? 0 : 1 }} />
       <span style={{ ...bar, transform: open ? "translateY(-6px) rotate(-45deg)" : "none" }} />
     </span>
+  );
+}
+
+// ─── TemplateMiniPreview ─────────────────────────────────────────────────────
+
+function TemplateMiniPreview({ theme }: { theme: LandingTemplatePreset["theme"] }) {
+  const isLight = (() => {
+    const h = theme.background.replace("#", "");
+    if (h.length < 6) return false;
+    const r = parseInt(h.slice(0, 2), 16);
+    const g = parseInt(h.slice(2, 4), 16);
+    const b = parseInt(h.slice(4, 6), 16);
+    return (r * 299 + g * 587 + b * 114) / 1000 >= 80;
+  })();
+
+  return (
+    <div style={{ width: "100%", height: 84, borderRadius: 8, overflow: "hidden", background: theme.background, position: "relative", flexShrink: 0 }}>
+      {/* Hero gradient overlay */}
+      <div style={{ position: "absolute", inset: 0, background: `linear-gradient(180deg, ${theme.background}00 0%, ${theme.background}cc 100%)` }} />
+      {/* Simulated hero title bars */}
+      <div style={{ position: "absolute", top: 16, left: 10, right: 10, display: "flex", flexDirection: "column", gap: 4 }}>
+        <div style={{ width: "45%", height: 5, borderRadius: 3, background: isLight ? "rgba(0,0,0,0.25)" : "rgba(255,255,255,0.8)" }} />
+        <div style={{ width: "70%", height: 9, borderRadius: 4, background: isLight ? "rgba(0,0,0,0.55)" : "rgba(255,255,255,0.95)" }} />
+        <div style={{ width: "55%", height: 4, borderRadius: 3, background: isLight ? "rgba(0,0,0,0.18)" : "rgba(255,255,255,0.45)" }} />
+      </div>
+      {/* Accent line */}
+      <div style={{ position: "absolute", bottom: 16, left: 10, width: 28, height: 4, borderRadius: 2, background: theme.accent, opacity: 0.85 }} />
+      {/* Surface block */}
+      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 18, background: theme.surface }} />
+    </div>
   );
 }
 
@@ -2269,5 +2348,34 @@ const s: Record<string, React.CSSProperties> = {
     fontSize: 14,
     fontWeight: 700,
     cursor: "pointer",
+  },
+
+  // Template picker
+  templateGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fill, minmax(110px, 1fr))",
+    gap: 8,
+    marginTop: 4,
+  },
+  templateCard: {
+    display: "flex",
+    flexDirection: "column" as const,
+    gap: 6,
+    padding: 0,
+    border: "none",
+    background: "none",
+    cursor: "pointer",
+    borderRadius: 10,
+    textAlign: "left" as const,
+    transition: "transform 120ms ease",
+  },
+  templateLabel: {
+    fontSize: 11,
+    letterSpacing: "0.01em",
+    paddingLeft: 2,
+    lineHeight: 1.2,
+    whiteSpace: "nowrap" as const,
+    overflow: "hidden",
+    textOverflow: "ellipsis",
   },
 };
