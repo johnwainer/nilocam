@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { EVENT_BUCKET, FILTERS, TEMPLATES } from "@/lib/constants";
 import type { EventRecord, PhotoRecord } from "@/types";
@@ -37,19 +37,28 @@ type ComposerProps = {
   accentColor?: string;
 };
 
+const LS_NAME_KEY = "nilo-guest-name";
+
 export function PhotoComposer({ event, onUploaded, compact, accentColor }: ComposerProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [name, setName] = useState("");
-  const [anonymous, setAnonymous] = useState(true);
   const [filter, setFilter] = useState<FilterKey>("none");
   const [template, setTemplate] = useState<TemplateKey>("clean");
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(true);
   const uploadRef = useRef<HTMLInputElement | null>(null);
   const cameraRef = useRef<HTMLInputElement | null>(null);
+
+  // Pre-fill name from localStorage on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(LS_NAME_KEY);
+      if (saved) setName(saved);
+    } catch { /* ignore */ }
+  }, []);
 
   const limitLabel = useMemo(() => formatBytes(event.max_upload_mb * 1024 * 1024), [event.max_upload_mb]);
 
@@ -75,13 +84,12 @@ export function PhotoComposer({ event, onUploaded, compact, accentColor }: Compo
     setIsOpen(false);
     setFile(null);
     setPreviewUrl(null);
-    setName("");
-    setAnonymous(true);
+    // keep name — user shouldn't have to type it again
     setFilter("none");
     setTemplate("clean");
     setIsSaving(false);
     setError(null);
-    setAcceptedTerms(false);
+    setAcceptedTerms(true);
   };
 
   const submit = async () => {
@@ -90,12 +98,17 @@ export function PhotoComposer({ event, onUploaded, compact, accentColor }: Compo
       setError("Debes aceptar los términos para continuar.");
       return;
     }
-    if (!anonymous && !name.trim() && event.landing_config.showNameField) {
-      setError("Escribe tu nombre o activa anónimo.");
-      return;
-    }
     setIsSaving(true);
     setError(null);
+
+    // Persist name to localStorage so it pre-fills next visit
+    const trimmedName = name.trim();
+    try {
+      if (trimmedName) localStorage.setItem(LS_NAME_KEY, trimmedName);
+    } catch { /* ignore */ }
+
+    const isAnon = !trimmedName;
+
     try {
       const wm = event.landing_config.watermarkUrl
         ? {
@@ -129,9 +142,9 @@ export function PhotoComposer({ event, onUploaded, compact, accentColor }: Compo
           event_id: event.id,
           storage_path: path,
           original_name: file.name,
-          uploaded_by_name: anonymous ? null : name.trim() || null,
+          uploaded_by_name: isAnon ? null : trimmedName,
           uploaded_by_email: null,
-          is_anonymous: anonymous,
+          is_anonymous: isAnon,
           moderation_status: moderationStatus,
           filter_name: filter,
           template_key: template,
@@ -221,9 +234,25 @@ export function PhotoComposer({ event, onUploaded, compact, accentColor }: Compo
                     sizes="(max-width: 640px) 100vw, 48vw"
                     style={{ objectFit: "cover", filter: FILTER_CSS[filter], transition: "filter 200ms ease" }}
                   />
-                  {/* Active filter name overlay */}
+
+                  {/* ── Template overlays ── */}
+                  {template === "film" && (
+                    <div style={styles.tmplFilmOverlay}>
+                      <strong style={styles.tmplFilmTitle}>{event.title}</strong>
+                      {event.subtitle ? <span style={styles.tmplFilmSub}>{event.subtitle}</span> : null}
+                    </div>
+                  )}
+                  {template === "frame" && (
+                    <>
+                      <div style={styles.tmplFrameBorder} />
+                      <div style={styles.tmplFrameTitle}>{event.title}</div>
+                    </>
+                  )}
+
+                  {/* Filter + template name badge */}
                   <div style={styles.filterNameBadge}>
                     {FILTERS.find(f => f.key === filter)?.label ?? "Original"}
+                    {template !== "clean" ? ` · ${TEMPLATES.find(t => t.key === template)?.label}` : ""}
                   </div>
                 </div>
 
@@ -287,25 +316,17 @@ export function PhotoComposer({ event, onUploaded, compact, accentColor }: Compo
                   </div>
                 </div>
 
-                {/* Name */}
+                {/* Name — optional, persisted to localStorage */}
                 {event.landing_config.showNameField ? (
                   <label style={styles.formField}>
-                    <span style={styles.formLabel}>Tu nombre</span>
+                    <span style={styles.formLabel}>Tu nombre <span style={{ fontWeight: 400, opacity: 0.55 }}>(opcional)</span></span>
                     <input
                       className="input"
-                      placeholder="Ej: Andrea"
+                      placeholder="Déjalo vacío para publicar anónimo"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      disabled={anonymous}
+                      autoComplete="nickname"
                     />
-                  </label>
-                ) : null}
-
-                {event.landing_config.showAnonymousToggle ? (
-                  <label style={styles.checkRow}>
-                    <input type="checkbox" checked={anonymous}
-                      onChange={(e) => setAnonymous(e.target.checked)} />
-                    <span style={{ color: "rgba(255,255,255,0.75)" }}>Publicar como anónimo</span>
                   </label>
                 ) : null}
 
@@ -467,6 +488,49 @@ const styles: Record<string, React.CSSProperties> = {
     color: "#ffffff",
     backdropFilter: "blur(8px)",
     letterSpacing: "0.04em",
+    zIndex: 4,
+  },
+  // template: film
+  tmplFilmOverlay: {
+    position: "absolute",
+    inset: "auto 0 0 0",
+    background: "linear-gradient(0deg, rgba(8,12,23,0.88) 0%, rgba(8,12,23,0.3) 70%, transparent 100%)",
+    padding: "32px 16px 14px",
+    display: "grid",
+    gap: 3,
+    zIndex: 3,
+  },
+  tmplFilmTitle: {
+    color: "#f8fafc",
+    fontSize: 16,
+    fontWeight: 700,
+    letterSpacing: "-0.01em",
+    lineHeight: 1.2,
+  },
+  tmplFilmSub: {
+    color: "rgba(255,255,255,0.65)",
+    fontSize: 11,
+    fontWeight: 500,
+  },
+  // template: frame
+  tmplFrameBorder: {
+    position: "absolute",
+    inset: 8,
+    border: "3px solid rgba(212,163,115,0.85)",
+    borderRadius: 10,
+    zIndex: 3,
+    pointerEvents: "none",
+  },
+  tmplFrameTitle: {
+    position: "absolute",
+    top: 16,
+    left: 16,
+    color: "#ffffff",
+    fontSize: 13,
+    fontWeight: 800,
+    letterSpacing: "-0.01em",
+    textShadow: "0 1px 4px rgba(0,0,0,0.5)",
+    zIndex: 4,
   },
   filterScrollOuter: {
     background: "rgba(0,0,0,0.6)",
