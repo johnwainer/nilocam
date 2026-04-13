@@ -1,65 +1,106 @@
-import Image from "next/image";
+import { LinkButton } from "@/components/button";
+import { Camera, ShieldCheck, Sparkles, Wifi } from "lucide-react";
 
 export default function Home() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <main className="mx-auto flex min-h-screen w-full max-w-7xl flex-col justify-center px-4 py-10 sm:px-6 lg:px-8">
+      <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+        <section className="glass-card rounded-[38px] p-7 sm:p-10">
+          <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs uppercase tracking-[0.24em] text-white/60">
+            <Sparkles className="h-3.5 w-3.5" />
+            Nilo Cam
+          </div>
+          <h1 className="mt-5 max-w-3xl font-[family-name:var(--font-space-grotesk)] text-5xl font-bold leading-[0.95] text-white sm:text-7xl">
+            Fotos en vivo para eventos con QR, landing y admin.
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p className="mt-5 max-w-2xl text-lg leading-8 text-white/70">
+            Un sistema PWA que abre desde Android o iPhone sin instalar nada. Cada evento tiene su
+            URL, su QR, su landing personalizable y una galería que se actualiza en tiempo real.
           </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+
+          <div className="mt-8 flex flex-wrap gap-3">
+            <LinkButton href="/admin" tone="primary">
+              Entrar al admin
+            </LinkButton>
+            <LinkButton href="/e/fiesta-luna" tone="secondary">
+              Ver ejemplo en vivo
+            </LinkButton>
+          </div>
+
+          <div className="mt-8 grid gap-3 sm:grid-cols-3">
+            {[
+              {
+                title: "PWA",
+                body: "Sin instalación, pensado para móvil y QR.",
+                icon: Wifi,
+              },
+              {
+                title: "Fotos",
+                body: "Tomar, subir, editar y publicar con filtros.",
+                icon: Camera,
+              },
+              {
+                title: "Moderación",
+                body: "Directo o con aprobación del dueño del evento.",
+                icon: ShieldCheck,
+              },
+            ].map((item) => {
+              const Icon = item.icon;
+              return (
+                <div key={item.title} className="rounded-[28px] border border-white/10 bg-white/5 p-4">
+                  <Icon className="h-5 w-5 text-white/75" />
+                  <p className="mt-4 text-sm font-semibold text-white">{item.title}</p>
+                  <p className="mt-2 text-sm leading-6 text-white/60">{item.body}</p>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
+        <aside className="glass-card rounded-[38px] p-7 sm:p-10">
+          <div className="rounded-[32px] border border-white/10 bg-gradient-to-br from-white/10 to-transparent p-6">
+            <p className="text-xs uppercase tracking-[0.24em] text-white/45">Flujo</p>
+            <div className="mt-5 space-y-4">
+              {[
+                "Escaneas el QR y entras al evento.",
+                "Tomas o subes una foto.",
+                "Le aplicas filtro o plantilla.",
+                "La foto aparece en el muro en vivo.",
+                "El admin decide si publica directo o con moderación.",
+              ].map((step, index) => (
+                <div key={step} className="flex gap-3 rounded-[22px] border border-white/10 bg-black/15 p-3">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-sm font-bold text-white">
+                    {index + 1}
+                  </div>
+                  <p className="text-sm leading-6 text-white/75">{step}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-6 rounded-[32px] border border-white/10 bg-white/5 p-6">
+            <p className="text-sm font-semibold text-white">Tipos iniciales</p>
+            <div className="mt-4 grid grid-cols-2 gap-2 text-sm text-white/65">
+              {[
+                "Cumpleaños",
+                "Fiesta de 15",
+                "Matrimonio",
+                "Despedida de solter@",
+                "Baby shower",
+                "Bautizo",
+                "Graduación",
+                "Aniversario",
+                "Corporativo",
+                "Festival",
+              ].map((type) => (
+                <div key={type} className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2">
+                  {type}
+                </div>
+              ))}
+            </div>
+          </div>
+        </aside>
+      </div>
+    </main>
   );
 }
