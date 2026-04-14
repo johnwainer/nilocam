@@ -71,18 +71,17 @@ export async function POST(request: Request) {
 
   const admin = serviceClient();
 
-  // Generate an invite link without auto-sending email, so we can return it
-  const { data: linkData, error: linkErr } = await admin.auth.admin.generateLink({
-    type: "invite",
+  // Create user (no password — they will set it via the app's registration form)
+  const { data: createdUser, error: createErr } = await admin.auth.admin.createUser({
     email,
-    options: { data: { full_name: display_name ?? email } },
+    email_confirm: true,
+    user_metadata: { full_name: display_name ?? email },
   });
-  if (linkErr) {
-    return NextResponse.json({ ok: false, message: linkErr.message }, { status: 500 });
+  if (createErr) {
+    return NextResponse.json({ ok: false, message: createErr.message }, { status: 500 });
   }
 
-  const userId = linkData.user.id;
-  const magicLink = linkData.properties?.action_link ?? null;
+  const userId = createdUser.user.id;
 
   // Upsert profile with desired role and display_name
   await admin.from("profiles").upsert({
@@ -92,7 +91,13 @@ export async function POST(request: Request) {
     role,
   }, { onConflict: "id" });
 
-  return NextResponse.json({ ok: true, id: userId, magic_link: magicLink });
+  // Build invite URL pointing at the app's own registration page
+  const { origin } = new URL(request.url);
+  const params = new URLSearchParams({ email });
+  if (display_name) params.set("name", display_name);
+  const inviteLink = `${origin}/auth?${params.toString()}`;
+
+  return NextResponse.json({ ok: true, id: userId, magic_link: inviteLink });
 }
 
 // PATCH /api/admin/users — update role, display_name, or ban status
@@ -110,17 +115,20 @@ export async function PATCH(request: Request) {
   };
   const { id, email, action, role, display_name, is_active } = body;
 
-  // Regenerate magic link for an existing user
+  // Regenerate invite link for an existing user using the app's own registration page
   if (action === "regenerate_link") {
     if (!email) return NextResponse.json({ ok: false, message: "Falta email." }, { status: 400 });
     const admin = serviceClient();
-    const { data: linkData, error: linkErr } = await admin.auth.admin.generateLink({
-      type: "magiclink",
-      email,
-    });
-    if (linkErr) return NextResponse.json({ ok: false, message: linkErr.message }, { status: 500 });
-    const magicLink = linkData.properties?.action_link ?? null;
-    return NextResponse.json({ ok: true, magic_link: magicLink });
+    const { data: profile } = await admin
+      .from("profiles")
+      .select("display_name")
+      .eq("email", email)
+      .single();
+    const { origin } = new URL(request.url);
+    const params = new URLSearchParams({ email });
+    if (profile?.display_name) params.set("name", profile.display_name);
+    const inviteLink = `${origin}/auth?${params.toString()}`;
+    return NextResponse.json({ ok: true, magic_link: inviteLink });
   }
 
   if (!id) return NextResponse.json({ ok: false, message: "Falta id." }, { status: 400 });

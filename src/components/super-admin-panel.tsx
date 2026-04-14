@@ -802,7 +802,7 @@ function NewUserForm({ onSaved, onCancel, onError }: {
           </div>
         </div>
         <div style={p.magicLinkBox}>
-          <div style={p.magicLinkLabel}>Magic link de activación</div>
+          <div style={p.magicLinkLabel}>Enlace de registro</div>
           <div style={p.magicLinkRow}>
             <code style={p.magicLinkCode}>{magicLink}</code>
             <button
@@ -814,7 +814,7 @@ function NewUserForm({ onSaved, onCancel, onError }: {
             </button>
           </div>
           <p style={{ margin: 0, fontSize: 12, color: "var(--muted)", lineHeight: 1.5 }}>
-            Este enlace solo funciona una vez. Compártelo con el usuario por WhatsApp, email u otro medio. Expira en 24 h.
+            El usuario llegará a la pantalla de registro con su email pre-llenado. Compártelo por WhatsApp, email u otro medio.
           </p>
         </div>
         <button type="button" className="btn btn-primary" style={{ fontSize: 13, padding: "8px 18px", alignSelf: "flex-start" }} onClick={onSaved}>
@@ -880,12 +880,12 @@ function RegeneratedLinkBox({ email, link, onClose }: { email: string; link: str
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
         <span style={{ fontSize: 20 }}>🔗</span>
         <div>
-          <strong style={{ fontSize: 14, fontWeight: 700, display: "block" }}>Nuevo magic link generado</strong>
+          <strong style={{ fontSize: 14, fontWeight: 700, display: "block" }}>Enlace de registro generado</strong>
           <span style={{ fontSize: 13, color: "var(--muted)" }}>{email}</span>
         </div>
       </div>
       <div style={p.magicLinkBox}>
-        <div style={p.magicLinkLabel}>Magic link de acceso</div>
+        <div style={p.magicLinkLabel}>Enlace de registro</div>
         <div style={p.magicLinkRow}>
           <code style={p.magicLinkCode}>{link}</code>
           <button
@@ -897,7 +897,7 @@ function RegeneratedLinkBox({ email, link, onClose }: { email: string; link: str
           </button>
         </div>
         <p style={{ margin: 0, fontSize: 12, color: "var(--muted)", lineHeight: 1.5 }}>
-          Este enlace solo funciona una vez. Compártelo con el usuario por WhatsApp, email u otro medio. Expira en 24 h.
+          El usuario llegará a la pantalla de registro con su email pre-llenado. Compártelo por WhatsApp, email u otro medio.
         </p>
       </div>
       <button type="button" className="btn btn-ghost" style={{ fontSize: 13, alignSelf: "flex-start" }} onClick={onClose}>

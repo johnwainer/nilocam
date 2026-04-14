@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, type FormEvent } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 
 const supabase = createSupabaseBrowserClient();
@@ -28,12 +28,24 @@ const copy: Record<Mode, { title: string; subtitle: string; primary: string }> =
 
 export function AdminLogin() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [mode, setMode] = useState<Mode>("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [message, setMessage] = useState<{ text: string; ok: boolean } | null>(null);
+
+  // Pre-fill from invite link (?email=...&name=...)
+  useEffect(() => {
+    const inviteEmail = searchParams.get("email");
+    const inviteName = searchParams.get("name");
+    if (inviteEmail) {
+      setMode("access");
+      setEmail(inviteEmail);
+      if (inviteName) setDisplayName(inviteName);
+    }
+  }, [searchParams]);
 
   const origin =
     typeof window !== "undefined" && window.location.origin
