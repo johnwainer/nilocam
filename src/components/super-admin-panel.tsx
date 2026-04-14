@@ -804,34 +804,40 @@ export function SuperAdminPanel({
           </p>
           {pricingLoading ? <p style={p.loading}>Cargando…</p> : (
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              {pricingList.map((pr) => (
-                <div key={pr.key} style={p.pricingRow}>
-                  <div style={{ flex: 1 }}>
-                    <strong style={{ fontSize: 14, color: "#111" }}>{pr.label}</strong>
-                    <p style={{ margin: "2px 0 0", fontSize: 13, color: "var(--muted)" }}>{pr.description}</p>
+              {[...pricingList].sort((a, b) => a.key === "initial_credits" ? -1 : b.key === "initial_credits" ? 1 : 0).map((pr) => {
+                const isInitial = pr.key === "initial_credits";
+                return (
+                  <div key={pr.key} style={isInitial ? p.pricingRowHighlight : p.pricingRow}>
+                    <div style={{ flex: 1 }}>
+                      {isInitial && (
+                        <span style={p.pricingBadge}>Bienvenida</span>
+                      )}
+                      <strong style={{ fontSize: 14, color: "#111", display: "block" }}>{pr.label}</strong>
+                      <p style={{ margin: "2px 0 0", fontSize: 13, color: "var(--muted)" }}>{pr.description}</p>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{ fontSize: 13, color: "#6d28d9", fontWeight: 700 }}>◈</span>
+                      <input
+                        className="input"
+                        type="number"
+                        min={0}
+                        style={{ width: 72, fontSize: 15, fontWeight: 700, textAlign: "center", padding: "7px 8px" }}
+                        value={editingPrices[pr.key] ?? pr.credits}
+                        onChange={(e) => setEditingPrices((prev) => ({ ...prev, [pr.key]: parseInt(e.target.value) || 0 }))}
+                      />
+                      <button
+                        type="button"
+                        className="btn btn-primary"
+                        style={{ fontSize: 13, padding: "8px 16px" }}
+                        disabled={savingPriceKey === pr.key || editingPrices[pr.key] === pr.credits}
+                        onClick={() => savePrice(pr.key)}
+                      >
+                        {savingPriceKey === pr.key ? "Guardando…" : "Guardar"}
+                      </button>
+                    </div>
                   </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <span style={{ fontSize: 13, color: "#6d28d9", fontWeight: 700 }}>◈</span>
-                    <input
-                      className="input"
-                      type="number"
-                      min={0}
-                      style={{ width: 72, fontSize: 15, fontWeight: 700, textAlign: "center", padding: "7px 8px" }}
-                      value={editingPrices[pr.key] ?? pr.credits}
-                      onChange={(e) => setEditingPrices((prev) => ({ ...prev, [pr.key]: parseInt(e.target.value) || 0 }))}
-                    />
-                    <button
-                      type="button"
-                      className="btn btn-primary"
-                      style={{ fontSize: 13, padding: "8px 16px" }}
-                      disabled={savingPriceKey === pr.key || editingPrices[pr.key] === pr.credits}
-                      onClick={() => savePrice(pr.key)}
-                    >
-                      {savingPriceKey === pr.key ? "Guardando…" : "Guardar"}
-                    </button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
@@ -1331,6 +1337,29 @@ const p: Record<string, React.CSSProperties> = {
     background: "#fff",
     border: "1px solid rgba(0,0,0,0.07)",
     flexWrap: "wrap" as const,
+  },
+  pricingRowHighlight: {
+    display: "flex",
+    alignItems: "center",
+    gap: 16,
+    padding: "18px 20px",
+    borderRadius: 16,
+    background: "linear-gradient(135deg, rgba(109,40,217,0.06) 0%, rgba(109,40,217,0.02) 100%)",
+    border: "1.5px solid rgba(109,40,217,0.22)",
+    flexWrap: "wrap" as const,
+  },
+  pricingBadge: {
+    display: "inline-block",
+    fontSize: 10,
+    fontWeight: 700,
+    letterSpacing: "0.1em",
+    textTransform: "uppercase" as const,
+    color: "#6d28d9",
+    background: "rgba(109,40,217,0.1)",
+    border: "1px solid rgba(109,40,217,0.2)",
+    borderRadius: 999,
+    padding: "2px 9px",
+    marginBottom: 5,
   },
   magicLinkCode: {
     flex: 1,
