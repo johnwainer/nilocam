@@ -196,6 +196,7 @@ export function AdminDashboard({
   const [selectedPhotoIds, setSelectedPhotoIds] = useState<Set<string>>(new Set());
   const [exportState, setExportState] = useState<{ done: number; total: number } | null>(null);
   const [deletingPhotoId, setDeletingPhotoId] = useState<string | null>(null);
+  const [metaPhoto, setMetaPhoto] = useState<PhotoRecord | null>(null);
 
   // Saving / deleting
   const [saving, setSaving] = useState(false);
@@ -1729,6 +1730,13 @@ export function AdminDashboard({
                                 )}
                                 <button
                                   type="button"
+                                  style={s.actionMeta}
+                                  onClick={() => setMetaPhoto(photo)}
+                                >
+                                  Info
+                                </button>
+                                <button
+                                  type="button"
                                   style={{
                                     ...s.actionNeutral,
                                     marginLeft: "auto",
@@ -1751,6 +1759,11 @@ export function AdminDashboard({
           </div>}
         </div>
       </div>
+
+      {/* ── Photo metadata modal ── */}
+      {metaPhoto && (
+        <PhotoMetadataModal photo={metaPhoto} onClose={() => setMetaPhoto(null)} />
+      )}
 
       {/* ── Confirm delete event modal ── */}
       {confirmDeleteEvent && (
@@ -1962,6 +1975,96 @@ function TemplateMiniPreview({ theme }: { theme: LandingTemplatePreset["theme"] 
     </div>
   );
 }
+
+// ─── PhotoMetadataModal ───────────────────────────────────────────────────────
+
+function PhotoMetadataModal({ photo, onClose }: { photo: PhotoRecord; onClose: () => void }) {
+  const exif = photo.exif_data;
+
+  const rows: { label: string; value: string | number | null | undefined }[] = [
+    { label: "Archivo original",    value: photo.original_name },
+    { label: "Tipo de archivo",     value: photo.original_mime_type },
+    { label: "Tamaño original",     value: photo.original_size_bytes ? formatBytes(photo.original_size_bytes) : null },
+    { label: "Dimensiones orig.",   value: photo.original_width && photo.original_height ? `${photo.original_width} × ${photo.original_height} px` : null },
+    { label: "Tamaño renderizado",  value: (photo as PhotoRecord & { size_bytes?: number }).size_bytes ? formatBytes((photo as PhotoRecord & { size_bytes?: number }).size_bytes!) : null },
+    { label: "Subido por",          value: photo.is_anonymous ? "Anónimo" : (photo.uploaded_by_name ?? "Invitado") },
+    { label: "Filtro",              value: photo.filter_name ?? "none" },
+    { label: "Plantilla",           value: photo.template_key ?? "—" },
+    { label: "Subida el",           value: new Date(photo.created_at).toLocaleString("es-CO", { dateStyle: "long", timeStyle: "short" }) },
+    ...(exif ? [
+      { label: "Cámara",            value: [exif.make, exif.model].filter(Boolean).join(" ") || null },
+      { label: "Lente",             value: exif.lens },
+      { label: "Fecha de captura",  value: exif.dateTaken ? new Date(exif.dateTaken).toLocaleString("es-CO", { dateStyle: "long", timeStyle: "short" }) : null },
+      { label: "ISO",               value: exif.iso },
+      { label: "Apertura",          value: exif.aperture ? `f/${exif.aperture}` : null },
+      { label: "Vel. obturador",    value: exif.shutterSpeed },
+      { label: "Focal",             value: exif.focalLength ? `${exif.focalLength} mm` : null },
+      { label: "Flash",             value: exif.flash },
+      { label: "Balance de blancos",value: exif.whiteBalance },
+      { label: "Comp. exposición",  value: exif.exposureCompensation != null ? `${exif.exposureCompensation > 0 ? "+" : ""}${exif.exposureCompensation} EV` : null },
+      { label: "Espacio de color",  value: exif.colorSpace },
+      { label: "GPS",               value: exif.gpsLat != null && exif.gpsLon != null ? `${exif.gpsLat.toFixed(6)}, ${exif.gpsLon.toFixed(6)}${exif.gpsAlt != null ? ` · ${exif.gpsAlt.toFixed(0)} m` : ""}` : null },
+    ] : []),
+  ].filter((r) => r.value != null && r.value !== "");
+
+  return (
+    <div style={mStyles.backdrop} onClick={onClose}>
+      <div style={mStyles.modal} onClick={(e) => e.stopPropagation()}>
+        <div style={mStyles.header}>
+          <span style={mStyles.title}>Metadatos</span>
+          <button type="button" style={mStyles.close} onClick={onClose}>✕</button>
+        </div>
+        <div style={mStyles.body}>
+          {rows.length === 0 ? (
+            <p style={{ margin: 0, fontSize: 13, color: "var(--muted)" }}>No hay metadatos disponibles para esta foto.</p>
+          ) : (
+            <dl style={mStyles.dl}>
+              {rows.map((r) => (
+                <div key={r.label} style={mStyles.dlRow}>
+                  <dt style={mStyles.dt}>{r.label}</dt>
+                  <dd style={mStyles.dd}>{String(r.value)}</dd>
+                </div>
+              ))}
+            </dl>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const mStyles: Record<string, React.CSSProperties> = {
+  backdrop: {
+    position: "fixed", inset: 0, zIndex: 9999,
+    background: "rgba(0,0,0,0.55)", backdropFilter: "blur(6px)",
+    display: "flex", alignItems: "center", justifyContent: "center",
+    padding: 20,
+  },
+  modal: {
+    background: "#fff", borderRadius: 24, width: "100%", maxWidth: 480,
+    maxHeight: "80dvh", display: "flex", flexDirection: "column",
+    boxShadow: "0 24px 80px rgba(0,0,0,0.25)",
+  },
+  header: {
+    display: "flex", alignItems: "center", justifyContent: "space-between",
+    padding: "18px 22px 14px", borderBottom: "1px solid rgba(0,0,0,0.07)",
+    flexShrink: 0,
+  },
+  title: { fontSize: 15, fontWeight: 700, letterSpacing: "-0.02em" },
+  close: {
+    background: "none", border: "none", cursor: "pointer",
+    fontSize: 14, color: "var(--muted)", padding: "4px 8px", borderRadius: 8,
+  },
+  body: { overflowY: "auto", padding: "16px 22px 22px" },
+  dl: { display: "grid", gap: 0, margin: 0 },
+  dlRow: {
+    display: "grid", gridTemplateColumns: "1fr 1.4fr", gap: 8,
+    padding: "8px 0", borderBottom: "1px solid rgba(0,0,0,0.05)",
+    alignItems: "baseline",
+  },
+  dt: { fontSize: 12, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.05em" },
+  dd: { fontSize: 13, color: "#111", margin: 0, wordBreak: "break-word" },
+};
 
 // ─── styles ──────────────────────────────────────────────────────────────────
 
@@ -2649,6 +2752,16 @@ const s: Record<string, React.CSSProperties> = {
     cursor: "pointer",
   },
   actionNeutral: {
+    padding: "5px 11px",
+    borderRadius: 999,
+    border: "1px solid rgba(0,0,0,0.1)",
+    background: "rgba(0,0,0,0.03)",
+    color: "var(--muted)",
+    fontSize: 12,
+    fontWeight: 600,
+    cursor: "pointer",
+  },
+  actionMeta: {
     padding: "5px 11px",
     borderRadius: 999,
     border: "1px solid rgba(0,0,0,0.1)",

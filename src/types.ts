@@ -110,6 +110,24 @@ export type CreditTransaction = {
   created_at: string;
 };
 
+export type PhotoExif = {
+  make?: string;
+  model?: string;
+  lens?: string;
+  iso?: number;
+  aperture?: number;
+  shutterSpeed?: string;
+  focalLength?: number;
+  dateTaken?: string;
+  gpsLat?: number;
+  gpsLon?: number;
+  gpsAlt?: number;
+  flash?: string;
+  whiteBalance?: string;
+  exposureCompensation?: number;
+  colorSpace?: string;
+};
+
 export type PhotoRecord = {
   id: string;
   event_id: string;
@@ -122,6 +140,12 @@ export type PhotoRecord = {
   moderation_status: "approved" | "pending" | "rejected";
   filter_name: string | null;
   template_key: string | null;
+  size_bytes?: number | null;
+  original_size_bytes?: number | null;
+  original_mime_type?: string | null;
+  original_width?: number | null;
+  original_height?: number | null;
+  exif_data?: PhotoExif | null;
   created_at: string;
 };
 

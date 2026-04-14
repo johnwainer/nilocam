@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { EVENT_BUCKET, FILTERS, TEMPLATES } from "@/lib/constants";
-import type { EventRecord, PhotoRecord } from "@/types";
+import type { EventRecord, PhotoExif, PhotoRecord } from "@/types";
 import { formatBytes, publicStorageUrl } from "@/lib/utils";
 import { renderEditedImage, type FilterKey, type TemplateKey } from "@/lib/image-tools";
 
@@ -30,6 +30,54 @@ const FILTER_CSS: Record<FilterKey, string> = {
 };
 
 const MAX_FILES = 10;
+
+// ── metadata extraction ────────────────────────────────────────────────────────
+
+async function getImageDimensions(file: File): Promise<{ width: number; height: number }> {
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(file);
+    const img = new window.Image();
+    img.onload = () => { URL.revokeObjectURL(url); resolve({ width: img.naturalWidth, height: img.naturalHeight }); };
+    img.onerror = () => { URL.revokeObjectURL(url); resolve({ width: 0, height: 0 }); };
+    img.src = url;
+  });
+}
+
+async function extractExif(file: File): Promise<PhotoExif | null> {
+  try {
+    const exifr = (await import("exifr")).default;
+    const raw = await exifr.parse(file, {
+      tiff: true, exif: true, gps: true, iptc: false, xmp: false,
+      pick: ["Make","Model","LensModel","ISO","FNumber","ExposureTime","FocalLength",
+             "DateTimeOriginal","GPSLatitude","GPSLongitude","GPSAltitude",
+             "Flash","WhiteBalance","ExposureCompensation","ColorSpace"],
+    });
+    if (!raw) return null;
+
+    const fmtShutter = (v: number | undefined) =>
+      v !== undefined ? (v < 1 ? `1/${Math.round(1 / v)}s` : `${v}s`) : undefined;
+
+    return {
+      make:                raw.Make,
+      model:               raw.Model,
+      lens:                raw.LensModel,
+      iso:                 raw.ISO,
+      aperture:            raw.FNumber,
+      shutterSpeed:        fmtShutter(raw.ExposureTime),
+      focalLength:         raw.FocalLength,
+      dateTaken:           raw.DateTimeOriginal instanceof Date ? raw.DateTimeOriginal.toISOString() : raw.DateTimeOriginal,
+      gpsLat:              raw.GPSLatitude,
+      gpsLon:              raw.GPSLongitude,
+      gpsAlt:              raw.GPSAltitude,
+      flash:               typeof raw.Flash === "string" ? raw.Flash : undefined,
+      whiteBalance:        typeof raw.WhiteBalance === "string" ? raw.WhiteBalance : undefined,
+      exposureCompensation:raw.ExposureCompensation,
+      colorSpace:          typeof raw.ColorSpace === "string" ? raw.ColorSpace : undefined,
+    };
+  } catch {
+    return null;
+  }
+}
 
 type ComposerProps = {
   event: EventRecord;
@@ -181,6 +229,12 @@ export function PhotoComposer({ event, onUploaded, compact, accentColor }: Compo
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       try {
+        // Extract metadata from original file before any processing
+        const [dims, exif] = await Promise.all([
+          getImageDimensions(file),
+          extractExif(file),
+        ]);
+
         const editedBlob = await renderEditedImage(file, {
           filter: effectiveFilter,
           template: effectiveTemplate,
@@ -211,6 +265,11 @@ export function PhotoComposer({ event, onUploaded, compact, accentColor }: Compo
             filter_name: effectiveFilter,
             template_key: effectiveTemplate,
             size_bytes: editedBlob.size,
+            original_size_bytes: file.size,
+            original_mime_type: file.type || null,
+            original_width: dims.width || null,
+            original_height: dims.height || null,
+            exif_data: exif,
           })
           .select("*")
           .single();
