@@ -139,6 +139,23 @@ export function PhotoComposer({ event, onUploaded, compact, accentColor }: Compo
       setError("Debes aceptar los términos para continuar.");
       return;
     }
+
+    // Photo limit check (photo_limit === 0 means no packs purchased yet)
+    const limit = event.photo_limit ?? 0;
+    if (limit === 0) {
+      setError("Las subidas están temporalmente desactivadas para este evento.");
+      return;
+    }
+    const { count: currentCount } = await supabase
+      .from("photos")
+      .select("*", { count: "exact", head: true })
+      .eq("event_id", event.id);
+    const remaining = limit - (currentCount ?? 0);
+    if (remaining <= 0) {
+      setError("Este evento ha alcanzado su límite de fotos. El organizador puede ampliar la capacidad.");
+      return;
+    }
+
     setIsSaving(true);
     setError(null);
 

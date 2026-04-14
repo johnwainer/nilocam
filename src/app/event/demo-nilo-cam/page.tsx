@@ -15,6 +15,7 @@ const DEMO_EVENT: EventRecord = {
   max_upload_mb: 20,
   allow_guest_upload: true,
   is_active: true,
+  photo_limit: 9999,
   cover_image_url: null,
   created_at: new Date().toISOString(),
   updated_at: new Date().toISOString(),

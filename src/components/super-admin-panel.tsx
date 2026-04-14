@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { formatDate, siteUrl } from "@/lib/utils";
-import type { EventRecord } from "@/types";
+import type { CreditPricing, EventRecord } from "@/types";
 
 const supabase = createSupabaseBrowserClient();
 
@@ -18,7 +18,7 @@ type Profile = {
   is_active: boolean;
 };
 
-type ProfileWithStats = Profile & { event_count: number };
+type ProfileWithStats = Profile & { event_count: number; credits: number };
 
 type EventWithCount = EventRecord & { photo_count: number };
 
@@ -40,7 +40,7 @@ type RecentPhoto = {
   moderation_status: string;
 };
 
-type SATab = "stats" | "events" | "users";
+type SATab = "stats" | "events" | "users" | "pricing";
 
 const ROLE_LABELS: Record<string, string> = {
   owner: "Owner",
@@ -81,6 +81,13 @@ export function SuperAdminPanel({
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
   const [togglingUserId, setTogglingUserId] = useState<string | null>(null);
   const [showNewUser, setShowNewUser] = useState(false);
+  const [adjustingCreditsFor, setAdjustingCreditsFor] = useState<ProfileWithStats | null>(null);
+
+  // Pricing
+  const [pricingList, setPricingList] = useState<CreditPricing[]>([]);
+  const [pricingLoading, setPricingLoading] = useState(false);
+  const [savingPriceKey, setSavingPriceKey] = useState<string | null>(null);
+  const [editingPrices, setEditingPrices] = useState<Record<string, number>>({});
 
   const flash = useCallback((text: string, ok: boolean) => {
     setNotice({ text, ok });
@@ -174,17 +181,34 @@ export function SuperAdminPanel({
       for (const e of eventsData ?? []) {
         if (e.owner_email) evtMap.set(e.owner_email, (evtMap.get(e.owner_email) ?? 0) + 1);
       }
-      setUsers(json.users.map((u: Profile) => ({ ...u, event_count: evtMap.get(u.email) ?? 0 })));
+      setUsers(json.users.map((u: Profile & { credits?: number }) => ({ ...u, event_count: evtMap.get(u.email) ?? 0, credits: u.credits ?? 0 })));
     } finally {
       setUsersLoading(false);
     }
   }, [flash]);
 
+  const loadPricing = useCallback(async () => {
+    setPricingLoading(true);
+    try {
+      const res = await fetch("/api/admin/pricing");
+      const json = await res.json();
+      if (json.ok) {
+        setPricingList(json.pricing);
+        const initial: Record<string, number> = {};
+        for (const pr of json.pricing) initial[pr.key] = pr.credits;
+        setEditingPrices(initial);
+      }
+    } finally {
+      setPricingLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     if (tab === "stats") loadStats();
     else if (tab === "events") loadEvents();
     else if (tab === "users") loadUsers();
-  }, [tab, loadStats, loadEvents, loadUsers]);
+    else if (tab === "pricing") loadPricing();
+  }, [tab, loadStats, loadEvents, loadUsers, loadPricing]);
 
   // ── event actions ───────────────────────────────────────────────────────────
 
@@ -264,6 +288,45 @@ export function SuperAdminPanel({
     }
   };
 
+  // ── pricing actions ────────────────────────────────────────────────────────
+
+  const savePrice = async (key: string) => {
+    const credits = editingPrices[key];
+    if (credits === undefined) return;
+    setSavingPriceKey(key);
+    try {
+      const res = await fetch("/api/admin/pricing", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key, credits }),
+      });
+      const json = await res.json();
+      if (!json.ok) throw new Error(json.message);
+      setPricingList((prev) => prev.map((pr) => pr.key === key ? { ...pr, credits } : pr));
+      flash("Precio actualizado", true);
+    } catch (e) {
+      flash(e instanceof Error ? e.message : "Error", false);
+    } finally {
+      setSavingPriceKey(null);
+    }
+  };
+
+  const adjustCredits = async (user: ProfileWithStats, amount: number, description: string) => {
+    try {
+      const res = await fetch("/api/admin/credits", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: user.id, user_email: user.email, amount, description }),
+      });
+      const json = await res.json();
+      if (!json.ok) throw new Error(json.message);
+      setUsers((prev) => prev.map((u) => u.id === user.id ? { ...u, credits: json.credits } : u));
+      flash(`Créditos actualizados: ${json.credits} ◈`, true);
+    } catch (e) {
+      flash(e instanceof Error ? e.message : "Error", false);
+    }
+  };
+
   // ── render ──────────────────────────────────────────────────────────────────
 
   return (
@@ -275,9 +338,9 @@ export function SuperAdminPanel({
           <span style={p.panelSub}>Sesión como {userEmail}</span>
         </div>
         <div style={p.tabBar}>
-          {(["stats", "events", "users"] as SATab[]).map((t) => (
+          {(["stats", "events", "users", "pricing"] as SATab[]).map((t) => (
             <button key={t} type="button" onClick={() => setTab(t)} style={tab === t ? p.tabActive : p.tab}>
-              {t === "stats" ? "Estadísticas" : t === "events" ? "Eventos" : "Usuarios"}
+              {t === "stats" ? "Estadísticas" : t === "events" ? "Eventos" : t === "users" ? "Usuarios" : "Precios"}
             </button>
           ))}
         </div>
@@ -453,6 +516,14 @@ export function SuperAdminPanel({
             />
           )}
 
+          {adjustingCreditsFor && (
+            <AdjustCreditsForm
+              user={adjustingCreditsFor}
+              onSaved={(amount, desc) => { adjustCredits(adjustingCreditsFor, amount, desc); setAdjustingCreditsFor(null); }}
+              onCancel={() => setAdjustingCreditsFor(null)}
+            />
+          )}
+
           {usersLoading ? <p style={p.loading}>Cargando…</p> : (
             <div style={p.tableWrap}>
               <table style={p.table}>
@@ -461,6 +532,7 @@ export function SuperAdminPanel({
                   <th style={p.th}>Nombre</th>
                   <th style={p.th}>Rol</th>
                   <th style={{ ...p.th, textAlign: "right" }}>Eventos</th>
+                  <th style={{ ...p.th, textAlign: "right" }}>Créditos</th>
                   <th style={p.th}>Estado</th>
                   <th style={p.th}>Registro</th>
                   <th style={p.th}>Acciones</th>
@@ -475,6 +547,14 @@ export function SuperAdminPanel({
                       <td style={{ ...p.td, ...p.tdMuted }}>{user.display_name || "—"}</td>
                       <td style={p.td}><RolePill role={user.role} /></td>
                       <td style={{ ...p.td, textAlign: "right", fontWeight: 600 }}>{user.event_count}</td>
+                      <td style={{ ...p.td, textAlign: "right" }}>
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 6 }}>
+                          <span style={{ fontWeight: 700, color: "#6d28d9" }}>◈ {user.credits}</span>
+                          {user.email !== userEmail && (
+                            <button type="button" style={{ ...p.miniBtn, fontSize: 10 }} onClick={() => setAdjustingCreditsFor(user)}>±</button>
+                          )}
+                        </div>
+                      </td>
                       <td style={p.td}><ActivePill active={user.is_active} /></td>
                       <td style={{ ...p.td, ...p.tdMuted }}>{fmtDate(user.created_at)}</td>
                       <td style={p.td}>
@@ -512,6 +592,85 @@ export function SuperAdminPanel({
           )}
         </div>
       )}
+
+      {/* ── PRICING ── */}
+      {tab === "pricing" && (
+        <div style={p.content}>
+          <div style={p.tableActions}>
+            <span style={p.tableCount}>Precios en créditos</span>
+            <button type="button" style={p.refreshBtn} onClick={loadPricing} disabled={pricingLoading}>{pricingLoading ? "Cargando…" : "↺ Actualizar"}</button>
+          </div>
+          <p style={{ margin: 0, fontSize: 13, color: "var(--muted)", lineHeight: 1.6 }}>
+            Configura cuántos créditos cuesta cada operación. Los cambios aplican a partir de la siguiente transacción.
+          </p>
+          {pricingLoading ? <p style={p.loading}>Cargando…</p> : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              {pricingList.map((pr) => (
+                <div key={pr.key} style={p.pricingRow}>
+                  <div style={{ flex: 1 }}>
+                    <strong style={{ fontSize: 14, color: "#111" }}>{pr.label}</strong>
+                    <p style={{ margin: "2px 0 0", fontSize: 13, color: "var(--muted)" }}>{pr.description}</p>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{ fontSize: 13, color: "#6d28d9", fontWeight: 700 }}>◈</span>
+                    <input
+                      className="input"
+                      type="number"
+                      min={0}
+                      style={{ width: 72, fontSize: 15, fontWeight: 700, textAlign: "center", padding: "7px 8px" }}
+                      value={editingPrices[pr.key] ?? pr.credits}
+                      onChange={(e) => setEditingPrices((prev) => ({ ...prev, [pr.key]: parseInt(e.target.value) || 0 }))}
+                    />
+                    <button
+                      type="button"
+                      className="btn btn-primary"
+                      style={{ fontSize: 13, padding: "8px 16px" }}
+                      disabled={savingPriceKey === pr.key || editingPrices[pr.key] === pr.credits}
+                      onClick={() => savePrice(pr.key)}
+                    >
+                      {savingPriceKey === pr.key ? "Guardando…" : "Guardar"}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── AdjustCreditsForm ────────────────────────────────────────────────────────
+
+function AdjustCreditsForm({ user, onSaved, onCancel }: {
+  user: ProfileWithStats;
+  onSaved: (amount: number, description: string) => void;
+  onCancel: () => void;
+}) {
+  const [amount, setAmount] = useState(10);
+  const [description, setDescription] = useState("");
+
+  return (
+    <div style={p.inlineForm}>
+      <strong style={{ fontSize: 14, fontWeight: 700 }}>Ajustar créditos — {user.email}</strong>
+      <p style={{ margin: 0, fontSize: 13, color: "var(--muted)" }}>Saldo actual: <strong style={{ color: "#6d28d9" }}>◈ {user.credits}</strong></p>
+      <div style={p.formRow}>
+        <div style={p.formField}>
+          <label style={p.formLabel}>Cantidad (positivo = otorgar, negativo = descontar)</label>
+          <input className="input" type="number" value={amount} onChange={(e) => setAmount(parseInt(e.target.value) || 0)} style={p.formInput} />
+        </div>
+        <div style={{ ...p.formField, flex: "2 1 260px" }}>
+          <label style={p.formLabel}>Descripción (opcional)</label>
+          <input className="input" type="text" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="ej. Créditos de bienvenida" style={p.formInput} />
+        </div>
+      </div>
+      <div style={{ display: "flex", gap: 8 }}>
+        <button type="button" className="btn btn-primary" style={{ fontSize: 13, padding: "8px 18px" }} onClick={() => onSaved(amount, description)}>
+          Aplicar
+        </button>
+        <button type="button" className="btn btn-ghost" style={{ fontSize: 13 }} onClick={onCancel}>Cancelar</button>
+      </div>
     </div>
   );
 }
@@ -845,6 +1004,16 @@ const p: Record<string, React.CSSProperties> = {
   },
   magicLinkLabel: { fontSize: 11, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.08em", color: "var(--muted)" },
   magicLinkRow: { display: "flex", gap: 10, alignItems: "center" },
+  pricingRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: 16,
+    padding: "16px 18px",
+    borderRadius: 16,
+    background: "#fff",
+    border: "1px solid rgba(0,0,0,0.07)",
+    flexWrap: "wrap" as const,
+  },
   magicLinkCode: {
     flex: 1,
     fontSize: 11,

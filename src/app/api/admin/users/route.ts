@@ -31,7 +31,7 @@ export async function GET() {
   const admin = serviceClient();
   const { data: profiles } = await admin
     .from("profiles")
-    .select("*")
+    .select("id, email, display_name, role, credits, created_at, updated_at")
     .order("created_at", { ascending: false });
 
   // Fetch ban status from auth.users via admin API

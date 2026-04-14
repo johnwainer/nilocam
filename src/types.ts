@@ -87,8 +87,27 @@ export type EventRecord = {
   cover_image_url: string | null;
   allow_guest_upload: boolean;
   is_active: boolean;
+  photo_limit: number;
   created_at: string;
   updated_at: string;
+};
+
+export type CreditPricing = {
+  key: string;
+  label: string;
+  description: string;
+  credits: number;
+};
+
+export type CreditTransaction = {
+  id: string;
+  user_email: string;
+  amount: number;
+  type: string;
+  event_id: string | null;
+  event_slug: string | null;
+  description: string;
+  created_at: string;
 };
 
 export type PhotoRecord = {

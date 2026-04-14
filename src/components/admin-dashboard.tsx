@@ -16,7 +16,7 @@ import {
   eventTypePresetFromKey,
 } from "@/lib/constants";
 import { formatBytes, formatDate, publicStorageUrl, siteUrl, toSlug } from "@/lib/utils";
-import type { EventRecord, EventTypeKey, LandingTemplatePreset, PhotoRecord, WatermarkPosition } from "@/types";
+import type { CreditPricing, CreditTransaction, EventRecord, EventTypeKey, LandingTemplatePreset, PhotoRecord, WatermarkPosition } from "@/types";
 import { SpyCatIcon } from "@/components/top-nav";
 import { SuperAdminPanel } from "@/components/super-admin-panel";
 
@@ -118,6 +118,7 @@ const emptyEvent: EventRecord = {
   cover_image_url: null,
   allow_guest_upload: true,
   is_active: true,
+  photo_limit: 0,
   created_at: new Date().toISOString(),
   updated_at: new Date().toISOString(),
 };
@@ -170,6 +171,17 @@ export function AdminDashboard({
   const [selectedId, setSelectedId] = useState<string>(initialDraft.id);
   const [tab, setTab] = useState<"evento" | "fotos">("evento");
   const [mainView, setMainView] = useState<"editor" | "system">("editor");
+
+  // Credits
+  const [credits, setCredits] = useState<number | null>(null);
+  const [pricing, setPricing] = useState<Record<string, CreditPricing>>({});
+  const [transactions, setTransactions] = useState<CreditTransaction[]>([]);
+  const [showCreditsHistory, setShowCreditsHistory] = useState(false);
+  const [purchasingPack, setPurchasingPack] = useState<string | null>(null);
+  const [showCreateConfirm, setShowCreateConfirm] = useState(false);
+
+  // Track which event ids exist in DB (not drafts)
+  const [savedIds] = useState<Set<string>>(() => new Set(initialEvents.map((e) => e.id)));
 
   // Photo management
   const [photos, setPhotos] = useState<PhotoRecord[]>([]);
@@ -227,6 +239,46 @@ export function AdminDashboard({
     }),
     [photos]
   );
+
+  // ── credits + pricing ──────────────────────────────────────────────────────
+
+  useEffect(() => {
+    fetch("/api/credits").then((r) => r.json()).then((j) => {
+      if (j.ok) { setCredits(j.credits); setTransactions(j.transactions ?? []); }
+    }).catch(() => {});
+    fetch("/api/admin/pricing").then((r) => r.json()).then((j) => {
+      if (j.ok) {
+        const map: Record<string, CreditPricing> = {};
+        for (const p of j.pricing) map[p.key] = p;
+        setPricing(map);
+      }
+    }).catch(() => {});
+  }, []);
+
+  const refreshCredits = useCallback(() => {
+    fetch("/api/credits").then((r) => r.json()).then((j) => {
+      if (j.ok) { setCredits(j.credits); setTransactions(j.transactions ?? []); }
+    }).catch(() => {});
+  }, []);
+
+  const buyPhotoPack = useCallback(async (packKey: string) => {
+    setPurchasingPack(packKey);
+    try {
+      const res = await fetch("/api/credits/purchase", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ event_id: selected.id, pack_key: packKey }),
+      });
+      const json = await res.json();
+      if (!json.ok) { setNotice({ text: json.message, ok: false }); return; }
+      setCredits(json.credits);
+      setEvents((cur) => cur.map((e) => e.id === selected.id ? { ...e, photo_limit: json.photo_limit } : e));
+      setNotice({ text: `Pack activado. Límite de fotos: ${json.photo_limit}`, ok: true });
+      refreshCredits();
+    } finally {
+      setPurchasingPack(null);
+    }
+  }, [selected.id, refreshCredits]);
 
   // ── photo ops ──────────────────────────────────────────────────────────────
 
@@ -313,34 +365,71 @@ export function AdminDashboard({
     }
     setSaving(true);
     setNotice(null);
-    const payload = {
-      id: selected.id || crypto.randomUUID(),
-      slug: toSlug(selected.slug), // final cleanup on save
-      title: selected.title,
-      subtitle: selected.subtitle,
-      event_type_key: selected.event_type_key,
-      owner_email: selected.owner_email ?? userEmail,
-      event_date: selected.event_date,
-      venue_name: selected.venue_name,
-      venue_city: selected.venue_city,
-      moderation_mode: selected.moderation_mode,
-      max_upload_mb: selected.max_upload_mb,
-      landing_config: selected.landing_config,
-      cover_image_url: selected.cover_image_url,
-      allow_guest_upload: selected.allow_guest_upload,
-    };
-    const { data, error } = await supabase.from("events").upsert(payload).select("*").single();
-    setSaving(false);
-    if (error) {
-      setNotice({ text: error.message, ok: false });
-      return;
+
+    const isNew = !savedIds.has(selected.id);
+    const cleanSlug = toSlug(selected.slug);
+
+    if (isNew) {
+      // New event — use credit route (server-side deduction)
+      const payload = {
+        id: selected.id,
+        slug: cleanSlug,
+        title: selected.title,
+        subtitle: selected.subtitle,
+        event_type_key: selected.event_type_key,
+        owner_email: selected.owner_email ?? userEmail,
+        event_date: selected.event_date,
+        venue_name: selected.venue_name,
+        venue_city: selected.venue_city,
+        moderation_mode: selected.moderation_mode,
+        max_upload_mb: selected.max_upload_mb,
+        landing_config: selected.landing_config,
+        cover_image_url: selected.cover_image_url,
+        allow_guest_upload: selected.allow_guest_upload,
+      };
+      const res = await fetch("/api/credits/event", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const json = await res.json();
+      setSaving(false);
+      if (!json.ok) {
+        setNotice({ text: json.message, ok: false });
+        return;
+      }
+      savedIds.add(json.event.id);
+      setCredits(json.credits);
+      setEvents((cur) => {
+        const rest = cur.filter((e) => e.id !== json.event.id);
+        return [json.event as EventRecord, ...rest];
+      });
+      setSelectedId(json.event.id);
+      setNotice({ text: `Evento creado. ${json.cost} crédito${json.cost !== 1 ? "s" : ""} descontado${json.cost !== 1 ? "s" : ""}. Compra un pack de fotos para activar las subidas.`, ok: true });
+    } else {
+      // Existing event — direct update
+      const payload = {
+        id: selected.id,
+        slug: cleanSlug,
+        title: selected.title,
+        subtitle: selected.subtitle,
+        event_type_key: selected.event_type_key,
+        owner_email: selected.owner_email ?? userEmail,
+        event_date: selected.event_date,
+        venue_name: selected.venue_name,
+        venue_city: selected.venue_city,
+        moderation_mode: selected.moderation_mode,
+        max_upload_mb: selected.max_upload_mb,
+        landing_config: selected.landing_config,
+        cover_image_url: selected.cover_image_url,
+        allow_guest_upload: selected.allow_guest_upload,
+      };
+      const { data, error } = await supabase.from("events").update(payload).eq("id", selected.id).select("*").single();
+      setSaving(false);
+      if (error) { setNotice({ text: error.message, ok: false }); return; }
+      setEvents((cur) => cur.map((e) => e.id === data.id ? data as EventRecord : e));
+      setNotice({ text: "Cambios guardados.", ok: true });
     }
-    setEvents((cur) => {
-      const rest = cur.filter((e) => e.id !== data.id);
-      return [data as EventRecord, ...rest];
-    });
-    setSelectedId(data.id);
-    setNotice({ text: "Evento guardado. Comparte la URL o el QR con tus invitados.", ok: true });
   };
 
   const deleteEvent = async () => {
@@ -542,6 +631,18 @@ export function AdminDashboard({
 
           {/* Right actions */}
           <div style={s.headerRight}>
+            {credits !== null && (
+              <button
+                type="button"
+                style={s.creditsChip}
+                onClick={() => setShowCreditsHistory((v) => !v)}
+                title="Ver historial de créditos"
+              >
+                <span style={s.creditsIcon}>◈</span>
+                <span style={{ fontWeight: 800 }}>{credits}</span>
+                <span style={{ opacity: 0.65, fontSize: 11 }}>créditos</span>
+              </button>
+            )}
             <span className="admin-header-email" style={s.headerEmail}>{userEmail}</span>
             <button className="btn btn-ghost" style={s.headerBtn} onClick={signOut} type="button">
               Salir
@@ -1327,6 +1428,18 @@ export function AdminDashboard({
                         </div>
                       )}
                     </div>
+
+                    {/* ── Capacidad de fotos ── */}
+                    {savedIds.has(selected.id) && (
+                      <PhotoCapacityCard
+                        photoLimit={selected.photo_limit ?? 0}
+                        photoCount={photoCounts.approved}
+                        pricing={pricing}
+                        credits={credits}
+                        purchasing={purchasingPack}
+                        onBuy={buyPhotoPack}
+                      />
+                    )}
                   </div>
                 </div>
               </div>
@@ -1641,9 +1754,154 @@ export function AdminDashboard({
           </div>
         </div>
       )}
+
+      {/* ── Credits history modal ── */}
+      {showCreditsHistory && (
+        <div style={s.modalOverlay} onClick={() => setShowCreditsHistory(false)}>
+          <div className="card" style={{ ...s.modal, maxWidth: 480, maxHeight: "80vh", overflowY: "auto" }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+              <h3 className="serif" style={s.modalTitle}>Historial de créditos</h3>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <span style={s.creditsBig}>◈ {credits ?? "—"}</span>
+                <button type="button" className="btn btn-ghost" style={{ fontSize: 13, padding: "6px 12px" }} onClick={() => setShowCreditsHistory(false)}>✕</button>
+              </div>
+            </div>
+            {transactions.length === 0 ? (
+              <p className="muted" style={{ fontSize: 13 }}>Sin transacciones aún.</p>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                {transactions.map((t) => (
+                  <div key={t.id} style={s.txRow}>
+                    <div style={{ flex: 1 }}>
+                      <span style={{ fontSize: 13, fontWeight: 600, color: "#111" }}>{t.description || t.type}</span>
+                      {t.event_slug && <span style={{ fontSize: 11, color: "var(--muted)", display: "block" }}>/{t.event_slug}</span>}
+                      <span style={{ fontSize: 11, color: "var(--muted)" }}>{new Date(t.created_at).toLocaleDateString("es-MX", { day: "2-digit", month: "short", year: "numeric" })}</span>
+                    </div>
+                    <span style={{ fontWeight: 800, fontSize: 16, color: t.amount >= 0 ? "#065f46" : "#374151" }}>
+                      {t.amount >= 0 ? "+" : ""}{t.amount} ◈
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+
+// ─── PhotoCapacityCard ────────────────────────────────────────────────────────
+
+const PHOTO_PACKS = [
+  { key: "photos_100", photos: 100 },
+  { key: "photos_200", photos: 200 },
+  { key: "photos_500", photos: 500 },
+] as const;
+
+function PhotoCapacityCard({
+  photoLimit,
+  photoCount,
+  pricing,
+  credits,
+  purchasing,
+  onBuy,
+}: {
+  photoLimit: number;
+  photoCount: number;
+  pricing: Record<string, CreditPricing>;
+  credits: number | null;
+  purchasing: string | null;
+  onBuy: (packKey: string) => void;
+}) {
+  const pct = photoLimit > 0 ? Math.min(100, (photoCount / photoLimit) * 100) : 0;
+  const atLimit = photoLimit > 0 && photoCount >= photoLimit;
+
+  return (
+    <div style={cc.card}>
+      <div style={cc.header}>
+        <span className="eyebrow" style={{ marginBottom: 0, fontSize: 10 }}>Capacidad de fotos</span>
+        <span style={{ fontSize: 13, fontWeight: 800, color: atLimit ? "#dc2626" : "#111" }}>
+          {photoCount} / {photoLimit === 0 ? "—" : photoLimit}
+        </span>
+      </div>
+
+      {photoLimit > 0 && (
+        <div style={cc.bar}>
+          <div style={{ ...cc.barFill, width: `${pct}%`, background: atLimit ? "#dc2626" : pct > 80 ? "#f59e0b" : "#111" }} />
+        </div>
+      )}
+
+      {photoLimit === 0 && (
+        <p style={cc.hint}>Las subidas están desactivadas. Compra un pack para activarlas.</p>
+      )}
+      {atLimit && (
+        <p style={{ ...cc.hint, color: "#dc2626" }}>Límite alcanzado. Compra más capacidad.</p>
+      )}
+
+      <div style={cc.packs}>
+        {PHOTO_PACKS.map(({ key, photos }) => {
+          const p = pricing[key];
+          const cost = p?.credits ?? "…";
+          const canAfford = credits !== null && typeof cost === "number" && credits >= cost;
+          return (
+            <button
+              key={key}
+              type="button"
+              disabled={purchasing !== null || !canAfford}
+              onClick={() => onBuy(key)}
+              style={{
+                ...cc.packBtn,
+                opacity: (!canAfford || purchasing !== null) ? 0.5 : 1,
+                cursor: !canAfford || purchasing !== null ? "not-allowed" : "pointer",
+              }}
+              title={!canAfford ? `Necesitas ${cost} créditos` : `+${photos} fotos por ${cost} créditos`}
+            >
+              <span style={cc.packPhotos}>+{photos}</span>
+              <span style={cc.packLabel}>fotos</span>
+              <span style={cc.packCost}>{purchasing === key ? "…" : `◈ ${cost}`}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {credits !== null && (
+        <p style={cc.balance}>Saldo actual: <strong>◈ {credits}</strong></p>
+      )}
+    </div>
+  );
+}
+
+const cc: Record<string, React.CSSProperties> = {
+  card: {
+    marginTop: 14,
+    paddingTop: 14,
+    borderTop: "1px solid rgba(0,0,0,0.07)",
+    display: "flex",
+    flexDirection: "column",
+    gap: 10,
+  },
+  header: { display: "flex", alignItems: "center", justifyContent: "space-between" },
+  bar: { height: 5, borderRadius: 999, background: "rgba(0,0,0,0.07)", overflow: "hidden" },
+  barFill: { height: "100%", borderRadius: 999, transition: "width 0.3s ease" },
+  hint: { margin: 0, fontSize: 12, color: "var(--muted)", lineHeight: 1.5 },
+  packs: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6 },
+  packBtn: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: 2,
+    padding: "10px 6px",
+    borderRadius: 12,
+    border: "1px solid rgba(0,0,0,0.1)",
+    background: "rgba(0,0,0,0.02)",
+    transition: "background 0.15s",
+  },
+  packPhotos: { fontSize: 15, fontWeight: 800, color: "#111", letterSpacing: "-0.03em" },
+  packLabel: { fontSize: 10, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.06em" },
+  packCost: { fontSize: 11, fontWeight: 700, color: "var(--muted)", marginTop: 2 },
+  balance: { margin: 0, fontSize: 11, color: "var(--muted)", textAlign: "right" as const },
+};
 
 // ─── DisplayIcon ─────────────────────────────────────────────────────────────
 
@@ -1739,6 +1997,28 @@ const s: Record<string, React.CSSProperties> = {
   adminPill: { fontSize: 11, padding: "3px 10px" },
   headerRight: { display: "flex", alignItems: "center", gap: 8, flexShrink: 0 },
   headerEmail: { fontSize: 13, color: "var(--muted)" },
+  creditsChip: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 5,
+    padding: "5px 12px",
+    borderRadius: 999,
+    background: "rgba(0,0,0,0.05)",
+    border: "1px solid rgba(0,0,0,0.1)",
+    fontSize: 13,
+    color: "#111",
+    cursor: "pointer",
+    fontWeight: 600,
+  },
+  creditsIcon: { fontSize: 14, color: "#6d28d9" },
+  creditsBig: { fontSize: 18, fontWeight: 800, color: "#6d28d9" },
+  txRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: 12,
+    padding: "10px 0",
+    borderBottom: "1px solid rgba(0,0,0,0.06)",
+  },
   headerBtn: { fontSize: 13, padding: "7px 14px" },
   hamburger: {
     display: "none", // shown via CSS on mobile
