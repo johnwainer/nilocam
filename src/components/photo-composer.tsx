@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { EVENT_BUCKET, FILTERS, TEMPLATES } from "@/lib/constants";
-import type { EventRecord, PhotoExif, PhotoRecord } from "@/types";
+import type { EventRecord, PhotoDeviceData, PhotoExif, PhotoRecord } from "@/types";
 import { formatBytes, publicStorageUrl } from "@/lib/utils";
 import { renderEditedImage, type FilterKey, type TemplateKey } from "@/lib/image-tools";
 
@@ -41,6 +41,50 @@ async function getImageDimensions(file: File): Promise<{ width: number; height: 
     img.onerror = () => { URL.revokeObjectURL(url); resolve({ width: 0, height: 0 }); };
     img.src = url;
   });
+}
+
+function collectDeviceData(): PhotoDeviceData {
+  const ua = navigator.userAgent;
+  // Coarse browser detection
+  const browser =
+    /Edg\//.test(ua) ? "Edge" :
+    /OPR\/|Opera/.test(ua) ? "Opera" :
+    /Chrome\//.test(ua) ? "Chrome" :
+    /Firefox\//.test(ua) ? "Firefox" :
+    /Safari\//.test(ua) ? "Safari" :
+    "Unknown";
+  // Coarse OS detection
+  const os =
+    /Android/.test(ua) ? "Android" :
+    /iPhone|iPad|iPod/.test(ua) ? "iOS" :
+    /Windows/.test(ua) ? "Windows" :
+    /Mac OS X/.test(ua) ? "macOS" :
+    /Linux/.test(ua) ? "Linux" :
+    "Unknown";
+  const deviceType =
+    /Mobi|Android|iPhone|iPad/.test(ua) ? "mobile" : "desktop";
+
+  return {
+    userAgent: ua,
+    browser,
+    os,
+    deviceType,
+    language: navigator.language,
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    screenWidth: screen.width,
+    screenHeight: screen.height,
+    pixelRatio: window.devicePixelRatio,
+  };
+}
+
+async function fetchUploadIp(): Promise<string> {
+  try {
+    const res = await fetch("/api/photos/ip");
+    const json = await res.json() as { ip?: string };
+    return json.ip ?? "unknown";
+  } catch {
+    return "unknown";
+  }
 }
 
 async function extractExif(file: File): Promise<PhotoExif | null> {
@@ -223,6 +267,14 @@ export function PhotoComposer({ event, onUploaded, compact, accentColor }: Compo
         }
       : undefined;
 
+    // Collect uploader identity + device info once for all photos
+    const [sessionData, deviceData, uploadIp] = await Promise.all([
+      supabase.auth.getUser(),
+      Promise.resolve(collectDeviceData()),
+      fetchUploadIp(),
+    ]);
+    const sessionEmail = sessionData.data.user?.email ?? null;
+
     let errorCount = 0;
     setUploadProgress({ done: 0, total: files.length });
 
@@ -259,7 +311,7 @@ export function PhotoComposer({ event, onUploaded, compact, accentColor }: Compo
             storage_path: path,
             original_name: file.name,
             uploaded_by_name: isAnon ? null : trimmedName,
-            uploaded_by_email: null,
+            uploaded_by_email: sessionEmail,
             is_anonymous: isAnon,
             moderation_status: moderationStatus,
             filter_name: effectiveFilter,
@@ -270,6 +322,8 @@ export function PhotoComposer({ event, onUploaded, compact, accentColor }: Compo
             original_width: dims.width || null,
             original_height: dims.height || null,
             exif_data: exif,
+            device_data: deviceData,
+            upload_ip: uploadIp,
           })
           .select("*")
           .single();

@@ -110,6 +110,18 @@ export type CreditTransaction = {
   created_at: string;
 };
 
+export type PhotoDeviceData = {
+  userAgent?: string;
+  browser?: string;
+  os?: string;
+  deviceType?: string;
+  language?: string;
+  timezone?: string;
+  screenWidth?: number;
+  screenHeight?: number;
+  pixelRatio?: number;
+};
+
 export type PhotoExif = {
   make?: string;
   model?: string;
@@ -146,6 +158,8 @@ export type PhotoRecord = {
   original_width?: number | null;
   original_height?: number | null;
   exif_data?: PhotoExif | null;
+  device_data?: PhotoDeviceData | null;
+  upload_ip?: string | null;
   created_at: string;
 };
 

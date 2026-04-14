@@ -1980,17 +1980,40 @@ function TemplateMiniPreview({ theme }: { theme: LandingTemplatePreset["theme"] 
 
 function PhotoMetadataModal({ photo, onClose }: { photo: PhotoRecord; onClose: () => void }) {
   const exif = photo.exif_data;
+  const dev = photo.device_data;
 
-  const rows: { label: string; value: string | number | null | undefined }[] = [
-    { label: "Archivo original",    value: photo.original_name },
-    { label: "Tipo de archivo",     value: photo.original_mime_type },
+  const rows: { label: string; value: string | number | null | undefined; section?: string }[] = [
+    { label: "——", value: "ARCHIVO", section: "header" },
+    { label: "Nombre original",     value: photo.original_name },
+    { label: "Tipo",                value: photo.original_mime_type },
     { label: "Tamaño original",     value: photo.original_size_bytes ? formatBytes(photo.original_size_bytes) : null },
     { label: "Dimensiones orig.",   value: photo.original_width && photo.original_height ? `${photo.original_width} × ${photo.original_height} px` : null },
     { label: "Tamaño renderizado",  value: (photo as PhotoRecord & { size_bytes?: number }).size_bytes ? formatBytes((photo as PhotoRecord & { size_bytes?: number }).size_bytes!) : null },
-    { label: "Subido por",          value: photo.is_anonymous ? "Anónimo" : (photo.uploaded_by_name ?? "Invitado") },
-    { label: "Filtro",              value: photo.filter_name ?? "none" },
-    { label: "Plantilla",           value: photo.template_key ?? "—" },
+    { label: "Filtro",              value: photo.filter_name && photo.filter_name !== "none" ? photo.filter_name : null },
+    { label: "Plantilla",           value: photo.template_key },
     { label: "Subida el",           value: new Date(photo.created_at).toLocaleString("es-CO", { dateStyle: "long", timeStyle: "short" }) },
+
+    { label: "——", value: "IDENTIDAD", section: "header" },
+    { label: "Nombre",              value: photo.is_anonymous ? "Anónimo" : (photo.uploaded_by_name ?? "Invitado") },
+    { label: "Email",               value: photo.uploaded_by_email },
+    { label: "Anónimo",             value: photo.is_anonymous ? "Sí" : "No" },
+
+    ...(dev ? [
+      { label: "——", value: "DISPOSITIVO", section: "header" },
+      { label: "IP",                value: photo.upload_ip },
+      { label: "Navegador",         value: dev.browser },
+      { label: "Sistema operativo", value: dev.os },
+      { label: "Tipo de equipo",    value: dev.deviceType },
+      { label: "Idioma",            value: dev.language },
+      { label: "Zona horaria",      value: dev.timezone },
+      { label: "Resolución",        value: dev.screenWidth && dev.screenHeight ? `${dev.screenWidth} × ${dev.screenHeight}` : null },
+      { label: "Pixel ratio",       value: dev.pixelRatio },
+      { label: "User agent",        value: dev.userAgent },
+    ] : [
+      { label: "——", value: "DISPOSITIVO", section: "header" },
+      { label: "IP",                value: photo.upload_ip },
+    ]),
+
     ...(exif ? [
       { label: "Cámara",            value: [exif.make, exif.model].filter(Boolean).join(" ") || null },
       { label: "Lente",             value: exif.lens },
@@ -2005,26 +2028,37 @@ function PhotoMetadataModal({ photo, onClose }: { photo: PhotoRecord; onClose: (
       { label: "Espacio de color",  value: exif.colorSpace },
       { label: "GPS",               value: exif.gpsLat != null && exif.gpsLon != null ? `${exif.gpsLat.toFixed(6)}, ${exif.gpsLon.toFixed(6)}${exif.gpsAlt != null ? ` · ${exif.gpsAlt.toFixed(0)} m` : ""}` : null },
     ] : []),
-  ].filter((r) => r.value != null && r.value !== "");
+  ].filter((r) => r.section === "header" || (r.value != null && r.value !== ""));
+
+  // Remove orphaned section headers (header followed immediately by another header or end)
+  const cleaned = rows.filter((r, i) => {
+    if (r.section !== "header") return true;
+    const next = rows[i + 1];
+    return next && next.section !== "header";
+  });
 
   return (
     <div style={mStyles.backdrop} onClick={onClose}>
       <div style={mStyles.modal} onClick={(e) => e.stopPropagation()}>
         <div style={mStyles.header}>
-          <span style={mStyles.title}>Metadatos</span>
+          <span style={mStyles.title}>Metadatos de la foto</span>
           <button type="button" style={mStyles.close} onClick={onClose}>✕</button>
         </div>
         <div style={mStyles.body}>
-          {rows.length === 0 ? (
+          {cleaned.length === 0 ? (
             <p style={{ margin: 0, fontSize: 13, color: "var(--muted)" }}>No hay metadatos disponibles para esta foto.</p>
           ) : (
             <dl style={mStyles.dl}>
-              {rows.map((r) => (
-                <div key={r.label} style={mStyles.dlRow}>
-                  <dt style={mStyles.dt}>{r.label}</dt>
-                  <dd style={mStyles.dd}>{String(r.value)}</dd>
-                </div>
-              ))}
+              {cleaned.map((r, i) =>
+                r.section === "header" ? (
+                  <div key={i} style={mStyles.sectionHead}>{String(r.value)}</div>
+                ) : (
+                  <div key={r.label} style={mStyles.dlRow}>
+                    <dt style={mStyles.dt}>{r.label}</dt>
+                    <dd style={mStyles.dd}>{String(r.value)}</dd>
+                  </div>
+                )
+              )}
             </dl>
           )}
         </div>
@@ -2064,6 +2098,11 @@ const mStyles: Record<string, React.CSSProperties> = {
   },
   dt: { fontSize: 12, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.05em" },
   dd: { fontSize: 13, color: "#111", margin: 0, wordBreak: "break-word" },
+  sectionHead: {
+    fontSize: 10, fontWeight: 800, letterSpacing: "0.12em", textTransform: "uppercase" as const,
+    color: "var(--muted)", padding: "14px 0 6px", borderBottom: "1px solid rgba(0,0,0,0.07)",
+    marginBottom: 2,
+  },
 };
 
 // ─── styles ──────────────────────────────────────────────────────────────────
