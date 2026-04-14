@@ -91,6 +91,20 @@ export async function POST(request: Request) {
     role,
   }, { onConflict: "id" });
 
+  // Grant initial credits
+  const { data: pricing } = await admin.from("credit_pricing").select("credits").eq("key", "initial_credits").single();
+  const initialCredits = pricing?.credits ?? 0;
+  if (initialCredits > 0) {
+    await admin.from("profiles").update({ credits: initialCredits }).eq("id", userId);
+    await admin.from("credit_transactions").insert({
+      user_id: userId,
+      user_email: email,
+      amount: initialCredits,
+      type: "manual_grant",
+      description: "Créditos de bienvenida",
+    });
+  }
+
   // Build invite URL pointing at the app's own registration page
   const { origin } = new URL(request.url);
   const params = new URLSearchParams({ email });

@@ -7,6 +7,27 @@ type RequestBody = {
   displayName?: string;
 };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function grantInitialCredits(supabase: any, userId: string, email: string) {
+  const { data: pricing } = await supabase
+    .from("credit_pricing")
+    .select("credits")
+    .eq("key", "initial_credits")
+    .single();
+
+  const amount = pricing?.credits ?? 0;
+  if (amount <= 0) return;
+
+  await supabase.from("profiles").update({ credits: amount }).eq("id", userId);
+  await supabase.from("credit_transactions").insert({
+    user_id: userId,
+    user_email: email,
+    amount,
+    type: "manual_grant",
+    description: "Créditos de bienvenida",
+  });
+}
+
 export async function POST(request: Request) {
   const body = (await request.json().catch(() => ({}))) as RequestBody;
   const email = body.email?.trim().toLowerCase();
@@ -55,6 +76,8 @@ export async function POST(request: Request) {
 
   let userId = existingUser?.id ?? null;
 
+  const isNewUser = !existingUser;
+
   if (existingUser) {
     const { error: updateError } = await supabase.auth.admin.updateUserById(existingUser.id, {
       password,
@@ -102,6 +125,11 @@ export async function POST(request: Request) {
 
   if (profileError) {
     return NextResponse.json({ ok: false, message: profileError.message }, { status: 400 });
+  }
+
+  // Grant initial credits only on first-time registration
+  if (isNewUser) {
+    await grantInitialCredits(supabase, userId, email);
   }
 
   return NextResponse.json({ ok: true, message: "Acceso listo." });
