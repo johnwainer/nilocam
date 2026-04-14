@@ -1155,34 +1155,42 @@ export function AdminDashboard({
                     )}
                   </div>
 
-                  {/* ── 7. RESPONSABLE (super admin only) ──────────────────── */}
-                  {isSuperAdmin && (
-                    <div style={s.formSection}>
-                      <div style={s.sectionHead}>
-                        <span className="eyebrow" style={s.sectionEyebrow}>Responsable del evento</span>
-                        <p style={s.sectionDesc}>La persona que puede editar este evento desde el panel.</p>
-                      </div>
-                      <label style={s.field}>
-                        <span className="label">Correo electrónico</span>
-                        <input
-                          className="input"
-                          type="email"
-                          placeholder="responsable@ejemplo.com"
-                          value={selected.owner_email ?? userEmail}
-                          onChange={(e) => updateSelected("owner_email", e.target.value)}
-                        />
-                        <span style={s.fieldHint}>
-                          Esta persona podrá iniciar sesión en /admin y editar la landing de este evento.
-                        </span>
-                      </label>
-                      <div style={s.responsableTip}>
-                        <strong style={{ fontSize: 13 }}>¿Aún no tiene cuenta?</strong>
-                        <p style={{ margin: "4px 0 0", fontSize: 13, lineHeight: 1.55 }}>
-                          Pídele que se registre en <strong>{siteUrl("/auth")}</strong> con ese correo.
-                        </p>
-                      </div>
+                  {/* ── 7. RESPONSABLE ─────────────────────────────────────── */}
+                  <div style={s.formSection}>
+                    <div style={s.sectionHead}>
+                      <span className="eyebrow" style={s.sectionEyebrow}>Responsable del evento</span>
+                      <p style={s.sectionDesc}>La persona que puede editar este evento desde el panel.</p>
                     </div>
-                  )}
+                    {isSuperAdmin ? (
+                      <>
+                        <label style={s.field}>
+                          <span className="label">Correo electrónico</span>
+                          <input
+                            className="input"
+                            type="email"
+                            placeholder="responsable@ejemplo.com"
+                            value={selected.owner_email ?? userEmail}
+                            onChange={(e) => updateSelected("owner_email", e.target.value)}
+                          />
+                          <span style={s.fieldHint}>
+                            Esta persona podrá iniciar sesión en /admin y editar la landing de este evento.
+                          </span>
+                        </label>
+                        <div style={s.responsableTip}>
+                          <strong style={{ fontSize: 13 }}>¿Aún no tiene cuenta?</strong>
+                          <p style={{ margin: "4px 0 0", fontSize: 13, lineHeight: 1.55 }}>
+                            Pídele que se registre en <strong>{siteUrl("/auth")}</strong> con ese correo.
+                          </p>
+                        </div>
+                      </>
+                    ) : (
+                      <div style={s.responsableReadOnly}>
+                        <span className="label" style={{ marginBottom: 4 }}>Correo electrónico</span>
+                        <span style={s.responsableEmail}>{selected.owner_email ?? userEmail}</span>
+                        <span style={s.fieldHint}>Este es tu correo. Este evento es tuyo.</span>
+                      </div>
+                    )}
+                  </div>
 
                   {/* ── ZONA DE PELIGRO ────────────────────────────────────── */}
                   <div className="admin-danger-zone" style={s.dangerZone}>
@@ -1894,6 +1902,21 @@ const s: Record<string, React.CSSProperties> = {
     borderRadius: 16,
     padding: "12px 14px",
     color: "var(--text)",
+  },
+  responsableReadOnly: {
+    display: "flex",
+    flexDirection: "column" as const,
+    gap: 6,
+    padding: "12px 14px",
+    borderRadius: 16,
+    background: "var(--surface)",
+    border: "1px solid var(--border)",
+  },
+  responsableEmail: {
+    fontSize: 15,
+    fontWeight: 600,
+    color: "var(--text)",
+    wordBreak: "break-all" as const,
   },
 
   colorPickerRow: {
