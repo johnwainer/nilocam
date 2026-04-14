@@ -2021,7 +2021,6 @@ const s: Record<string, React.CSSProperties> = {
     cursor: "pointer",
     textAlign: "left" as const,
     letterSpacing: "-0.01em",
-    marginTop: 6,
   },
   creditsBtnActive: {
     width: "100%",
@@ -2035,7 +2034,6 @@ const s: Record<string, React.CSSProperties> = {
     cursor: "pointer",
     textAlign: "left" as const,
     letterSpacing: "-0.01em",
-    marginTop: 6,
   },
   headerBtn: { fontSize: 13, padding: "7px 14px" },
   hamburger: {
@@ -2079,6 +2077,9 @@ const s: Record<string, React.CSSProperties> = {
     paddingTop: 12,
     borderTop: "1px solid rgba(0,0,0,0.07)",
     marginTop: "auto",
+    display: "flex",
+    flexDirection: "column",
+    gap: 8,
   },
   createBtn: { width: "100%", fontSize: 13, padding: "10px 16px", marginBottom: 8 },
   systemBtn: {
