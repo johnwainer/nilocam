@@ -1252,6 +1252,54 @@ export function AdminDashboard({
                       </div>
                     </div>
 
+                    {/* Autoplay — only relevant in slider mode */}
+                    {(selected.landing_config.galleryMode ?? "grid") === "slider" && (
+                      <div style={s.field}>
+                        <span className="label">Reproducción automática</span>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                          {/* On/off toggle */}
+                          <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}>
+                            <input
+                              type="checkbox"
+                              checked={selected.landing_config.galleryAutoplay ?? false}
+                              onChange={(e) => updateLanding("galleryAutoplay", e.target.checked)}
+                              style={{ width: 16, height: 16, cursor: "pointer" }}
+                            />
+                            <span style={{ fontSize: 14 }}>
+                              Avanzar fotos automáticamente
+                            </span>
+                          </label>
+
+                          {/* Interval selector — only show when autoplay on */}
+                          {(selected.landing_config.galleryAutoplay ?? false) && (
+                            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                              <span className="muted" style={{ fontSize: 13, flexShrink: 0 }}>Cambiar cada</span>
+                              <div style={{ display: "flex", gap: 6 }}>
+                                {[3, 4, 5, 7, 10].map((sec) => {
+                                  const active = (selected.landing_config.galleryAutoplayInterval ?? 4) === sec;
+                                  return (
+                                    <button
+                                      key={sec}
+                                      type="button"
+                                      style={{
+                                        ...(active ? s.modeChipActive : s.modeChip),
+                                        padding: "7px 14px",
+                                        borderRadius: 999,
+                                        fontSize: 13,
+                                      }}
+                                      onClick={() => updateLanding("galleryAutoplayInterval", sec)}
+                                    >
+                                      {sec}s
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
                     <div style={s.field}>
                       <span className="label">Secciones visibles en la landing</span>
                       <div style={s.sectionChips}>

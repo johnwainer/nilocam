@@ -126,6 +126,8 @@ export const DEFAULT_LANDING_CONFIG: EventLandingConfig = {
   showAnonymousToggle: true,
   showTerms: true,
   galleryMode: "grid",
+  galleryAutoplay: false,
+  galleryAutoplayInterval: 4,
   filtersMode: "allow",
   forcedFilter: null,
   templatesMode: "allow",

@@ -37,6 +37,8 @@ const DEMO_EVENT: EventRecord = {
     filtersMode: "allow",
     forcedFilter: null,
     galleryMode: "slider",
+    galleryAutoplay: true,
+    galleryAutoplayInterval: 4,
     templatesMode: "allow",
     forcedTemplate: null,
     templateKey: "midnight",

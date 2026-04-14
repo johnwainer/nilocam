@@ -95,7 +95,12 @@ export function RealtimeGallery({
 
         {/* ── Grid or Slider ── */}
         {mode === "slider" ? (
-          <SliderView photos={allPhotos} freshIds={freshIds} />
+          <SliderView
+            photos={allPhotos}
+            freshIds={freshIds}
+            autoplay={event.landing_config.galleryAutoplay ?? false}
+            autoplayInterval={event.landing_config.galleryAutoplayInterval ?? 4}
+          />
         ) : (
           <div className="rg-masonry">
             {allPhotos.map((photo, i) => (
@@ -126,22 +131,41 @@ export function RealtimeGallery({
 
 // ── Slider view ───────────────────────────────────────────────────────────────
 
+const AUTOPLAY_RESUME_DELAY = 3000; // ms idle before resuming after manual nav
+
 function SliderView({
   photos,
   freshIds,
+  autoplay,
+  autoplayInterval,
 }: {
   photos: PhotoRecord[];
   freshIds: Set<string>;
+  autoplay: boolean;
+  autoplayInterval: number;
 }) {
   const [index, setIndex] = useState(0);
   const [animKey, setAnimKey] = useState(0);
   const [animDir, setAnimDir] = useState<"left" | "right">("right");
+  const [paused, setPaused] = useState(false);
+  // progress bar key — reset on each slide change
+  const [progressKey, setProgressKey] = useState(0);
+
   const touchStartX = useRef<number | null>(null);
   const prevLengthRef = useRef(photos.length);
+  const resumeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const indexRef = useRef(index);
+  const countRef = useRef(photos.length);
+
+  // Keep refs in sync (no deps — runs after every render)
+  useEffect(() => {
+    indexRef.current = index;
+    countRef.current = photos.length;
+  });
 
   const count = photos.length;
 
-  // When new photo arrives at front of array, keep visual index on same photo
+  // When new photo arrives at front, keep visual index on same photo
   useEffect(() => {
     const prev = prevLengthRef.current;
     if (photos.length > prev) {
@@ -151,31 +175,51 @@ function SliderView({
     prevLengthRef.current = photos.length;
   }, [photos.length]);
 
-  const go = useCallback(
-    (newIndex: number, dir: "left" | "right") => {
-      setAnimDir(dir);
-      setIndex(newIndex);
-      setAnimKey((k) => k + 1);
-    },
-    []
-  );
+  const go = useCallback((newIndex: number, dir: "left" | "right", manual = false) => {
+    setAnimDir(dir);
+    setIndex(newIndex);
+    setAnimKey((k) => k + 1);
+    setProgressKey((k) => k + 1);
+    if (manual && autoplay) {
+      setPaused(true);
+      if (resumeTimer.current) clearTimeout(resumeTimer.current);
+      resumeTimer.current = setTimeout(() => setPaused(false), AUTOPLAY_RESUME_DELAY);
+    }
+  }, [autoplay]);
 
   const prev = useCallback(() => {
-    go(index > 0 ? index - 1 : count - 1, "left");
-  }, [index, count, go]);
+    const i = indexRef.current;
+    const c = countRef.current;
+    go(i > 0 ? i - 1 : c - 1, "left", true);
+  }, [go]);
 
-  const next = useCallback(() => {
-    go(index < count - 1 ? index + 1 : 0, "right");
-  }, [index, count, go]);
+  const next = useCallback((manual = false) => {
+    const i = indexRef.current;
+    const c = countRef.current;
+    go(i < c - 1 ? i + 1 : 0, "right", manual);
+  }, [go]);
 
+  // Autoplay interval
+  useEffect(() => {
+    if (!autoplay || paused || count < 2) return;
+    const id = setInterval(() => next(false), autoplayInterval * 1000);
+    return () => clearInterval(id);
+  }, [autoplay, paused, count, autoplayInterval, next]);
+
+  // Keyboard nav
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === "ArrowLeft") prev();
-      if (e.key === "ArrowRight") next();
+      if (e.key === "ArrowRight") next(true);
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, [prev, next]);
+
+  // Cleanup resume timer on unmount
+  useEffect(() => () => {
+    if (resumeTimer.current) clearTimeout(resumeTimer.current);
+  }, []);
 
   if (count === 0) return null;
 
@@ -184,31 +228,25 @@ function SliderView({
   const url = photo.public_url ?? publicStorageUrl(photo.storage_path);
   const uploader = photo.is_anonymous ? null : photo.uploaded_by_name;
   const isNew = freshIds.has(photo.id);
-
-  // Dots: show up to 9, then just counter
-  const showDots = count <= 9;
+  const showArrows = count > 1;
 
   return (
     <div style={sl.root}>
-      {/* Counter */}
-      <div style={sl.counter}>
-        {safeIndex + 1} <span style={{ opacity: 0.4 }}>/</span> {count}
-      </div>
-
-      {/* Main row: prev | image | next */}
-      <div style={sl.row}>
-        {/* Prev arrow */}
-        <button
-          style={sl.arrow}
-          onClick={prev}
-          aria-label="Anterior"
-          disabled={count < 2}
-          type="button"
-        >
-          <ChevronLeftIcon />
-        </button>
-
-        {/* Photo card */}
+      {/* Card — fills full width, arrows overlay on sides */}
+      <div
+        className="rg-slider-wrap"
+        style={sl.cardWrap}
+        onTouchStart={(e) => {
+          touchStartX.current = e.touches[0].clientX;
+        }}
+        onTouchEnd={(e) => {
+          if (touchStartX.current === null) return;
+          const dx = e.changedTouches[0].clientX - touchStartX.current;
+          if (Math.abs(dx) > 44) { if (dx < 0) { next(true); } else { prev(); } }
+          touchStartX.current = null;
+        }}
+      >
+        {/* Animated photo */}
         <div
           className="rg-slider-card"
           key={animKey}
@@ -216,19 +254,7 @@ function SliderView({
             ...sl.card,
             animationName: `sliderIn${animDir === "right" ? "Right" : "Left"}`,
           }}
-          onTouchStart={(e) => { touchStartX.current = e.touches[0].clientX; }}
-          onTouchEnd={(e) => {
-            if (touchStartX.current === null) return;
-            const dx = e.changedTouches[0].clientX - touchStartX.current;
-            if (Math.abs(dx) > 48) { if (dx < 0) { next(); } else { prev(); } }
-            touchStartX.current = null;
-          }}
         >
-          {/* New photo badge */}
-          {isNew && (
-            <div style={sl.newBadge}>Nueva foto</div>
-          )}
-
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={url}
@@ -236,59 +262,64 @@ function SliderView({
             style={sl.img}
           />
 
-          {/* Caption overlay */}
-          {uploader && (
-            <div style={sl.caption}>
+          {/* Gradient bottom overlay */}
+          <div style={sl.overlay} />
+
+          {/* Bottom row: uploader + counter */}
+          <div style={sl.bottomRow}>
+            {uploader ? (
               <span style={sl.captionName}>{uploader}</span>
+            ) : (
+              <span />
+            )}
+            <span style={sl.counter}>
+              {safeIndex + 1}<span style={{ opacity: 0.35 }}> / {count}</span>
+            </span>
+          </div>
+
+          {/* New photo badge */}
+          {isNew && <div style={sl.newBadge}>Nueva foto</div>}
+
+          {/* Autoplay progress bar */}
+          {autoplay && !paused && count > 1 && (
+            <div key={progressKey} style={sl.progressTrack}>
+              <div
+                className="rg-progress-bar"
+                style={{
+                  ...sl.progressBar,
+                  animationDuration: `${autoplayInterval}s`,
+                }}
+              />
             </div>
           )}
         </div>
 
-        {/* Next arrow */}
-        <button
-          style={sl.arrow}
-          onClick={next}
-          aria-label="Siguiente"
-          disabled={count < 2}
-          type="button"
-        >
-          <ChevronRightIcon />
-        </button>
-      </div>
+        {/* Prev arrow — overlay left */}
+        {showArrows && (
+          <button
+            className="rg-slider-arrow"
+            style={{ ...sl.arrow, left: 10 }}
+            onClick={prev}
+            aria-label="Anterior"
+            type="button"
+          >
+            <ChevronLeftIcon />
+          </button>
+        )}
 
-      {/* Dots / strip */}
-      {showDots ? (
-        <div style={sl.dots}>
-          {photos.map((p, i) => (
-            <button
-              key={p.id}
-              type="button"
-              aria-label={`Foto ${i + 1}`}
-              style={{
-                ...sl.dot,
-                ...(i === safeIndex ? sl.dotActive : {}),
-              }}
-              onClick={() => go(i, i > safeIndex ? "right" : "left")}
-            />
-          ))}
-        </div>
-      ) : (
-        <div style={sl.dots}>
-          {/* Strip of lines for > 9 photos */}
-          {Array.from({ length: Math.min(count, 24) }).map((_, i) => (
-            <button
-              key={i}
-              type="button"
-              aria-label={`Foto ${i + 1}`}
-              style={{
-                ...sl.strip,
-                ...(i === safeIndex ? sl.stripActive : {}),
-              }}
-              onClick={() => go(i, i > safeIndex ? "right" : "left")}
-            />
-          ))}
-        </div>
-      )}
+        {/* Next arrow — overlay right */}
+        {showArrows && (
+          <button
+            className="rg-slider-arrow"
+            style={{ ...sl.arrow, right: 10 }}
+            onClick={() => next(true)}
+            aria-label="Siguiente"
+            type="button"
+          >
+            <ChevronRightIcon />
+          </button>
+        )}
+      </div>
     </div>
   );
 }
@@ -643,51 +674,23 @@ const s: Record<string, React.CSSProperties> = {
 // Slider-specific styles
 const sl: Record<string, React.CSSProperties> = {
   root: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    gap: 20,
-    padding: "0 0 12px",
-  },
-  counter: {
-    fontSize: 13,
-    fontWeight: 600,
-    letterSpacing: "0.06em",
-    color: "rgba(255,255,255,0.4)",
-    alignSelf: "flex-end",
-    paddingRight: 4,
-  },
-  row: {
-    display: "flex",
-    alignItems: "center",
-    gap: 16,
     width: "100%",
-    justifyContent: "center",
   },
-  arrow: {
-    flexShrink: 0,
-    width: 52,
-    height: 52,
-    borderRadius: 999,
-    background: "rgba(255,255,255,0.06)",
-    border: "1px solid rgba(255,255,255,0.1)",
-    color: "#fff",
-    cursor: "pointer",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    transition: "background 150ms ease, transform 100ms ease",
-  } as React.CSSProperties,
-  card: {
+  cardWrap: {
     position: "relative",
-    flex: "1 1 0",
-    maxWidth: 760,
+    width: "100%",
+    maxWidth: 860,
+    margin: "0 auto",
     borderRadius: 20,
     overflow: "hidden",
     background: "rgba(255,255,255,0.03)",
     border: "1px solid rgba(255,255,255,0.07)",
     aspectRatio: "4/3",
-    animationDuration: "320ms",
+  } as React.CSSProperties,
+  card: {
+    position: "absolute",
+    inset: 0,
+    animationDuration: "340ms",
     animationTimingFunction: "cubic-bezier(0.22, 1, 0.36, 1)",
     animationFillMode: "both",
   } as React.CSSProperties,
@@ -697,28 +700,60 @@ const sl: Record<string, React.CSSProperties> = {
     objectFit: "cover",
     display: "block",
   },
-  caption: {
+  overlay: {
+    position: "absolute",
+    inset: 0,
+    background: "linear-gradient(180deg, transparent 50%, rgba(0,0,0,0.7) 100%)",
+    pointerEvents: "none",
+  },
+  bottomRow: {
     position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
-    padding: "40px 20px 16px",
-    background: "linear-gradient(0deg, rgba(0,0,0,0.72) 0%, transparent 100%)",
+    padding: "14px 16px",
     display: "flex",
-    alignItems: "flex-end",
+    alignItems: "center",
+    justifyContent: "space-between",
     gap: 8,
+    zIndex: 2,
   },
   captionName: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: 600,
-    color: "rgba(255,255,255,0.88)",
+    color: "rgba(255,255,255,0.85)",
     letterSpacing: "0.01em",
   },
+  counter: {
+    fontSize: 12,
+    fontWeight: 700,
+    letterSpacing: "0.06em",
+    color: "rgba(255,255,255,0.55)",
+  },
+  arrow: {
+    position: "absolute",
+    top: "50%",
+    transform: "translateY(-50%)",
+    zIndex: 3,
+    width: 44,
+    height: 44,
+    borderRadius: 999,
+    background: "rgba(0,0,0,0.45)",
+    backdropFilter: "blur(8px)",
+    WebkitBackdropFilter: "blur(8px)",
+    border: "1px solid rgba(255,255,255,0.12)",
+    color: "#fff",
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    transition: "background 150ms ease",
+  } as React.CSSProperties,
   newBadge: {
     position: "absolute",
-    top: 14,
-    right: 14,
-    padding: "5px 11px",
+    top: 12,
+    left: 12,
+    padding: "4px 10px",
     borderRadius: 999,
     background: "rgba(74,222,128,0.15)",
     border: "1px solid rgba(74,222,128,0.35)",
@@ -726,44 +761,24 @@ const sl: Record<string, React.CSSProperties> = {
     fontSize: 11,
     fontWeight: 700,
     letterSpacing: "0.1em",
-    zIndex: 2,
+    zIndex: 3,
   },
-  dots: {
-    display: "flex",
-    alignItems: "center",
-    gap: 7,
-    flexWrap: "wrap",
-    justifyContent: "center",
-    maxWidth: 760,
-  },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 999,
-    background: "rgba(255,255,255,0.2)",
-    border: "none",
-    cursor: "pointer",
-    padding: 0,
-    transition: "background 200ms ease, transform 200ms ease",
-    flexShrink: 0,
-  },
-  dotActive: {
-    background: "#ffffff",
-    transform: "scale(1.25)",
-  },
-  strip: {
-    width: 20,
+  progressTrack: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
     height: 3,
-    borderRadius: 999,
-    background: "rgba(255,255,255,0.15)",
-    border: "none",
-    cursor: "pointer",
-    padding: 0,
-    transition: "background 200ms ease",
-    flexShrink: 0,
+    background: "rgba(255,255,255,0.1)",
+    zIndex: 4,
+    overflow: "hidden",
   },
-  stripActive: {
-    background: "#ffffff",
-    width: 28,
+  progressBar: {
+    height: "100%",
+    background: "rgba(255,255,255,0.6)",
+    width: "0%",
+    animationName: "sliderProgress",
+    animationTimingFunction: "linear",
+    animationFillMode: "forwards",
   },
 };

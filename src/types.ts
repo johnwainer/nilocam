@@ -59,6 +59,8 @@ export type EventLandingConfig = {
   templateKey?: string;
   // Gallery display mode
   galleryMode?: "grid" | "slider";
+  galleryAutoplay?: boolean;
+  galleryAutoplayInterval?: number; // seconds, default 4
   // Filter & template policy
   // "allow"  → guest chooses freely (default)
   // "none"   → no filter/template applied, picker hidden
