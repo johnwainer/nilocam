@@ -684,11 +684,13 @@ export function AdminDashboard({
               <div className="admin-editor-grid" style={s.editorGrid}>
                 {/* Left: form */}
                 <div style={s.form}>
-                  {/* Identidad */}
+
+                  {/* ── 1. TU EVENTO ───────────────────────────────────────── */}
                   <div style={s.formSection}>
-                    <span className="eyebrow" style={s.sectionEyebrow}>
-                      Identidad del evento
-                    </span>
+                    <div style={s.sectionHead}>
+                      <span className="eyebrow" style={s.sectionEyebrow}>Tu evento</span>
+                      <p style={s.sectionDesc}>Los datos básicos que identifican el evento.</p>
+                    </div>
 
                     <label style={s.field}>
                       <span className="label">Tipo de evento</span>
@@ -698,16 +700,14 @@ export function AdminDashboard({
                         onChange={(e) => applyPreset(e.target.value as EventTypeKey)}
                       >
                         {EVENT_TYPES.map((opt) => (
-                          <option key={opt.key} value={opt.key}>
-                            {opt.name}
-                          </option>
+                          <option key={opt.key} value={opt.key}>{opt.name}</option>
                         ))}
                       </select>
                     </label>
 
                     <div className="admin-field-row" style={s.fieldRow}>
                       <label style={s.fieldHalf}>
-                        <span className="label">Título del evento</span>
+                        <span className="label">Título</span>
                         <input
                           className="input"
                           placeholder="Boda de Laura &amp; Mateo"
@@ -716,7 +716,7 @@ export function AdminDashboard({
                         />
                       </label>
                       <label style={s.fieldHalf}>
-                        <span className="label">Subtítulo</span>
+                        <span className="label">Subtítulo <span style={s.optionalTag}>opcional</span></span>
                         <input
                           className="input"
                           placeholder="Un día para recordar"
@@ -726,42 +726,20 @@ export function AdminDashboard({
                       </label>
                     </div>
 
-                    {/* Slug — allow dashes while typing; strip trailing on blur */}
-                    <label style={s.field}>
-                      <span className="label">Slug (URL del evento)</span>
-                      <input
-                        className="input"
-                        placeholder="boda-laura-mateo-2026"
-                        value={selected.slug}
-                        onChange={(e) =>
-                          updateSelected("slug", sanitizeSlugInput(e.target.value))
-                        }
-                        onBlur={(e) =>
-                          updateSelected("slug", toSlug(e.target.value))
-                        }
-                      />
-                      <span style={s.fieldHint}>
-                        {siteUrl(`/event/${selected.slug || "tu-slug"}`)}
-                      </span>
-                    </label>
-
                     <div className="admin-field-row" style={s.fieldRow}>
                       <label style={s.fieldHalf}>
-                        <span className="label">Fecha del evento</span>
+                        <span className="label">Fecha</span>
                         <input
                           className="input"
                           type="date"
                           value={selected.event_date ? selected.event_date.slice(0, 10) : ""}
                           onChange={(e) =>
-                            updateSelected(
-                              "event_date",
-                              e.target.value ? new Date(e.target.value).toISOString() : null
-                            )
+                            updateSelected("event_date", e.target.value ? new Date(e.target.value).toISOString() : null)
                           }
                         />
                       </label>
                       <label style={s.fieldHalf}>
-                        <span className="label">Ciudad</span>
+                        <span className="label">Ciudad <span style={s.optionalTag}>opcional</span></span>
                         <input
                           className="input"
                           placeholder="Bogotá"
@@ -772,7 +750,7 @@ export function AdminDashboard({
                     </div>
 
                     <label style={s.field}>
-                      <span className="label">Lugar / Venue</span>
+                      <span className="label">Lugar / Venue <span style={s.optionalTag}>opcional</span></span>
                       <input
                         className="input"
                         placeholder="Club El Nogal"
@@ -780,385 +758,30 @@ export function AdminDashboard({
                         onChange={(e) => updateSelected("venue_name", e.target.value)}
                       />
                     </label>
-                  </div>
-
-                  {/* Responsable */}
-                  <div style={s.formSection}>
-                    <div style={s.responsableHeader}>
-                      <span className="eyebrow">Responsable del evento</span>
-                      <span className="pill" style={s.responsablePill}>
-                        Acceso a edición
-                      </span>
-                    </div>
 
                     <label style={s.field}>
-                      <span className="label">Correo electrónico del responsable</span>
+                      <span className="label">URL del evento</span>
                       <input
                         className="input"
-                        type="email"
-                        placeholder="responsable@ejemplo.com"
-                        value={selected.owner_email ?? userEmail}
-                        onChange={(e) => updateSelected("owner_email", e.target.value)}
-                        disabled={!isSuperAdmin}
-                        style={!isSuperAdmin ? s.inputDisabled : undefined}
+                        placeholder="boda-laura-mateo-2026"
+                        value={selected.slug}
+                        onChange={(e) => updateSelected("slug", sanitizeSlugInput(e.target.value))}
+                        onBlur={(e) => updateSelected("slug", toSlug(e.target.value))}
                       />
                       <span style={s.fieldHint}>
-                        {isSuperAdmin
-                          ? "Esta persona podrá iniciar sesión en /admin y editar la landing de este evento."
-                          : "El responsable eres tú. Solo un super admin puede reasignar eventos."}
+                        {siteUrl(`/event/${selected.slug || "tu-slug"}`)}
                       </span>
                     </label>
-
-                    {isSuperAdmin && (
-                      <div style={s.responsableTip}>
-                        <strong style={{ fontSize: 13 }}>¿El responsable aún no tiene cuenta?</strong>
-                        <p style={{ margin: "4px 0 0", fontSize: 13, lineHeight: 1.55 }}>
-                          Pídele que se registre en{" "}
-                          <strong>{siteUrl("/auth")}</strong> con ese correo. Al iniciar sesión
-                          verá este evento en su panel y podrá editarlo.
-                        </p>
-                      </div>
-                    )}
                   </div>
 
-                  {/* Subida de fotos */}
+                  {/* ── 2. DISEÑO ──────────────────────────────────────────── */}
                   <div style={s.formSection}>
-                    <span className="eyebrow" style={s.sectionEyebrow}>
-                      Subida de fotos
-                    </span>
-
-                    <div className="admin-field-row" style={s.fieldRow}>
-                      <label style={s.fieldHalf}>
-                        <span className="label">Moderación</span>
-                        <select
-                          className="select"
-                          value={selected.moderation_mode}
-                          onChange={(e) =>
-                            updateSelected(
-                              "moderation_mode",
-                              e.target.value as EventRecord["moderation_mode"]
-                            )
-                          }
-                        >
-                          <option value="auto">Automática — aparecen al instante</option>
-                          <option value="manual">Manual — apruebas tú cada foto</option>
-                        </select>
-                      </label>
-                      <label style={s.fieldHalf}>
-                        <span className="label">Peso máximo por foto (MB)</span>
-                        <input
-                          className="input"
-                          type="number"
-                          min={2}
-                          max={40}
-                          value={selected.max_upload_mb}
-                          onChange={(e) => updateSelected("max_upload_mb", Number(e.target.value))}
-                        />
-                      </label>
+                    <div style={s.sectionHead}>
+                      <span className="eyebrow" style={s.sectionEyebrow}>Diseño visual</span>
+                      <p style={s.sectionDesc}>Elige una plantilla y listo. Puedes ajustar los colores después.</p>
                     </div>
 
-                    <div className="admin-check-grid" style={s.checkGrid}>
-                      <label style={s.checkRow}>
-                        <input
-                          type="checkbox"
-                          checked={selected.allow_guest_upload}
-                          onChange={(e) => updateSelected("allow_guest_upload", e.target.checked)}
-                        />
-                        <span>Permitir subida a invitados</span>
-                      </label>
-                      <label style={s.checkRow}>
-                        <input
-                          type="checkbox"
-                          checked={selected.landing_config.showNameField}
-                          onChange={(e) => updateLanding("showNameField", e.target.checked)}
-                        />
-                        <span>Pedir nombre al invitado</span>
-                      </label>
-                      <label style={s.checkRow}>
-                        <input
-                          type="checkbox"
-                          checked={selected.landing_config.showAnonymousToggle}
-                          onChange={(e) => updateLanding("showAnonymousToggle", e.target.checked)}
-                        />
-                        <span>Mostrar opción anónima</span>
-                      </label>
-                      <label style={s.checkRow}>
-                        <input
-                          type="checkbox"
-                          checked={selected.landing_config.showTerms}
-                          onChange={(e) => updateLanding("showTerms", e.target.checked)}
-                        />
-                        <span>Mostrar términos y condiciones</span>
-                      </label>
-                    </div>
-
-                    {/* Filtros y marcos */}
-                    <div style={{ borderTop: "1px solid rgba(0,0,0,0.07)", paddingTop: 18, display: "grid", gap: 16 }}>
-                      <span className="eyebrow" style={s.sectionEyebrow}>Filtros y marcos</span>
-
-                      {/* Filters mode */}
-                      <div style={s.field}>
-                        <span className="label">Filtros de color</span>
-                        <div style={s.modeChips}>
-                          {([
-                            { v: "allow",  label: "Invitado elige" },
-                            { v: "none",   label: "Sin filtros" },
-                            { v: "forced", label: "Fijar filtro" },
-                          ] as { v: "allow" | "none" | "forced"; label: string }[]).map(({ v, label }) => {
-                            const active = (selected.landing_config.filtersMode ?? "allow") === v;
-                            return (
-                              <button key={v} type="button" style={active ? s.modeChipActive : s.modeChip} onClick={() => updateLanding("filtersMode", v)}>
-                                {label}
-                              </button>
-                            );
-                          })}
-                        </div>
-                        {(selected.landing_config.filtersMode ?? "allow") === "forced" && (
-                          <div style={{ marginTop: 12 }}>
-                            <span className="label" style={{ marginBottom: 10, display: "block" }}>Filtro para todos</span>
-                            <div style={s.filterGrid}>
-                              {FILTERS.map((f) => {
-                                const active = (selected.landing_config.forcedFilter ?? "none") === f.key;
-                                return (
-                                  <button key={f.key} type="button" style={active ? s.filterChipActive : s.filterChip} onClick={() => updateLanding("forcedFilter", f.key)}>
-                                    {f.label}
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Templates mode */}
-                      <div style={s.field}>
-                        <span className="label">Marcos decorativos</span>
-                        <div style={s.modeChips}>
-                          {([
-                            { v: "allow",  label: "Invitado elige" },
-                            { v: "none",   label: "Sin marcos" },
-                            { v: "forced", label: "Fijar marco" },
-                          ] as { v: "allow" | "none" | "forced"; label: string }[]).map(({ v, label }) => {
-                            const active = (selected.landing_config.templatesMode ?? "allow") === v;
-                            return (
-                              <button key={v} type="button" style={active ? s.modeChipActive : s.modeChip} onClick={() => updateLanding("templatesMode", v)}>
-                                {label}
-                              </button>
-                            );
-                          })}
-                        </div>
-                        {(selected.landing_config.templatesMode ?? "allow") === "forced" && (
-                          <div style={{ marginTop: 12 }}>
-                            <span className="label" style={{ marginBottom: 10, display: "block" }}>Marco para todos</span>
-                            <div style={s.filterGrid}>
-                              {TEMPLATES.map((t) => {
-                                const active = (selected.landing_config.forcedTemplate ?? "clean") === t.key;
-                                return (
-                                  <button key={t.key} type="button" style={active ? s.filterChipActive : s.filterChip} onClick={() => updateLanding("forcedTemplate", t.key)}>
-                                    {t.label}
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Marca de agua */}
-                  <div style={s.formSection}>
-                    <span className="eyebrow" style={s.sectionEyebrow}>
-                      Marca de agua
-                    </span>
-                    <p style={s.fieldHint}>
-                      Se aplicará sobre cada foto que suba un invitado. Sube un PNG con fondo transparente para mejor resultado.
-                    </p>
-
-                    {selected.landing_config.watermarkUrl ? (
-                      <div style={s.wmPreviewRow}>
-                        <div style={s.wmPreviewBox}>
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={selected.landing_config.watermarkUrl}
-                            alt="Marca de agua"
-                            style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }}
-                          />
-                        </div>
-                        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                          <button
-                            className="btn btn-secondary"
-                            style={s.wmBtn}
-                            type="button"
-                            onClick={() => watermarkInputRef.current?.click()}
-                            disabled={watermarkUploading}
-                          >
-                            {watermarkUploading ? "Subiendo…" : "Cambiar imagen"}
-                          </button>
-                          <button
-                            className="btn btn-ghost"
-                            style={s.wmBtn}
-                            type="button"
-                            onClick={() => {
-                              updateLanding("watermarkUrl", null);
-                            }}
-                          >
-                            Quitar marca
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <button
-                        className="btn btn-secondary"
-                        style={{ width: "100%", padding: "18px 0", borderRadius: 16, border: "1.5px dashed rgba(0,0,0,0.15)" }}
-                        type="button"
-                        onClick={() => watermarkInputRef.current?.click()}
-                        disabled={watermarkUploading}
-                      >
-                        {watermarkUploading ? "Subiendo…" : "+ Subir imagen de marca de agua"}
-                      </button>
-                    )}
-
-                    <input
-                      ref={watermarkInputRef}
-                      type="file"
-                      accept="image/png,image/svg+xml,image/jpeg,image/webp"
-                      className="sr-only"
-                      onChange={(e) => {
-                        const f = e.target.files?.[0];
-                        if (f) uploadWatermark(f);
-                        e.target.value = "";
-                      }}
-                    />
-
-                    {selected.landing_config.watermarkUrl && (
-                      <>
-                        {/* Corner selector */}
-                        <div style={s.field}>
-                          <span className="label">Esquina</span>
-                          <div style={s.wmCornerGrid}>
-                            {(["top-left", "top-right", "bottom-left", "bottom-right"] as WatermarkPosition[]).map((pos) => {
-                              const labels: Record<WatermarkPosition, string> = {
-                                "top-left": "↖ Sup. izq.",
-                                "top-right": "↗ Sup. der.",
-                                "bottom-left": "↙ Inf. izq.",
-                                "bottom-right": "↘ Inf. der.",
-                              };
-                              const active = (selected.landing_config.watermarkPosition ?? "bottom-right") === pos;
-                              return (
-                                <button
-                                  key={pos}
-                                  type="button"
-                                  onClick={() => updateLanding("watermarkPosition", pos)}
-                                  style={active ? s.wmCornerActive : s.wmCorner}
-                                >
-                                  {labels[pos]}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </div>
-
-                        {/* Size slider */}
-                        <label style={s.field}>
-                          <span className="label">
-                            Tamaño — <strong>{selected.landing_config.watermarkSize ?? 18}%</strong> del ancho de la foto
-                          </span>
-                          <input
-                            type="range"
-                            min={5}
-                            max={40}
-                            step={1}
-                            value={selected.landing_config.watermarkSize ?? 18}
-                            onChange={(e) => updateLanding("watermarkSize", Number(e.target.value))}
-                            style={{ width: "100%", accentColor: "#111" }}
-                          />
-                          <div style={s.sliderLabels}>
-                            <span>5%</span><span>40%</span>
-                          </div>
-                        </label>
-
-                        {/* Opacity slider */}
-                        <label style={s.field}>
-                          <span className="label">
-                            Opacidad — <strong>{Math.round((selected.landing_config.watermarkOpacity ?? 0.75) * 100)}%</strong>
-                          </span>
-                          <input
-                            type="range"
-                            min={10}
-                            max={100}
-                            step={5}
-                            value={Math.round((selected.landing_config.watermarkOpacity ?? 0.75) * 100)}
-                            onChange={(e) => updateLanding("watermarkOpacity", Number(e.target.value) / 100)}
-                            style={{ width: "100%", accentColor: "#111" }}
-                          />
-                          <div style={s.sliderLabels}>
-                            <span>10%</span><span>100%</span>
-                          </div>
-                        </label>
-                      </>
-                    )}
-                  </div>
-
-                  {/* Contenido */}
-                  <div style={s.formSection}>
-                    <span className="eyebrow" style={s.sectionEyebrow}>
-                      Contenido de la landing
-                    </span>
-
-                    <div className="admin-field-row" style={s.fieldRow}>
-                      <label style={s.fieldHalf}>
-                        <span className="label">Hero title</span>
-                        <input
-                          className="input"
-                          placeholder="Boda de Laura &amp; Mateo"
-                          value={selected.landing_config.heroTitle}
-                          onChange={(e) => updateLanding("heroTitle", e.target.value)}
-                        />
-                      </label>
-                      <label style={s.fieldHalf}>
-                        <span className="label">Eyebrow (etiqueta superior)</span>
-                        <input
-                          className="input"
-                          placeholder="Matrimonio · 2026"
-                          value={selected.landing_config.heroEyebrow}
-                          onChange={(e) => updateLanding("heroEyebrow", e.target.value)}
-                        />
-                      </label>
-                    </div>
-
-                    <label style={s.field}>
-                      <span className="label">Hero subtitle</span>
-                      <textarea
-                        className="textarea"
-                        rows={3}
-                        placeholder="Captura el momento y míralo en la pantalla grande..."
-                        value={selected.landing_config.heroSubtitle}
-                        onChange={(e) => updateLanding("heroSubtitle", e.target.value)}
-                      />
-                    </label>
-
-                    <label style={s.field}>
-                      <span className="label">Copy principal (intro)</span>
-                      <textarea
-                        className="textarea"
-                        rows={3}
-                        value={selected.landing_config.introCopy}
-                        onChange={(e) => updateLanding("introCopy", e.target.value)}
-                      />
-                    </label>
-                  </div>
-
-                  {/* Apariencia */}
-                  <div style={s.formSection}>
-                    <span className="eyebrow" style={s.sectionEyebrow}>
-                      Apariencia
-                    </span>
-
-                    {/* Template picker */}
                     <div style={s.field}>
-                      <span className="label">Plantilla de diseño</span>
-                      <p style={s.fieldHint}>Elige una plantilla prediseñada como base. Luego puedes ajustar los colores.</p>
                       <div style={s.templateGrid}>
                         {LANDING_TEMPLATES.map((t) => {
                           const active = (selected.landing_config.templateKey ?? "") === t.key;
@@ -1193,55 +816,42 @@ export function AdminDashboard({
                           <input
                             type="color"
                             value={selected.landing_config.theme.accent}
-                            onChange={(e) =>
-                              updateLanding("theme", {
-                                ...selected.landing_config.theme,
-                                accent: e.target.value,
-                              })
-                            }
+                            onChange={(e) => updateLanding("theme", { ...selected.landing_config.theme, accent: e.target.value })}
                             style={s.colorInput}
                           />
                           <span style={s.colorHex}>{selected.landing_config.theme.accent}</span>
                         </div>
                       </label>
                       <label style={s.fieldHalf}>
-                        <span className="label">URL de imagen hero</span>
+                        <span className="label">Imagen de fondo hero <span style={s.optionalTag}>URL</span></span>
                         <input
                           className="input"
                           placeholder="https://..."
                           value={selected.landing_config.theme.heroImage ?? ""}
-                          onChange={(e) =>
-                            updateLanding("theme", {
-                              ...selected.landing_config.theme,
-                              heroImage: e.target.value,
-                            })
-                          }
+                          onChange={(e) => updateLanding("theme", { ...selected.landing_config.theme, heroImage: e.target.value })}
                         />
                       </label>
                     </div>
+                  </div>
+
+                  {/* ── 3. GALERÍA ─────────────────────────────────────────── */}
+                  <div style={s.formSection}>
+                    <div style={s.sectionHead}>
+                      <span className="eyebrow" style={s.sectionEyebrow}>Galería de fotos</span>
+                      <p style={s.sectionDesc}>Cómo se muestran las fotos del evento en la landing.</p>
+                    </div>
 
                     <div style={s.field}>
-                      <span className="label">Modo de la galería de fotos</span>
+                      <span className="label">Vista de la galería</span>
                       <div style={s.modeChips}>
                         {([
-                          { v: "grid",   label: "Cuadrícula", desc: "Masonry de todas las fotos" },
+                          { v: "grid",   label: "Cuadrícula", desc: "Todas las fotos en mosaico" },
                           { v: "slider", label: "Slider",     desc: "Una foto a la vez con flechas" },
                         ] as { v: "grid" | "slider"; label: string; desc: string }[]).map(({ v, label, desc }) => {
                           const active = (selected.landing_config.galleryMode ?? "grid") === v;
                           return (
-                            <button
-                              key={v}
-                              type="button"
-                              style={{
-                                ...(active ? s.modeChipActive : s.modeChip),
-                                borderRadius: 14,
-                                display: "flex",
-                                flexDirection: "column",
-                                alignItems: "flex-start",
-                                padding: "12px 18px",
-                                gap: 2,
-                                minWidth: 140,
-                              }}
+                            <button key={v} type="button"
+                              style={{ ...(active ? s.modeChipActive : s.modeChip), borderRadius: 14, display: "flex", flexDirection: "column", alignItems: "flex-start", padding: "12px 18px", gap: 2, minWidth: 140 }}
                               onClick={() => updateLanding("galleryMode", v)}
                             >
                               <span style={{ fontWeight: 700 }}>{label}</span>
@@ -1252,12 +862,10 @@ export function AdminDashboard({
                       </div>
                     </div>
 
-                    {/* Autoplay — only relevant in slider mode */}
                     {(selected.landing_config.galleryMode ?? "grid") === "slider" && (
                       <div style={s.field}>
                         <span className="label">Reproducción automática</span>
                         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                          {/* On/off toggle */}
                           <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}>
                             <input
                               type="checkbox"
@@ -1265,12 +873,8 @@ export function AdminDashboard({
                               onChange={(e) => updateLanding("galleryAutoplay", e.target.checked)}
                               style={{ width: 16, height: 16, cursor: "pointer" }}
                             />
-                            <span style={{ fontSize: 14 }}>
-                              Avanzar fotos automáticamente
-                            </span>
+                            <span style={{ fontSize: 14 }}>Avanzar fotos automáticamente</span>
                           </label>
-
-                          {/* Interval selector — only show when autoplay on */}
                           {(selected.landing_config.galleryAutoplay ?? false) && (
                             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                               <span className="muted" style={{ fontSize: 13, flexShrink: 0 }}>Cambiar cada</span>
@@ -1278,19 +882,10 @@ export function AdminDashboard({
                                 {[3, 4, 5, 7, 10].map((sec) => {
                                   const active = (selected.landing_config.galleryAutoplayInterval ?? 4) === sec;
                                   return (
-                                    <button
-                                      key={sec}
-                                      type="button"
-                                      style={{
-                                        ...(active ? s.modeChipActive : s.modeChip),
-                                        padding: "7px 14px",
-                                        borderRadius: 999,
-                                        fontSize: 13,
-                                      }}
+                                    <button key={sec} type="button"
+                                      style={{ ...(active ? s.modeChipActive : s.modeChip), padding: "7px 14px", borderRadius: 999, fontSize: 13 }}
                                       onClick={() => updateLanding("galleryAutoplayInterval", sec)}
-                                    >
-                                      {sec}s
-                                    </button>
+                                    >{sec}s</button>
                                   );
                                 })}
                               </div>
@@ -1299,35 +894,187 @@ export function AdminDashboard({
                         </div>
                       </div>
                     )}
+                  </div>
+
+                  {/* ── 4. FOTOS Y SUBIDA ──────────────────────────────────── */}
+                  <div style={s.formSection}>
+                    <div style={s.sectionHead}>
+                      <span className="eyebrow" style={s.sectionEyebrow}>Subida de fotos</span>
+                      <p style={s.sectionDesc}>Controla cómo y qué pueden subir tus invitados.</p>
+                    </div>
+
+                    <div className="admin-field-row" style={s.fieldRow}>
+                      <label style={s.fieldHalf}>
+                        <span className="label">Moderación</span>
+                        <select
+                          className="select"
+                          value={selected.moderation_mode}
+                          onChange={(e) => updateSelected("moderation_mode", e.target.value as EventRecord["moderation_mode"])}
+                        >
+                          <option value="auto">Automática — aparecen al instante</option>
+                          <option value="manual">Manual — apruebas tú cada foto</option>
+                        </select>
+                      </label>
+                      <label style={s.fieldHalf}>
+                        <span className="label">Peso máximo por foto (MB)</span>
+                        <input
+                          className="input"
+                          type="number"
+                          min={2}
+                          max={40}
+                          value={selected.max_upload_mb}
+                          onChange={(e) => updateSelected("max_upload_mb", Number(e.target.value))}
+                        />
+                      </label>
+                    </div>
+
+                    <div className="admin-check-grid" style={s.checkGrid}>
+                      <label style={s.checkRow}>
+                        <input type="checkbox" checked={selected.allow_guest_upload} onChange={(e) => updateSelected("allow_guest_upload", e.target.checked)} />
+                        <span>Permitir subida a invitados</span>
+                      </label>
+                      <label style={s.checkRow}>
+                        <input type="checkbox" checked={selected.landing_config.showNameField} onChange={(e) => updateLanding("showNameField", e.target.checked)} />
+                        <span>Pedir nombre al invitado</span>
+                      </label>
+                      <label style={s.checkRow}>
+                        <input type="checkbox" checked={selected.landing_config.showAnonymousToggle} onChange={(e) => updateLanding("showAnonymousToggle", e.target.checked)} />
+                        <span>Permitir subida anónima</span>
+                      </label>
+                      <label style={s.checkRow}>
+                        <input type="checkbox" checked={selected.landing_config.showTerms} onChange={(e) => updateLanding("showTerms", e.target.checked)} />
+                        <span>Mostrar términos y condiciones</span>
+                      </label>
+                    </div>
 
                     <div style={s.field}>
-                      <span className="label">Secciones visibles en la landing</span>
+                      <span className="label">Filtros de color</span>
+                      <div style={s.modeChips}>
+                        {([
+                          { v: "allow",  label: "Invitado elige" },
+                          { v: "none",   label: "Sin filtros" },
+                          { v: "forced", label: "Fijar uno" },
+                        ] as { v: "allow" | "none" | "forced"; label: string }[]).map(({ v, label }) => {
+                          const active = (selected.landing_config.filtersMode ?? "allow") === v;
+                          return (
+                            <button key={v} type="button" style={active ? s.modeChipActive : s.modeChip} onClick={() => updateLanding("filtersMode", v)}>
+                              {label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      {(selected.landing_config.filtersMode ?? "allow") === "forced" && (
+                        <div style={{ marginTop: 12 }}>
+                          <span className="label" style={{ marginBottom: 10, display: "block" }}>Filtro para todos</span>
+                          <div style={s.filterGrid}>
+                            {FILTERS.map((f) => {
+                              const active = (selected.landing_config.forcedFilter ?? "none") === f.key;
+                              return (
+                                <button key={f.key} type="button" style={active ? s.filterChipActive : s.filterChip} onClick={() => updateLanding("forcedFilter", f.key)}>
+                                  {f.label}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    <div style={s.field}>
+                      <span className="label">Marcos decorativos</span>
+                      <div style={s.modeChips}>
+                        {([
+                          { v: "allow",  label: "Invitado elige" },
+                          { v: "none",   label: "Sin marcos" },
+                          { v: "forced", label: "Fijar uno" },
+                        ] as { v: "allow" | "none" | "forced"; label: string }[]).map(({ v, label }) => {
+                          const active = (selected.landing_config.templatesMode ?? "allow") === v;
+                          return (
+                            <button key={v} type="button" style={active ? s.modeChipActive : s.modeChip} onClick={() => updateLanding("templatesMode", v)}>
+                              {label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      {(selected.landing_config.templatesMode ?? "allow") === "forced" && (
+                        <div style={{ marginTop: 12 }}>
+                          <span className="label" style={{ marginBottom: 10, display: "block" }}>Marco para todos</span>
+                          <div style={s.filterGrid}>
+                            {TEMPLATES.map((t) => {
+                              const active = (selected.landing_config.forcedTemplate ?? "clean") === t.key;
+                              return (
+                                <button key={t.key} type="button" style={active ? s.filterChipActive : s.filterChip} onClick={() => updateLanding("forcedTemplate", t.key)}>
+                                  {t.label}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* ── 5. TEXTOS DE LA LANDING ────────────────────────────── */}
+                  <div style={s.formSection}>
+                    <div style={s.sectionHead}>
+                      <span className="eyebrow" style={s.sectionEyebrow}>Textos de la landing</span>
+                      <p style={s.sectionDesc}>Lo que leerán tus invitados. Se pre-rellenan al elegir el tipo de evento.</p>
+                    </div>
+
+                    <div className="admin-field-row" style={s.fieldRow}>
+                      <label style={s.fieldHalf}>
+                        <span className="label">Título principal</span>
+                        <input
+                          className="input"
+                          placeholder="Boda de Laura &amp; Mateo"
+                          value={selected.landing_config.heroTitle}
+                          onChange={(e) => updateLanding("heroTitle", e.target.value)}
+                        />
+                      </label>
+                      <label style={s.fieldHalf}>
+                        <span className="label">Etiqueta superior</span>
+                        <input
+                          className="input"
+                          placeholder="Matrimonio · 2026"
+                          value={selected.landing_config.heroEyebrow}
+                          onChange={(e) => updateLanding("heroEyebrow", e.target.value)}
+                        />
+                      </label>
+                    </div>
+
+                    <label style={s.field}>
+                      <span className="label">Subtítulo del hero</span>
+                      <textarea
+                        className="textarea"
+                        rows={2}
+                        placeholder="Captura el momento y míralo en la pantalla grande..."
+                        value={selected.landing_config.heroSubtitle}
+                        onChange={(e) => updateLanding("heroSubtitle", e.target.value)}
+                      />
+                    </label>
+
+                    <label style={s.field}>
+                      <span className="label">Párrafo de introducción</span>
+                      <textarea
+                        className="textarea"
+                        rows={3}
+                        value={selected.landing_config.introCopy}
+                        onChange={(e) => updateLanding("introCopy", e.target.value)}
+                      />
+                    </label>
+
+                    <div style={s.field}>
+                      <span className="label">Secciones visibles</span>
                       <div style={s.sectionChips}>
-                        {(
-                          [
-                            "hero",
-                            "ctas",
-                            "how-it-works",
-                            "gallery",
-                            "privacy",
-                            "event-info",
-                            "support",
-                          ] as const
-                        ).map((sec) => {
+                        {(["hero", "ctas", "how-it-works", "gallery", "privacy", "event-info", "support"] as const).map((sec) => {
                           const active = selected.landing_config.sections.includes(sec);
                           return (
-                            <button
-                              key={sec}
-                              type="button"
+                            <button key={sec} type="button"
                               style={active ? s.chipActive : s.chip}
-                              onClick={() =>
-                                updateLanding(
-                                  "sections",
-                                  active
-                                    ? selected.landing_config.sections.filter((x) => x !== sec)
-                                    : [...selected.landing_config.sections, sec]
-                                )
-                              }
+                              onClick={() => updateLanding("sections", active
+                                ? selected.landing_config.sections.filter((x) => x !== sec)
+                                : [...selected.landing_config.sections, sec]
+                              )}
                             >
                               {sectionLabels[sec] ?? sec}
                             </button>
@@ -1337,20 +1084,115 @@ export function AdminDashboard({
                     </div>
                   </div>
 
-                  {/* Danger zone */}
+                  {/* ── 6. MARCA DE AGUA ───────────────────────────────────── */}
+                  <div style={s.formSection}>
+                    <div style={s.sectionHead}>
+                      <span className="eyebrow" style={s.sectionEyebrow}>Marca de agua <span style={s.optionalTag}>opcional</span></span>
+                      <p style={s.sectionDesc}>Tu logo impreso en cada foto que suban los invitados. PNG con fondo transparente.</p>
+                    </div>
+
+                    {selected.landing_config.watermarkUrl ? (
+                      <div style={s.wmPreviewRow}>
+                        <div style={s.wmPreviewBox}>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={selected.landing_config.watermarkUrl} alt="Marca de agua" style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} />
+                        </div>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                          <button className="btn btn-secondary" style={s.wmBtn} type="button" onClick={() => watermarkInputRef.current?.click()} disabled={watermarkUploading}>
+                            {watermarkUploading ? "Subiendo…" : "Cambiar imagen"}
+                          </button>
+                          <button className="btn btn-ghost" style={s.wmBtn} type="button" onClick={() => updateLanding("watermarkUrl", null)}>
+                            Quitar marca
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        className="btn btn-secondary"
+                        style={{ width: "100%", padding: "18px 0", borderRadius: 16, border: "1.5px dashed rgba(0,0,0,0.15)" }}
+                        type="button"
+                        onClick={() => watermarkInputRef.current?.click()}
+                        disabled={watermarkUploading}
+                      >
+                        {watermarkUploading ? "Subiendo…" : "+ Subir imagen de marca de agua"}
+                      </button>
+                    )}
+
+                    <input ref={watermarkInputRef} type="file" accept="image/png,image/svg+xml,image/jpeg,image/webp" className="sr-only"
+                      onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadWatermark(f); e.target.value = ""; }}
+                    />
+
+                    {selected.landing_config.watermarkUrl && (
+                      <>
+                        <div style={s.field}>
+                          <span className="label">Posición</span>
+                          <div style={s.wmCornerGrid}>
+                            {(["top-left", "top-right", "bottom-left", "bottom-right"] as WatermarkPosition[]).map((pos) => {
+                              const labels: Record<WatermarkPosition, string> = {
+                                "top-left": "↖ Sup. izq.", "top-right": "↗ Sup. der.",
+                                "bottom-left": "↙ Inf. izq.", "bottom-right": "↘ Inf. der.",
+                              };
+                              const active = (selected.landing_config.watermarkPosition ?? "bottom-right") === pos;
+                              return (
+                                <button key={pos} type="button" onClick={() => updateLanding("watermarkPosition", pos)} style={active ? s.wmCornerActive : s.wmCorner}>
+                                  {labels[pos]}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                        <label style={s.field}>
+                          <span className="label">Tamaño — <strong>{selected.landing_config.watermarkSize ?? 18}%</strong> del ancho</span>
+                          <input type="range" min={5} max={40} step={1} value={selected.landing_config.watermarkSize ?? 18} onChange={(e) => updateLanding("watermarkSize", Number(e.target.value))} style={{ width: "100%", accentColor: "#111" }} />
+                          <div style={s.sliderLabels}><span>5%</span><span>40%</span></div>
+                        </label>
+                        <label style={s.field}>
+                          <span className="label">Opacidad — <strong>{Math.round((selected.landing_config.watermarkOpacity ?? 0.75) * 100)}%</strong></span>
+                          <input type="range" min={10} max={100} step={5} value={Math.round((selected.landing_config.watermarkOpacity ?? 0.75) * 100)} onChange={(e) => updateLanding("watermarkOpacity", Number(e.target.value) / 100)} style={{ width: "100%", accentColor: "#111" }} />
+                          <div style={s.sliderLabels}><span>10%</span><span>100%</span></div>
+                        </label>
+                      </>
+                    )}
+                  </div>
+
+                  {/* ── 7. RESPONSABLE (super admin only) ──────────────────── */}
+                  {isSuperAdmin && (
+                    <div style={s.formSection}>
+                      <div style={s.sectionHead}>
+                        <span className="eyebrow" style={s.sectionEyebrow}>Responsable del evento</span>
+                        <p style={s.sectionDesc}>La persona que puede editar este evento desde el panel.</p>
+                      </div>
+                      <label style={s.field}>
+                        <span className="label">Correo electrónico</span>
+                        <input
+                          className="input"
+                          type="email"
+                          placeholder="responsable@ejemplo.com"
+                          value={selected.owner_email ?? userEmail}
+                          onChange={(e) => updateSelected("owner_email", e.target.value)}
+                        />
+                        <span style={s.fieldHint}>
+                          Esta persona podrá iniciar sesión en /admin y editar la landing de este evento.
+                        </span>
+                      </label>
+                      <div style={s.responsableTip}>
+                        <strong style={{ fontSize: 13 }}>¿Aún no tiene cuenta?</strong>
+                        <p style={{ margin: "4px 0 0", fontSize: 13, lineHeight: 1.55 }}>
+                          Pídele que se registre en <strong>{siteUrl("/auth")}</strong> con ese correo.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ── ZONA DE PELIGRO ────────────────────────────────────── */}
                   <div className="admin-danger-zone" style={s.dangerZone}>
                     <div>
                       <strong style={{ fontSize: 14 }}>Eliminar evento</strong>
                       <p className="muted" style={s.dangerText}>
-                        Se eliminan el evento, todas sus fotos y los archivos de almacenamiento.
-                        Irreversible.
+                        Se eliminan el evento, todas sus fotos y los archivos. Irreversible.
                       </p>
                     </div>
-                    <button
-                      type="button"
-                      style={s.dangerBtn}
-                      onClick={() => setConfirmDeleteEvent(true)}
-                    >
+                    <button type="button" style={s.dangerBtn} onClick={() => setConfirmDeleteEvent(true)}>
                       Eliminar evento
                     </button>
                   </div>
@@ -2017,7 +1859,10 @@ const s: Record<string, React.CSSProperties> = {
     display: "grid",
     gap: 14,
   },
-  sectionEyebrow: { marginBottom: 4 },
+  sectionHead: { display: "grid", gap: 3, marginBottom: 2 },
+  sectionEyebrow: { marginBottom: 0 },
+  sectionDesc: { margin: 0, fontSize: 13, color: "var(--text-muted)", lineHeight: 1.5, opacity: 0.7 },
+  optionalTag: { fontSize: 11, fontWeight: 500, opacity: 0.45, letterSpacing: "0.04em", textTransform: "uppercase" as const },
   field: { display: "grid", gap: 8 },
   fieldRow: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 },
   fieldHalf: { display: "grid", gap: 8 },
