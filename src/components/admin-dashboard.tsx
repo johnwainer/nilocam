@@ -581,18 +581,6 @@ export function AdminDashboard({
           >
             {creating ? "Generando..." : "+ Nuevo evento"}
           </button>
-          {isSuperAdmin && (
-            <button
-              type="button"
-              style={mainView === "system" ? s.systemBtnActive : s.systemBtn}
-              onClick={() => {
-                setMainView((v) => v === "system" ? "editor" : "system");
-                setSidebarOpen(false);
-              }}
-            >
-              ⚙ Sistema
-            </button>
-          )}
           <div style={s.eventList}>
             {events.map((event) => (
               <button
@@ -617,6 +605,20 @@ export function AdminDashboard({
               </button>
             ))}
           </div>
+          {isSuperAdmin && (
+            <div style={s.sidebarBottom}>
+              <button
+                type="button"
+                style={mainView === "system" ? s.systemBtnActive : s.systemBtn}
+                onClick={() => {
+                  setMainView((v) => v === "system" ? "editor" : "system");
+                  setSidebarOpen(false);
+                }}
+              >
+                ⚙ Sistema
+              </button>
+            </div>
+          )}
         </aside>
 
         {/* ── Main ── */}
@@ -1770,15 +1772,20 @@ const s: Record<string, React.CSSProperties> = {
     borderRight: "1px solid rgba(0,0,0,0.07)",
     display: "flex",
     flexDirection: "column",
+    justifyContent: "space-between",
     padding: "16px 12px",
     gap: 4,
+  },
+  sidebarBottom: {
+    paddingTop: 12,
+    borderTop: "1px solid rgba(0,0,0,0.07)",
+    marginTop: "auto",
   },
   createBtn: { width: "100%", fontSize: 13, padding: "10px 16px", marginBottom: 8 },
   systemBtn: {
     width: "100%",
     fontSize: 13,
     padding: "9px 16px",
-    marginBottom: 8,
     borderRadius: 12,
     background: "rgba(124,58,237,0.06)",
     border: "1px solid rgba(124,58,237,0.15)",
@@ -1792,7 +1799,6 @@ const s: Record<string, React.CSSProperties> = {
     width: "100%",
     fontSize: 13,
     padding: "9px 16px",
-    marginBottom: 8,
     borderRadius: 12,
     background: "rgba(124,58,237,0.14)",
     border: "1px solid rgba(124,58,237,0.3)",
