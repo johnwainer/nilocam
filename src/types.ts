@@ -86,6 +86,7 @@ export type EventRecord = {
   landing_config: EventLandingConfig;
   cover_image_url: string | null;
   allow_guest_upload: boolean;
+  is_active: boolean;
   created_at: string;
   updated_at: string;
 };

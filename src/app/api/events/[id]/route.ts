@@ -11,6 +11,41 @@ function serviceClient() {
   );
 }
 
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+
+  const authClient = await createSupabaseServerClient();
+  const { data: { user } } = await authClient.auth.getUser();
+  if (!user?.email) {
+    return NextResponse.json({ ok: false, message: "No autenticado." }, { status: 401 });
+  }
+
+  const admin = serviceClient();
+  const { data: profile } = await admin.from("profiles").select("role").eq("email", user.email).single();
+  if (profile?.role !== "super_admin") {
+    return NextResponse.json({ ok: false, message: "Sin acceso." }, { status: 403 });
+  }
+
+  const body = await request.json() as { is_active?: boolean };
+  if (body.is_active === undefined) {
+    return NextResponse.json({ ok: false, message: "Falta is_active." }, { status: 400 });
+  }
+
+  const { error } = await admin
+    .from("events")
+    .update({ is_active: body.is_active, updated_at: new Date().toISOString() })
+    .eq("id", id);
+
+  if (error) {
+    return NextResponse.json({ ok: false, message: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json({ ok: true });
+}
+
 export async function DELETE(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }

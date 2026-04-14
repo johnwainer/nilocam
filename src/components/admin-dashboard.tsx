@@ -117,6 +117,7 @@ const emptyEvent: EventRecord = {
   landing_config: DEFAULT_LANDING_CONFIG,
   cover_image_url: null,
   allow_guest_upload: true,
+  is_active: true,
   created_at: new Date().toISOString(),
   updated_at: new Date().toISOString(),
 };

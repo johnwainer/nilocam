@@ -14,6 +14,7 @@ const DEMO_EVENT: EventRecord = {
   moderation_mode: "auto",
   max_upload_mb: 20,
   allow_guest_upload: true,
+  is_active: true,
   cover_image_url: null,
   created_at: new Date().toISOString(),
   updated_at: new Date().toISOString(),

@@ -24,6 +24,7 @@ create table if not exists public.events (
   landing_config jsonb not null,
   cover_image_url text,
   allow_guest_upload boolean not null default true,
+  is_active boolean not null default true,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
