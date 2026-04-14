@@ -36,15 +36,20 @@ export async function GET() {
 
   // Fetch ban status from auth.users via admin API
   const { data: authList } = await admin.auth.admin.listUsers({ perPage: 1000 });
-  const banMap = new Map(
-    (authList?.users ?? []).map((u) => [u.id, u.banned_until ?? null])
+  const authMap = new Map(
+    (authList?.users ?? []).map((u) => [u.id, u])
   );
 
-  const users = (profiles ?? []).map((p: { id: string }) => ({
-    ...p,
-    banned_until: banMap.get(p.id) ?? null,
-    is_active: !banMap.get(p.id),
-  }));
+  const users = (profiles ?? []).map((p: { id: string }) => {
+    const au = authMap.get(p.id);
+    return {
+      ...p,
+      banned_until: au?.banned_until ?? null,
+      is_active: !au?.banned_until,
+      last_sign_in_at: au?.last_sign_in_at ?? null,
+      confirmed_at: au?.confirmed_at ?? null,
+    };
+  });
 
   return NextResponse.json({ ok: true, users });
 }
@@ -97,11 +102,26 @@ export async function PATCH(request: Request) {
 
   const body = await request.json() as {
     id?: string;
+    email?: string;
+    action?: string;
     role?: string;
     display_name?: string;
     is_active?: boolean;
   };
-  const { id, role, display_name, is_active } = body;
+  const { id, email, action, role, display_name, is_active } = body;
+
+  // Regenerate magic link for an existing user
+  if (action === "regenerate_link") {
+    if (!email) return NextResponse.json({ ok: false, message: "Falta email." }, { status: 400 });
+    const admin = serviceClient();
+    const { data: linkData, error: linkErr } = await admin.auth.admin.generateLink({
+      type: "magiclink",
+      email,
+    });
+    if (linkErr) return NextResponse.json({ ok: false, message: linkErr.message }, { status: 500 });
+    const magicLink = linkData.properties?.action_link ?? null;
+    return NextResponse.json({ ok: true, magic_link: magicLink });
+  }
 
   if (!id) return NextResponse.json({ ok: false, message: "Falta id." }, { status: 400 });
 

@@ -17,6 +17,8 @@ type Profile = {
   role: "owner" | "admin" | "super_admin";
   created_at: string;
   is_active: boolean;
+  last_sign_in_at: string | null;
+  confirmed_at: string | null;
 };
 
 type ProfileWithStats = Profile & { event_count: number; credits: number };
@@ -83,6 +85,8 @@ export function SuperAdminPanel({
   const [togglingUserId, setTogglingUserId] = useState<string | null>(null);
   const [showNewUser, setShowNewUser] = useState(false);
   const [adjustingCreditsFor, setAdjustingCreditsFor] = useState<ProfileWithStats | null>(null);
+  const [regeneratingLinkFor, setRegeneratingLinkFor] = useState<string | null>(null);
+  const [regeneratedLink, setRegeneratedLink] = useState<{ email: string; link: string } | null>(null);
 
   // Pricing
   const [pricingList, setPricingList] = useState<CreditPricing[]>([]);
@@ -286,6 +290,24 @@ export function SuperAdminPanel({
     } finally {
       setDeletingUserId(null);
       setConfirmDeleteUserId(null);
+    }
+  };
+
+  const regenerateLink = async (user: ProfileWithStats) => {
+    setRegeneratingLinkFor(user.id);
+    try {
+      const res = await fetch("/api/admin/users", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "regenerate_link", email: user.email }),
+      });
+      const json = await res.json();
+      if (!json.ok) throw new Error(json.message);
+      setRegeneratedLink({ email: user.email, link: json.magic_link });
+    } catch (e) {
+      flash(e instanceof Error ? e.message : "Error", false);
+    } finally {
+      setRegeneratingLinkFor(null);
     }
   };
 
@@ -525,6 +547,14 @@ export function SuperAdminPanel({
             />
           )}
 
+          {regeneratedLink && (
+            <RegeneratedLinkBox
+              email={regeneratedLink.email}
+              link={regeneratedLink.link}
+              onClose={() => setRegeneratedLink(null)}
+            />
+          )}
+
           {usersLoading ? <p style={p.loading}>Cargando…</p> : (
             <div style={p.tableWrap}>
               <table style={p.table}>
@@ -572,6 +602,16 @@ export function SuperAdminPanel({
                             >
                               {togglingUserId === user.id ? "…" : user.is_active ? "Desactivar" : "Activar"}
                             </button>
+                            {!user.confirmed_at && (
+                              <button
+                                type="button"
+                                style={{ ...p.miniBtn, color: "#1d4ed8", borderColor: "rgba(29,78,216,0.3)" }}
+                                disabled={regeneratingLinkFor === user.id}
+                                onClick={() => { setRegeneratedLink(null); regenerateLink(user); }}
+                              >
+                                {regeneratingLinkFor === user.id ? "…" : "↻ Link"}
+                              </button>
+                            )}
                             {confirmDeleteUserId === user.id ? (
                               <>
                                 <button type="button" style={{ ...p.miniBtn, color: "#dc2626", borderColor: "#dc262655" }} disabled={deletingUserId === user.id} onClick={() => deleteUser(user.id)}>
@@ -823,6 +863,47 @@ function NewUserForm({ onSaved, onCancel, onError }: {
         Se generará un enlace de activación único. Podrás copiarlo y enviarlo por el medio que prefieras.
       </p>
     </form>
+  );
+}
+
+// ─── RegeneratedLinkBox ───────────────────────────────────────────────────────
+
+function RegeneratedLinkBox({ email, link, onClose }: { email: string; link: string; onClose: () => void }) {
+  const [copied, setCopied] = useState(false);
+  const copyLink = async () => {
+    await navigator.clipboard.writeText(link);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2500);
+  };
+  return (
+    <div style={p.inlineForm}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <span style={{ fontSize: 20 }}>🔗</span>
+        <div>
+          <strong style={{ fontSize: 14, fontWeight: 700, display: "block" }}>Nuevo magic link generado</strong>
+          <span style={{ fontSize: 13, color: "var(--muted)" }}>{email}</span>
+        </div>
+      </div>
+      <div style={p.magicLinkBox}>
+        <div style={p.magicLinkLabel}>Magic link de acceso</div>
+        <div style={p.magicLinkRow}>
+          <code style={p.magicLinkCode}>{link}</code>
+          <button
+            type="button"
+            style={{ ...p.miniBtn, minWidth: 76, color: copied ? "#065f46" : "#374151", borderColor: copied ? "rgba(16,185,129,0.4)" : undefined, background: copied ? "rgba(16,185,129,0.08)" : undefined }}
+            onClick={copyLink}
+          >
+            {copied ? "¡Copiado!" : "Copiar"}
+          </button>
+        </div>
+        <p style={{ margin: 0, fontSize: 12, color: "var(--muted)", lineHeight: 1.5 }}>
+          Este enlace solo funciona una vez. Compártelo con el usuario por WhatsApp, email u otro medio. Expira en 24 h.
+        </p>
+      </div>
+      <button type="button" className="btn btn-ghost" style={{ fontSize: 13, alignSelf: "flex-start" }} onClick={onClose}>
+        Cerrar
+      </button>
+    </div>
   );
 }
 
