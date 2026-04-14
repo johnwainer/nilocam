@@ -10,23 +10,67 @@ function serviceClient() {
   );
 }
 
-// GET /api/credits — returns balance + last 20 transactions for the logged-in user
-export async function GET() {
+// GET /api/credits
+//   ?all=1  (super admin only) — returns ALL users' transactions
+//   ?user=email — (super admin only) — filter by user
+export async function GET(request: Request) {
   const authClient = await createSupabaseServerClient();
   const { data: { user } } = await authClient.auth.getUser();
   if (!user?.email) {
     return NextResponse.json({ ok: false, message: "No autenticado." }, { status: 401 });
   }
 
+  const { searchParams } = new URL(request.url);
+  const wantsAll = searchParams.get("all") === "1";
+  const filterUser = searchParams.get("user");
+
   const admin = serviceClient();
-  const [{ data: profile }, { data: transactions }] = await Promise.all([
-    admin.from("profiles").select("credits").eq("email", user.email).single(),
-    admin.from("credit_transactions")
+
+  // Check role
+  const { data: profile } = await admin
+    .from("profiles")
+    .select("credits, role")
+    .eq("email", user.email)
+    .single();
+
+  const isSuperAdmin = profile?.role === "super_admin";
+
+  if ((wantsAll || filterUser) && !isSuperAdmin) {
+    return NextResponse.json({ ok: false, message: "Sin acceso." }, { status: 403 });
+  }
+
+  if (wantsAll || filterUser) {
+    // Super admin global view
+    let query = admin
+      .from("credit_transactions")
       .select("*")
-      .eq("user_email", user.email)
       .order("created_at", { ascending: false })
-      .limit(20),
-  ]);
+      .limit(200);
+
+    if (filterUser) query = query.eq("user_email", filterUser);
+
+    const { data: transactions } = await query;
+
+    // Also get all user balances for the global view
+    const { data: profiles } = await admin
+      .from("profiles")
+      .select("email, credits, display_name")
+      .order("email");
+
+    return NextResponse.json({
+      ok: true,
+      transactions: transactions ?? [],
+      profiles: profiles ?? [],
+    });
+  }
+
+  // Own transactions
+  const { data: transactions } = await admin
+    .from("credit_transactions")
+    .select("*")
+    .eq("user_email", user.email)
+    .order("created_at", { ascending: false })
+    .limit(200);
 
   return NextResponse.json({
     ok: true,

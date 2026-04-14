@@ -26,27 +26,36 @@ export async function PATCH(request: Request) {
   if (!caller) return NextResponse.json({ ok: false, message: "Sin acceso." }, { status: 403 });
 
   const body = await request.json() as {
-    user_id?: string;
+    user_id?: string;   // UUID or email — we look up by whichever is provided
     user_email?: string;
     amount?: number;
     description?: string;
   };
 
   const { user_id, user_email, amount, description = "" } = body;
-  if (!user_id || !user_email || amount === undefined) {
+  if ((!user_id && !user_email) || amount === undefined) {
     return NextResponse.json({ ok: false, message: "Faltan parámetros." }, { status: 400 });
   }
 
   const admin = serviceClient();
-  const { data: profile } = await admin.from("profiles").select("credits").eq("id", user_id).single();
+
+  // Resolve profile by UUID or by email
+  const isUUID = user_id && /^[0-9a-f-]{36}$/.test(user_id);
+  const profileQuery = isUUID
+    ? admin.from("profiles").select("id, email, credits").eq("id", user_id).single()
+    : admin.from("profiles").select("id, email, credits").eq("email", user_email ?? user_id ?? "").single();
+
+  const { data: profile } = await profileQuery;
   if (!profile) return NextResponse.json({ ok: false, message: "Usuario no encontrado." }, { status: 404 });
 
+  const resolvedEmail = user_email ?? profile.email;
+
   const newBalance = Math.max(0, (profile.credits ?? 0) + amount);
-  await admin.from("profiles").update({ credits: newBalance }).eq("id", user_id);
+  await admin.from("profiles").update({ credits: newBalance }).eq("id", profile.id);
 
   await admin.from("credit_transactions").insert({
-    user_id,
-    user_email,
+    user_id: profile.id,
+    user_email: resolvedEmail,
     amount,
     type: amount >= 0 ? "manual_grant" : "manual_deduct",
     description: description || (amount >= 0 ? "Créditos otorgados por admin" : "Créditos descontados por admin"),

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { formatDate, siteUrl } from "@/lib/utils";
 import type { CreditPricing, EventRecord } from "@/types";
+import { SuperCreditsPanel } from "@/components/credits-panel";
 
 const supabase = createSupabaseBrowserClient();
 
@@ -40,7 +41,7 @@ type RecentPhoto = {
   moderation_status: string;
 };
 
-type SATab = "stats" | "events" | "users" | "pricing";
+type SATab = "stats" | "events" | "users" | "pricing" | "credits";
 
 const ROLE_LABELS: Record<string, string> = {
   owner: "Owner",
@@ -338,9 +339,9 @@ export function SuperAdminPanel({
           <span style={p.panelSub}>Sesión como {userEmail}</span>
         </div>
         <div style={p.tabBar}>
-          {(["stats", "events", "users", "pricing"] as SATab[]).map((t) => (
+          {(["stats", "events", "users", "pricing", "credits"] as SATab[]).map((t) => (
             <button key={t} type="button" onClick={() => setTab(t)} style={tab === t ? p.tabActive : p.tab}>
-              {t === "stats" ? "Estadísticas" : t === "events" ? "Eventos" : t === "users" ? "Usuarios" : "Precios"}
+              {t === "stats" ? "Estadísticas" : t === "events" ? "Eventos" : t === "users" ? "Usuarios" : t === "pricing" ? "Precios" : "Créditos"}
             </button>
           ))}
         </div>
@@ -590,6 +591,13 @@ export function SuperAdminPanel({
               </table>
             </div>
           )}
+        </div>
+      )}
+
+      {/* ── CREDITS ── */}
+      {tab === "credits" && (
+        <div style={p.content}>
+          <SuperCreditsPanel userEmail={userEmail} />
         </div>
       )}
 

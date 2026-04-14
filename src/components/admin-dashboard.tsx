@@ -19,6 +19,7 @@ import { formatBytes, formatDate, publicStorageUrl, siteUrl, toSlug } from "@/li
 import type { CreditPricing, CreditTransaction, EventRecord, EventTypeKey, LandingTemplatePreset, PhotoRecord, WatermarkPosition } from "@/types";
 import { SpyCatIcon } from "@/components/top-nav";
 import { SuperAdminPanel } from "@/components/super-admin-panel";
+import { CreditsPanel } from "@/components/credits-panel";
 
 const supabase = createSupabaseBrowserClient();
 
@@ -170,7 +171,7 @@ export function AdminDashboard({
   );
   const [selectedId, setSelectedId] = useState<string>(initialDraft.id);
   const [tab, setTab] = useState<"evento" | "fotos">("evento");
-  const [mainView, setMainView] = useState<"editor" | "system">("editor");
+  const [mainView, setMainView] = useState<"editor" | "system" | "credits">("editor");
 
   // Credits
   const [credits, setCredits] = useState<number | null>(null);
@@ -707,8 +708,18 @@ export function AdminDashboard({
               </button>
             ))}
           </div>
-          {isSuperAdmin && (
-            <div style={s.sidebarBottom}>
+          <div style={s.sidebarBottom}>
+            <button
+              type="button"
+              style={mainView === "credits" ? s.creditsBtnActive : s.creditsBtn}
+              onClick={() => {
+                setMainView((v) => v === "credits" ? "editor" : "credits");
+                setSidebarOpen(false);
+              }}
+            >
+              {credits !== null ? `◈ ${credits} créditos` : "◈ Créditos"}
+            </button>
+            {isSuperAdmin && (
               <button
                 type="button"
                 style={mainView === "system" ? s.systemBtnActive : s.systemBtn}
@@ -719,12 +730,23 @@ export function AdminDashboard({
               >
                 ⚙ Sistema
               </button>
-            </div>
-          )}
+            )}
+          </div>
         </aside>
 
         {/* ── Main ── */}
         <div className="admin-main-wrap" style={s.mainWrap}>
+          {/* ── Credits panel (all users) ── */}
+          {mainView === "credits" && (
+            <div style={s.main}>
+              <CreditsPanel
+                userEmail={userEmail}
+                initialCredits={credits ?? 0}
+                initialTransactions={transactions}
+              />
+            </div>
+          )}
+
           {/* ── Super admin system panel ── */}
           {mainView === "system" && isSuperAdmin && (
             <div style={s.main}>
@@ -1755,38 +1777,6 @@ export function AdminDashboard({
         </div>
       )}
 
-      {/* ── Credits history modal ── */}
-      {showCreditsHistory && (
-        <div style={s.modalOverlay} onClick={() => setShowCreditsHistory(false)}>
-          <div className="card" style={{ ...s.modal, maxWidth: 480, maxHeight: "80vh", overflowY: "auto" }} onClick={(e) => e.stopPropagation()}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-              <h3 className="serif" style={s.modalTitle}>Historial de créditos</h3>
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <span style={s.creditsBig}>◈ {credits ?? "—"}</span>
-                <button type="button" className="btn btn-ghost" style={{ fontSize: 13, padding: "6px 12px" }} onClick={() => setShowCreditsHistory(false)}>✕</button>
-              </div>
-            </div>
-            {transactions.length === 0 ? (
-              <p className="muted" style={{ fontSize: 13 }}>Sin transacciones aún.</p>
-            ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                {transactions.map((t) => (
-                  <div key={t.id} style={s.txRow}>
-                    <div style={{ flex: 1 }}>
-                      <span style={{ fontSize: 13, fontWeight: 600, color: "#111" }}>{t.description || t.type}</span>
-                      {t.event_slug && <span style={{ fontSize: 11, color: "var(--muted)", display: "block" }}>/{t.event_slug}</span>}
-                      <span style={{ fontSize: 11, color: "var(--muted)" }}>{new Date(t.created_at).toLocaleDateString("es-MX", { day: "2-digit", month: "short", year: "numeric" })}</span>
-                    </div>
-                    <span style={{ fontWeight: 800, fontSize: 16, color: t.amount >= 0 ? "#065f46" : "#374151" }}>
-                      {t.amount >= 0 ? "+" : ""}{t.amount} ◈
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
@@ -2018,6 +2008,34 @@ const s: Record<string, React.CSSProperties> = {
     gap: 12,
     padding: "10px 0",
     borderBottom: "1px solid rgba(0,0,0,0.06)",
+  },
+  creditsBtn: {
+    width: "100%",
+    fontSize: 13,
+    padding: "9px 16px",
+    borderRadius: 12,
+    background: "rgba(109,40,217,0.04)",
+    border: "1px solid rgba(109,40,217,0.12)",
+    color: "#6d28d9",
+    fontWeight: 600,
+    cursor: "pointer",
+    textAlign: "left" as const,
+    letterSpacing: "-0.01em",
+    marginTop: 6,
+  },
+  creditsBtnActive: {
+    width: "100%",
+    fontSize: 13,
+    padding: "9px 16px",
+    borderRadius: 12,
+    background: "rgba(109,40,217,0.12)",
+    border: "1px solid rgba(109,40,217,0.28)",
+    color: "#5b21b6",
+    fontWeight: 700,
+    cursor: "pointer",
+    textAlign: "left" as const,
+    letterSpacing: "-0.01em",
+    marginTop: 6,
   },
   headerBtn: { fontSize: 13, padding: "7px 14px" },
   hamburger: {
