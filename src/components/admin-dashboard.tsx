@@ -986,15 +986,14 @@ export function AdminDashboard({
                           <span style={s.colorHex}>{selected.landing_config.theme.accent}</span>
                         </div>
                       </label>
-                      <label style={s.fieldHalf}>
-                        <span className="label">Imagen de fondo hero <span style={s.optionalTag}>URL</span></span>
-                        <input
-                          className="input"
-                          placeholder="https://..."
+                      <div style={s.fieldHalf}>
+                        <span className="label">Imagen de fondo hero</span>
+                        <CoverImageUpload
+                          eventId={selected.id}
                           value={selected.landing_config.theme.heroImage ?? ""}
-                          onChange={(e) => updateLanding("theme", { ...selected.landing_config.theme, heroImage: e.target.value })}
+                          onChange={(url) => updateLanding("theme", { ...selected.landing_config.theme, heroImage: url })}
                         />
-                      </label>
+                      </div>
                     </div>
                   </div>
 
@@ -1972,6 +1971,124 @@ function TemplateMiniPreview({ theme }: { theme: LandingTemplatePreset["theme"] 
       <div style={{ position: "absolute", bottom: 16, left: 10, width: 28, height: 4, borderRadius: 2, background: theme.accent, opacity: 0.85 }} />
       {/* Surface block */}
       <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 18, background: theme.surface }} />
+    </div>
+  );
+}
+
+// ─── CoverImageUpload ─────────────────────────────────────────────────────────
+
+const COVER_MIN_W = 1200;
+const COVER_MIN_H = 630;
+const COVER_MAX_MB = 10;
+const COVER_ACCEPT = ["image/jpeg", "image/png", "image/webp"];
+
+function CoverImageUpload({
+  eventId,
+  value,
+  onChange,
+}: {
+  eventId: string;
+  value: string;
+  onChange: (url: string) => void;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleFile(file: File) {
+    setError(null);
+
+    if (!COVER_ACCEPT.includes(file.type)) {
+      setError("Solo se aceptan JPEG, PNG o WebP.");
+      return;
+    }
+    if (file.size > COVER_MAX_MB * 1024 * 1024) {
+      setError(`Máximo ${COVER_MAX_MB} MB.`);
+      return;
+    }
+
+    // Check dimensions
+    const blobUrl = URL.createObjectURL(file);
+    const dims = await new Promise<{ w: number; h: number }>((resolve) => {
+      const img = new window.Image();
+      img.onload = () => resolve({ w: img.naturalWidth, h: img.naturalHeight });
+      img.onerror = () => resolve({ w: 0, h: 0 });
+      img.src = blobUrl;
+    });
+    URL.revokeObjectURL(blobUrl);
+
+    if (dims.w < COVER_MIN_W || dims.h < COVER_MIN_H) {
+      setError(`Mínimo ${COVER_MIN_W}×${COVER_MIN_H} px (subiste ${dims.w}×${dims.h} px).`);
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const ext = file.name.split(".").pop() ?? "jpg";
+      const path = `covers/${eventId}/${crypto.randomUUID()}.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from(EVENT_BUCKET)
+        .upload(path, file, { upsert: true, contentType: file.type });
+      if (upErr) throw upErr;
+
+      const { data } = supabase.storage.from(EVENT_BUCKET).getPublicUrl(path);
+      onChange(data.publicUrl);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Error al subir imagen.");
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      {value && (
+        <div style={{ position: "relative", borderRadius: 6, overflow: "hidden", border: "1px solid rgba(0,0,0,0.1)" }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={value} alt="Cover" style={{ width: "100%", maxHeight: 120, objectFit: "cover", display: "block" }} />
+          <button
+            type="button"
+            onClick={() => { onChange(""); setError(null); }}
+            style={{
+              position: "absolute", top: 6, right: 6,
+              background: "rgba(0,0,0,0.55)", color: "#fff",
+              border: "none", borderRadius: 4, padding: "2px 8px",
+              fontSize: 11, cursor: "pointer",
+            }}
+          >
+            Quitar
+          </button>
+        </div>
+      )}
+
+      <input
+        ref={inputRef}
+        type="file"
+        accept={COVER_ACCEPT.join(",")}
+        style={{ display: "none" }}
+        onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = ""; }}
+      />
+
+      <button
+        type="button"
+        disabled={uploading}
+        onClick={() => inputRef.current?.click()}
+        style={{
+          padding: "7px 14px", borderRadius: 6, border: "1px dashed rgba(0,0,0,0.25)",
+          background: "#fafafa", fontSize: 12, cursor: uploading ? "not-allowed" : "pointer",
+          color: "var(--muted)", fontWeight: 500,
+        }}
+      >
+        {uploading ? "Subiendo…" : value ? "Cambiar imagen" : "Subir imagen de fondo"}
+      </button>
+
+      <span style={{ fontSize: 10, color: "var(--muted)" }}>
+        Mín. {COVER_MIN_W}×{COVER_MIN_H} px · Máx. {COVER_MAX_MB} MB · JPEG / PNG / WebP
+      </span>
+
+      {error && (
+        <span style={{ fontSize: 11, color: "#dc2626", fontWeight: 500 }}>{error}</span>
+      )}
     </div>
   );
 }
