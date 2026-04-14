@@ -521,27 +521,32 @@ export function SuperAdminPanel({
             <button type="button" style={p.refreshBtn} onClick={loadEvents} disabled={eventsLoading}>{eventsLoading ? "Cargando…" : "↺ Actualizar"}</button>
           </div>
           <div style={p.filterBar}>
-            <input
-              className="input"
-              placeholder="Buscar por título, slug o responsable…"
-              value={eventsSearch}
-              onChange={(e) => setEventsSearch(e.target.value)}
-              style={p.searchInput}
-            />
-            <select className="input" style={p.filterSelect} value={eventsStatus} onChange={(e) => setEventsStatus(e.target.value as typeof eventsStatus)}>
-              <option value="all">Todos los estados</option>
-              <option value="active">Activos</option>
-              <option value="inactive">Inactivos</option>
-            </select>
-            <select className="input" style={p.filterSelect} value={eventsSort} onChange={(e) => setEventsSort(e.target.value)}>
-              <option value="created_desc">Más reciente</option>
-              <option value="created_asc">Más antiguo</option>
-              <option value="title_asc">Título A → Z</option>
-              <option value="title_desc">Título Z → A</option>
-              <option value="photos_desc">Más fotos</option>
-              <option value="date_asc">Fecha próxima</option>
-              <option value="date_desc">Fecha lejana</option>
-            </select>
+            <div style={p.searchWrap}>
+              <svg style={p.searchIcon} viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="9" cy="9" r="6"/><path d="M15 15l-3.5-3.5"/></svg>
+              <input
+                placeholder="Buscar título, slug o responsable…"
+                value={eventsSearch}
+                onChange={(e) => setEventsSearch(e.target.value)}
+                style={p.searchInput}
+              />
+              {eventsSearch && <button type="button" onClick={() => setEventsSearch("")} style={p.searchClear}>✕</button>}
+            </div>
+            <div style={p.filterGroup}>
+              <select style={p.filterSel} value={eventsStatus} onChange={(e) => setEventsStatus(e.target.value as typeof eventsStatus)}>
+                <option value="all">Estado: todos</option>
+                <option value="active">Activos</option>
+                <option value="inactive">Inactivos</option>
+              </select>
+              <select style={p.filterSel} value={eventsSort} onChange={(e) => setEventsSort(e.target.value)}>
+                <option value="created_desc">↓ Más reciente</option>
+                <option value="created_asc">↑ Más antiguo</option>
+                <option value="title_asc">A → Z</option>
+                <option value="title_desc">Z → A</option>
+                <option value="photos_desc">Más fotos</option>
+                <option value="date_asc">Fecha próxima</option>
+                <option value="date_desc">Fecha lejana</option>
+              </select>
+            </div>
           </div>
           {eventsLoading ? <p style={p.loading}>Cargando…</p> : (
             <div style={p.tableWrap}>
@@ -614,31 +619,36 @@ export function SuperAdminPanel({
             </div>
           </div>
           <div style={p.filterBar}>
-            <input
-              className="input"
-              placeholder="Buscar por email o nombre…"
-              value={usersSearch}
-              onChange={(e) => setUsersSearch(e.target.value)}
-              style={p.searchInput}
-            />
-            <select className="input" style={p.filterSelect} value={usersRole} onChange={(e) => setUsersRole(e.target.value as typeof usersRole)}>
-              <option value="all">Todos los roles</option>
-              <option value="owner">Owner</option>
-              <option value="admin">Admin</option>
-              <option value="super_admin">Super admin</option>
-            </select>
-            <select className="input" style={p.filterSelect} value={usersStatus} onChange={(e) => setUsersStatus(e.target.value as typeof usersStatus)}>
-              <option value="all">Todos los estados</option>
-              <option value="active">Activos</option>
-              <option value="inactive">Inactivos</option>
-            </select>
-            <select className="input" style={p.filterSelect} value={usersSort} onChange={(e) => setUsersSort(e.target.value)}>
-              <option value="created_desc">Más reciente</option>
-              <option value="created_asc">Más antiguo</option>
-              <option value="email_asc">Email A → Z</option>
-              <option value="credits_desc">Más créditos</option>
-              <option value="events_desc">Más eventos</option>
-            </select>
+            <div style={p.searchWrap}>
+              <svg style={p.searchIcon} viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="9" cy="9" r="6"/><path d="M15 15l-3.5-3.5"/></svg>
+              <input
+                placeholder="Buscar email o nombre…"
+                value={usersSearch}
+                onChange={(e) => setUsersSearch(e.target.value)}
+                style={p.searchInput}
+              />
+              {usersSearch && <button type="button" onClick={() => setUsersSearch("")} style={p.searchClear}>✕</button>}
+            </div>
+            <div style={p.filterGroup}>
+              <select style={p.filterSel} value={usersRole} onChange={(e) => setUsersRole(e.target.value as typeof usersRole)}>
+                <option value="all">Rol: todos</option>
+                <option value="owner">Owner</option>
+                <option value="admin">Admin</option>
+                <option value="super_admin">Super admin</option>
+              </select>
+              <select style={p.filterSel} value={usersStatus} onChange={(e) => setUsersStatus(e.target.value as typeof usersStatus)}>
+                <option value="all">Estado: todos</option>
+                <option value="active">Activos</option>
+                <option value="inactive">Inactivos</option>
+              </select>
+              <select style={p.filterSel} value={usersSort} onChange={(e) => setUsersSort(e.target.value)}>
+                <option value="created_desc">↓ Más reciente</option>
+                <option value="created_asc">↑ Más antiguo</option>
+                <option value="email_asc">Email A → Z</option>
+                <option value="credits_desc">Más créditos</option>
+                <option value="events_desc">Más eventos</option>
+              </select>
+            </div>
           </div>
 
           {showNewUser && (
@@ -1254,9 +1264,28 @@ const p: Record<string, React.CSSProperties> = {
   tableActions: { display: "flex", alignItems: "center", justifyContent: "space-between" },
   tableCount: { fontSize: 13, color: "var(--muted)", fontWeight: 600 },
   refreshBtn: { padding: "6px 14px", borderRadius: 999, background: "rgba(0,0,0,0.04)", border: "1px solid rgba(0,0,0,0.08)", fontSize: 13, fontWeight: 600, cursor: "pointer", color: "var(--muted)" },
-  filterBar: { display: "flex", gap: 8, flexWrap: "wrap" as const, alignItems: "center" },
-  searchInput: { flex: "1 1 200px", fontSize: 13, padding: "7px 12px" },
-  filterSelect: { flex: "0 0 auto", fontSize: 13, padding: "7px 10px", minWidth: 140 },
+  filterBar: { display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" as const },
+  searchWrap: {
+    flex: "1 1 200px",
+    display: "flex", alignItems: "center", gap: 0,
+    background: "#fff", border: "1px solid rgba(0,0,0,0.1)", borderRadius: 10,
+    padding: "0 10px", height: 36, minWidth: 0,
+  },
+  searchIcon: { width: 15, height: 15, flexShrink: 0, color: "var(--muted)", marginRight: 7 } as React.CSSProperties,
+  searchInput: {
+    flex: 1, border: "none", outline: "none", background: "transparent",
+    fontSize: 13, color: "var(--text)", minWidth: 0, padding: 0,
+  },
+  searchClear: {
+    background: "none", border: "none", cursor: "pointer", padding: "0 0 0 6px",
+    fontSize: 12, color: "var(--muted)", lineHeight: 1, flexShrink: 0,
+  },
+  filterGroup: { display: "flex", gap: 6, flexShrink: 0 },
+  filterSel: {
+    height: 36, padding: "0 10px", borderRadius: 10, border: "1px solid rgba(0,0,0,0.1)",
+    background: "#fff", fontSize: 13, color: "var(--text)", cursor: "pointer", outline: "none",
+    appearance: "auto" as const,
+  },
   miniBtn: { padding: "4px 10px", borderRadius: 999, background: "rgba(0,0,0,0.04)", border: "1px solid rgba(0,0,0,0.1)", fontSize: 12, fontWeight: 600, cursor: "pointer", color: "#374151" },
   miniLink: { padding: "4px 10px", borderRadius: 999, background: "rgba(0,0,0,0.04)", border: "1px solid rgba(0,0,0,0.1)", fontSize: 12, fontWeight: 600, cursor: "pointer", color: "#374151", textDecoration: "none", display: "inline-block" },
   youPill: { marginLeft: 6, fontSize: 10, fontWeight: 700, padding: "1px 7px", borderRadius: 999, background: "rgba(124,58,237,0.1)", color: "#6d28d9", verticalAlign: "middle" },
