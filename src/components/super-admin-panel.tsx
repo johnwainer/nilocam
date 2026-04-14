@@ -112,6 +112,7 @@ export function SuperAdminPanel({
   const [payLoading, setPayLoading] = useState(false);
   const [payError, setPayError] = useState<string | null>(null);
   const [paySaving, setPaySaving] = useState(false);
+  const [paySubTab, setPaySubTab] = useState<"config" | "purchases">("config");
   const [purchases, setPurchases] = useState<CreditPurchase[]>([]);
   const [purchasesLoading, setPurchasesLoading] = useState(false);
   const [purchaseFilter, setPurchaseFilter] = useState<"all" | "pending" | "completed" | "rejected">("pending");
@@ -266,7 +267,7 @@ export function SuperAdminPanel({
     else if (tab === "events") loadEvents();
     else if (tab === "users") loadUsers();
     else if (tab === "pricing") loadPricing();
-    else if (tab === "payments") { loadPayments(); loadPurchases("pending"); }
+    else if (tab === "payments") loadPayments();
   }, [tab, loadStats, loadEvents, loadUsers, loadPricing, loadPayments, loadPurchases]);
 
   // ── event actions ───────────────────────────────────────────────────────────
@@ -837,177 +838,188 @@ export function SuperAdminPanel({
       {/* ── PAYMENTS ── */}
       {tab === "payments" && (
         <div style={p.content}>
-          {payLoading ? <p style={p.loading}>Cargando configuración…</p> : paySettings ? (
-            <PaymentsTab
-              settings={paySettings}
-              saving={paySaving}
-              onSave={async (patch) => {
-                setPaySaving(true);
-                try {
-                  const res = await fetch("/api/admin/payment-settings", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(patch),
-                  });
-                  const json = await res.json();
-                  if (!json.ok) throw new Error(json.message);
-                  setPaySettings((prev) => prev ? { ...prev, ...patch } : prev);
-                  flash("Configuración de pagos guardada", true);
-                } catch (e) {
-                  flash(e instanceof Error ? e.message : "Error", false);
-                } finally {
-                  setPaySaving(false);
-                }
-              }}
-            />
-          ) : (
-            <div style={{ background: "rgba(239,68,68,0.07)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 14, padding: "14px 18px" }}>
-              <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: "#991b1b" }}>Error cargando configuración de pagos</p>
-              {payError && <p style={{ margin: "6px 0 0", fontSize: 13, color: "#b91c1c", fontFamily: "monospace" }}>{payError}</p>}
-              <p style={{ margin: "8px 0 0", fontSize: 13, color: "var(--muted)" }}>
-                Si aún no has ejecutado el SQL, corre en Supabase SQL Editor:
-              </p>
-              <pre style={{ margin: "6px 0 0", fontSize: 11, background: "rgba(0,0,0,0.05)", borderRadius: 8, padding: "8px 12px", overflowX: "auto" }}>{`create table if not exists public.payment_settings (
-  id smallint primary key default 1,
-  credit_price_usd numeric(10,2) not null default 1.00,
-  stripe_enabled boolean not null default false,
-  stripe_public_key text not null default '',
-  stripe_secret_key text not null default '',
-  stripe_webhook_secret text not null default '',
-  paypal_enabled boolean not null default false,
-  paypal_client_id text not null default '',
-  paypal_secret text not null default '',
-  paypal_sandbox boolean not null default false,
-  bank_transfer_enabled boolean not null default true,
-  bank_transfer_info jsonb not null default '{}',
-  updated_at timestamptz not null default now(),
-  constraint single_row check (id = 1)
-);
-insert into public.payment_settings (id) values (1) on conflict do nothing;
+          {/* Sub-tab bar */}
+          <div style={{ display: "flex", gap: 6, marginBottom: 18, borderBottom: "1px solid rgba(0,0,0,0.07)", paddingBottom: 0 }}>
+            {(["config", "purchases"] as const).map((st) => (
+              <button
+                key={st}
+                type="button"
+                onClick={() => {
+                  setPaySubTab(st);
+                  if (st === "config" && !paySettings) loadPayments();
+                  if (st === "purchases") loadPurchases(purchaseFilter);
+                }}
+                style={{
+                  background: "none",
+                  border: "none",
+                  borderBottom: paySubTab === st ? "2px solid #6d28d9" : "2px solid transparent",
+                  color: paySubTab === st ? "#6d28d9" : "var(--muted)",
+                  fontWeight: paySubTab === st ? 700 : 400,
+                  fontSize: 14,
+                  padding: "8px 14px",
+                  cursor: "pointer",
+                  marginBottom: -1,
+                }}
+              >
+                {st === "config" ? "Configuración" : "Compras"}
+              </button>
+            ))}
+          </div>
 
--- Si la tabla ya existe, solo agrega las columnas nuevas:
-alter table public.payment_settings
-  add column if not exists stripe_webhook_secret text not null default '',
-  add column if not exists paypal_sandbox boolean not null default false;`}</pre>
-              <button type="button" style={{ ...p.refreshBtn, marginTop: 10 }} onClick={loadPayments}>↺ Reintentar</button>
-            </div>
+          {/* ── Config sub-tab ── */}
+          {paySubTab === "config" && (
+            payLoading ? <p style={p.loading}>Cargando configuración…</p> : paySettings ? (
+              <PaymentsTab
+                settings={paySettings}
+                saving={paySaving}
+                onSave={async (patch) => {
+                  setPaySaving(true);
+                  try {
+                    const res = await fetch("/api/admin/payment-settings", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify(patch),
+                    });
+                    const json = await res.json();
+                    if (!json.ok) throw new Error(json.message);
+                    setPaySettings((prev) => prev ? { ...prev, ...patch } : prev);
+                    flash("Configuración de pagos guardada", true);
+                  } catch (e) {
+                    flash(e instanceof Error ? e.message : "Error", false);
+                  } finally {
+                    setPaySaving(false);
+                  }
+                }}
+              />
+            ) : (
+              <div style={{ background: "rgba(239,68,68,0.07)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 14, padding: "14px 18px" }}>
+                <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: "#991b1b" }}>Error cargando configuración de pagos</p>
+                {payError && <p style={{ margin: "6px 0 0", fontSize: 13, color: "#b91c1c", fontFamily: "monospace" }}>{payError}</p>}
+                <p style={{ margin: "8px 0 0", fontSize: 13, color: "var(--muted)" }}>
+                  Ejecuta el archivo <strong>supabase/setup-payments-complete.sql</strong> en Supabase SQL Editor y luego reintenta.
+                </p>
+                <button type="button" style={{ ...p.refreshBtn, marginTop: 10 }} onClick={loadPayments}>↺ Reintentar</button>
+              </div>
+            )
           )}
 
-          {/* Pending purchases */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" as const }}>
-              <h3 style={p.sectionTitle}>Compras de créditos</h3>
-              <div style={{ display: "flex", gap: 6 }}>
-                {(["pending", "completed", "rejected", "all"] as const).map((f) => (
-                  <button
-                    key={f}
-                    type="button"
-                    style={purchaseFilter === f ? { ...p.miniBtn, background: "rgba(0,0,0,0.1)", fontWeight: 700, color: "#111" } : p.miniBtn}
-                    onClick={() => { setPurchaseFilter(f); loadPurchases(f); }}
-                  >
-                    {f === "pending" ? "Pendientes" : f === "completed" ? "Aprobadas" : f === "rejected" ? "Rechazadas" : "Todas"}
+          {/* ── Purchases sub-tab ── */}
+          {paySubTab === "purchases" && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" as const }}>
+                <h3 style={p.sectionTitle}>Compras de créditos</h3>
+                <div style={{ display: "flex", gap: 6 }}>
+                  {(["pending", "completed", "rejected", "all"] as const).map((f) => (
+                    <button
+                      key={f}
+                      type="button"
+                      style={purchaseFilter === f ? { ...p.miniBtn, background: "rgba(0,0,0,0.1)", fontWeight: 700, color: "#111" } : p.miniBtn}
+                      onClick={() => { setPurchaseFilter(f); loadPurchases(f); }}
+                    >
+                      {f === "pending" ? "Pendientes" : f === "completed" ? "Aprobadas" : f === "rejected" ? "Rechazadas" : "Todas"}
+                    </button>
+                  ))}
+                  <button type="button" style={p.miniBtn} onClick={() => loadPurchases(purchaseFilter)} disabled={purchasesLoading}>
+                    {purchasesLoading ? "…" : "↺"}
                   </button>
-                ))}
-                <button type="button" style={p.miniBtn} onClick={() => loadPurchases(purchaseFilter)} disabled={purchasesLoading}>
-                  {purchasesLoading ? "…" : "↺"}
-                </button>
+                </div>
               </div>
-            </div>
 
-            {purchasesLoading ? (
-              <p style={p.loading}>Cargando…</p>
-            ) : purchases.length === 0 ? (
-              <p style={p.loading}>No hay compras {purchaseFilter === "pending" ? "pendientes" : ""}.</p>
-            ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                {purchases.map((pur) => (
-                  <div key={pur.id} style={p.purchaseRow}>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" as const }}>
-                        <strong style={{ fontSize: 14, color: "#111" }}>{pur.user_email}</strong>
-                        <PurchaseStatusPill status={pur.status} />
-                        <span style={{ fontSize: 12, color: "var(--muted)" }}>
-                          {pur.payment_method === "stripe" ? "💳 Tarjeta" : pur.payment_method === "paypal" ? "🅿 PayPal" : "🏦 Transferencia"}
-                        </span>
-                      </div>
-                      <div style={{ fontSize: 13, color: "#374151", marginTop: 3 }}>
-                        <strong style={{ color: "#6d28d9" }}>{pur.credits} créditos</strong>
-                        {" · "}
-                        <span>${pur.amount_usd} USD</span>
-                        {" · "}
-                        <span style={{ color: "var(--muted)" }}>{fmtDate(pur.created_at)}</span>
-                      </div>
-                      {pur.proof_url && (
-                        <a href={pur.proof_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: "#2563eb", marginTop: 4, display: "inline-block" }}>
-                          📎 Ver comprobante
-                        </a>
-                      )}
-                      {pur.admin_notes && (
-                        <p style={{ margin: "4px 0 0", fontSize: 12, color: "var(--muted)" }}>Nota: {pur.admin_notes}</p>
-                      )}
-                      {pur.status === "pending" && (
-                        <div style={{ marginTop: 8, display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" as const }}>
-                          <input
-                            className="input"
-                            type="text"
-                            placeholder="Nota opcional…"
-                            value={adminNotes[pur.id] ?? ""}
-                            onChange={(e) => setAdminNotes((prev) => ({ ...prev, [pur.id]: e.target.value }))}
-                            style={{ fontSize: 13, flex: "1 1 200px" }}
-                          />
-                          <button
-                            type="button"
-                            className="btn btn-primary"
-                            style={{ fontSize: 12, padding: "6px 14px", background: "#059669", borderColor: "#059669" }}
-                            disabled={processingPurchaseId === pur.id}
-                            onClick={async () => {
-                              setProcessingPurchaseId(pur.id);
-                              try {
-                                const res = await fetch(`/api/admin/purchases/${pur.id}`, {
-                                  method: "PATCH",
-                                  headers: { "Content-Type": "application/json" },
-                                  body: JSON.stringify({ action: "approve", admin_notes: adminNotes[pur.id] }),
-                                });
-                                const json = await res.json();
-                                if (!json.ok) throw new Error(json.message);
-                                flash(`Compra aprobada — ${pur.credits} créditos otorgados a ${pur.user_email}`, true);
-                                loadPurchases(purchaseFilter);
-                              } catch (e) { flash(e instanceof Error ? e.message : "Error", false); }
-                              finally { setProcessingPurchaseId(null); }
-                            }}
-                          >
-                            ✓ Aprobar
-                          </button>
-                          <button
-                            type="button"
-                            style={{ ...p.miniBtn, color: "#b91c1c", borderColor: "rgba(239,68,68,0.3)", background: "rgba(239,68,68,0.06)" }}
-                            disabled={processingPurchaseId === pur.id}
-                            onClick={async () => {
-                              setProcessingPurchaseId(pur.id);
-                              try {
-                                const res = await fetch(`/api/admin/purchases/${pur.id}`, {
-                                  method: "PATCH",
-                                  headers: { "Content-Type": "application/json" },
-                                  body: JSON.stringify({ action: "reject", admin_notes: adminNotes[pur.id] }),
-                                });
-                                const json = await res.json();
-                                if (!json.ok) throw new Error(json.message);
-                                flash("Compra rechazada.", true);
-                                loadPurchases(purchaseFilter);
-                              } catch (e) { flash(e instanceof Error ? e.message : "Error", false); }
-                              finally { setProcessingPurchaseId(null); }
-                            }}
-                          >
-                            ✗ Rechazar
-                          </button>
+              {purchasesLoading ? (
+                <p style={p.loading}>Cargando…</p>
+              ) : purchases.length === 0 ? (
+                <p style={p.loading}>No hay compras {purchaseFilter === "pending" ? "pendientes" : ""}.</p>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  {purchases.map((pur) => (
+                    <div key={pur.id} style={p.purchaseRow}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" as const }}>
+                          <strong style={{ fontSize: 14, color: "#111" }}>{pur.user_email}</strong>
+                          <PurchaseStatusPill status={pur.status} />
+                          <span style={{ fontSize: 12, color: "var(--muted)" }}>
+                            {pur.payment_method === "stripe" ? "💳 Tarjeta" : pur.payment_method === "paypal" ? "🅿 PayPal" : "🏦 Transferencia"}
+                          </span>
                         </div>
-                      )}
+                        <div style={{ fontSize: 13, color: "#374151", marginTop: 3 }}>
+                          <strong style={{ color: "#6d28d9" }}>{pur.credits} créditos</strong>
+                          {" · "}
+                          <span>${pur.amount_usd} USD</span>
+                          {" · "}
+                          <span style={{ color: "var(--muted)" }}>{fmtDate(pur.created_at)}</span>
+                        </div>
+                        {pur.proof_url && (
+                          <a href={pur.proof_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: "#2563eb", marginTop: 4, display: "inline-block" }}>
+                            📎 Ver comprobante
+                          </a>
+                        )}
+                        {pur.admin_notes && (
+                          <p style={{ margin: "4px 0 0", fontSize: 12, color: "var(--muted)" }}>Nota: {pur.admin_notes}</p>
+                        )}
+                        {pur.status === "pending" && (
+                          <div style={{ marginTop: 8, display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" as const }}>
+                            <input
+                              className="input"
+                              type="text"
+                              placeholder="Nota opcional…"
+                              value={adminNotes[pur.id] ?? ""}
+                              onChange={(e) => setAdminNotes((prev) => ({ ...prev, [pur.id]: e.target.value }))}
+                              style={{ fontSize: 13, flex: "1 1 200px" }}
+                            />
+                            <button
+                              type="button"
+                              className="btn btn-primary"
+                              style={{ fontSize: 12, padding: "6px 14px", background: "#059669", borderColor: "#059669" }}
+                              disabled={processingPurchaseId === pur.id}
+                              onClick={async () => {
+                                setProcessingPurchaseId(pur.id);
+                                try {
+                                  const res = await fetch(`/api/admin/purchases/${pur.id}`, {
+                                    method: "PATCH",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({ action: "approve", admin_notes: adminNotes[pur.id] }),
+                                  });
+                                  const json = await res.json();
+                                  if (!json.ok) throw new Error(json.message);
+                                  flash(`Compra aprobada — ${pur.credits} créditos otorgados a ${pur.user_email}`, true);
+                                  loadPurchases(purchaseFilter);
+                                } catch (e) { flash(e instanceof Error ? e.message : "Error", false); }
+                                finally { setProcessingPurchaseId(null); }
+                              }}
+                            >
+                              ✓ Aprobar
+                            </button>
+                            <button
+                              type="button"
+                              style={{ ...p.miniBtn, color: "#b91c1c", borderColor: "rgba(239,68,68,0.3)", background: "rgba(239,68,68,0.06)" }}
+                              disabled={processingPurchaseId === pur.id}
+                              onClick={async () => {
+                                setProcessingPurchaseId(pur.id);
+                                try {
+                                  const res = await fetch(`/api/admin/purchases/${pur.id}`, {
+                                    method: "PATCH",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({ action: "reject", admin_notes: adminNotes[pur.id] }),
+                                  });
+                                  const json = await res.json();
+                                  if (!json.ok) throw new Error(json.message);
+                                  flash("Compra rechazada.", true);
+                                  loadPurchases(purchaseFilter);
+                                } catch (e) { flash(e instanceof Error ? e.message : "Error", false); }
+                                finally { setProcessingPurchaseId(null); }
+                              }}
+                            >
+                              ✗ Rechazar
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 
