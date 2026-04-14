@@ -90,6 +90,17 @@ export function SuperAdminPanel({
   const [regeneratedLink, setRegeneratedLink] = useState<{ email: string; link: string } | null>(null);
   const [resettingPasswordFor, setResettingPasswordFor] = useState<ProfileWithStats | null>(null);
 
+  // Events search / filter / sort
+  const [eventsSearch, setEventsSearch] = useState("");
+  const [eventsStatus, setEventsStatus] = useState<"all" | "active" | "inactive">("all");
+  const [eventsSort, setEventsSort] = useState("created_desc");
+
+  // Users search / filter / sort
+  const [usersSearch, setUsersSearch] = useState("");
+  const [usersRole, setUsersRole] = useState<"all" | "owner" | "admin" | "super_admin">("all");
+  const [usersStatus, setUsersStatus] = useState<"all" | "active" | "inactive">("all");
+  const [usersSort, setUsersSort] = useState("created_desc");
+
   // Pricing
   const [pricingList, setPricingList] = useState<CreditPricing[]>([]);
   const [pricingLoading, setPricingLoading] = useState(false);
@@ -368,6 +379,47 @@ export function SuperAdminPanel({
     }
   };
 
+  // ── derived filtered/sorted lists ───────────────────────────────────────────
+
+  const filteredEvents = events
+    .filter((ev) => {
+      const q = eventsSearch.toLowerCase();
+      if (q && !ev.title.toLowerCase().includes(q) && !ev.slug.toLowerCase().includes(q) && !(ev.owner_email ?? "").toLowerCase().includes(q)) return false;
+      if (eventsStatus === "active" && !ev.is_active) return false;
+      if (eventsStatus === "inactive" && ev.is_active) return false;
+      return true;
+    })
+    .sort((a, b) => {
+      switch (eventsSort) {
+        case "title_asc":    return a.title.localeCompare(b.title);
+        case "title_desc":   return b.title.localeCompare(a.title);
+        case "photos_desc":  return b.photo_count - a.photo_count;
+        case "date_asc":     return (a.event_date ?? "").localeCompare(b.event_date ?? "");
+        case "date_desc":    return (b.event_date ?? "").localeCompare(a.event_date ?? "");
+        case "created_asc":  return a.created_at.localeCompare(b.created_at);
+        default:             return b.created_at.localeCompare(a.created_at); // created_desc
+      }
+    });
+
+  const filteredUsers = users
+    .filter((u) => {
+      const q = usersSearch.toLowerCase();
+      if (q && !u.email.toLowerCase().includes(q) && !(u.display_name ?? "").toLowerCase().includes(q)) return false;
+      if (usersRole !== "all" && u.role !== usersRole) return false;
+      if (usersStatus === "active" && !u.is_active) return false;
+      if (usersStatus === "inactive" && u.is_active) return false;
+      return true;
+    })
+    .sort((a, b) => {
+      switch (usersSort) {
+        case "email_asc":    return a.email.localeCompare(b.email);
+        case "credits_desc": return b.credits - a.credits;
+        case "events_desc":  return b.event_count - a.event_count;
+        case "created_asc":  return a.created_at.localeCompare(b.created_at);
+        default:             return b.created_at.localeCompare(a.created_at); // created_desc
+      }
+    });
+
   // ── render ──────────────────────────────────────────────────────────────────
 
   return (
@@ -465,8 +517,31 @@ export function SuperAdminPanel({
       {tab === "events" && (
         <div style={p.content}>
           <div style={p.tableActions}>
-            <span style={p.tableCount}>{events.length} eventos</span>
+            <span style={p.tableCount}>{filteredEvents.length} de {events.length} eventos</span>
             <button type="button" style={p.refreshBtn} onClick={loadEvents} disabled={eventsLoading}>{eventsLoading ? "Cargando…" : "↺ Actualizar"}</button>
+          </div>
+          <div style={p.filterBar}>
+            <input
+              className="input"
+              placeholder="Buscar por título, slug o responsable…"
+              value={eventsSearch}
+              onChange={(e) => setEventsSearch(e.target.value)}
+              style={p.searchInput}
+            />
+            <select className="input" style={p.filterSelect} value={eventsStatus} onChange={(e) => setEventsStatus(e.target.value as typeof eventsStatus)}>
+              <option value="all">Todos los estados</option>
+              <option value="active">Activos</option>
+              <option value="inactive">Inactivos</option>
+            </select>
+            <select className="input" style={p.filterSelect} value={eventsSort} onChange={(e) => setEventsSort(e.target.value)}>
+              <option value="created_desc">Más reciente</option>
+              <option value="created_asc">Más antiguo</option>
+              <option value="title_asc">Título A → Z</option>
+              <option value="title_desc">Título Z → A</option>
+              <option value="photos_desc">Más fotos</option>
+              <option value="date_asc">Fecha próxima</option>
+              <option value="date_desc">Fecha lejana</option>
+            </select>
           </div>
           {eventsLoading ? <p style={p.loading}>Cargando…</p> : (
             <div style={p.tableWrap}>
@@ -480,7 +555,10 @@ export function SuperAdminPanel({
                   <th style={p.th}>Acciones</th>
                 </tr></thead>
                 <tbody>
-                  {events.map((ev) => (
+                  {filteredEvents.length === 0 && (
+                    <tr><td colSpan={6} style={{ ...p.td, textAlign: "center", color: "var(--muted)", padding: "24px 0" }}>Sin resultados</td></tr>
+                  )}
+                  {filteredEvents.map((ev) => (
                     <tr key={ev.id} style={{ ...p.tr, opacity: ev.is_active ? 1 : 0.55 }}>
                       <td style={p.td}>
                         <strong style={{ fontSize: 14 }}>{ev.title}</strong>
@@ -527,13 +605,40 @@ export function SuperAdminPanel({
       {tab === "users" && (
         <div style={p.content}>
           <div style={p.tableActions}>
-            <span style={p.tableCount}>{users.length} usuarios</span>
+            <span style={p.tableCount}>{filteredUsers.length} de {users.length} usuarios</span>
             <div style={{ display: "flex", gap: 8 }}>
               <button type="button" style={{ ...p.refreshBtn, color: "#6d28d9", borderColor: "rgba(124,58,237,0.3)", background: "rgba(124,58,237,0.06)" }} onClick={() => setShowNewUser(true)}>
                 + Nuevo usuario
               </button>
               <button type="button" style={p.refreshBtn} onClick={loadUsers} disabled={usersLoading}>{usersLoading ? "Cargando…" : "↺ Actualizar"}</button>
             </div>
+          </div>
+          <div style={p.filterBar}>
+            <input
+              className="input"
+              placeholder="Buscar por email o nombre…"
+              value={usersSearch}
+              onChange={(e) => setUsersSearch(e.target.value)}
+              style={p.searchInput}
+            />
+            <select className="input" style={p.filterSelect} value={usersRole} onChange={(e) => setUsersRole(e.target.value as typeof usersRole)}>
+              <option value="all">Todos los roles</option>
+              <option value="owner">Owner</option>
+              <option value="admin">Admin</option>
+              <option value="super_admin">Super admin</option>
+            </select>
+            <select className="input" style={p.filterSelect} value={usersStatus} onChange={(e) => setUsersStatus(e.target.value as typeof usersStatus)}>
+              <option value="all">Todos los estados</option>
+              <option value="active">Activos</option>
+              <option value="inactive">Inactivos</option>
+            </select>
+            <select className="input" style={p.filterSelect} value={usersSort} onChange={(e) => setUsersSort(e.target.value)}>
+              <option value="created_desc">Más reciente</option>
+              <option value="created_asc">Más antiguo</option>
+              <option value="email_asc">Email A → Z</option>
+              <option value="credits_desc">Más créditos</option>
+              <option value="events_desc">Más eventos</option>
+            </select>
           </div>
 
           {showNewUser && (
@@ -595,7 +700,10 @@ export function SuperAdminPanel({
                   <th style={p.th}>Acciones</th>
                 </tr></thead>
                 <tbody>
-                  {users.map((user) => (
+                  {filteredUsers.length === 0 && (
+                    <tr><td colSpan={8} style={{ ...p.td, textAlign: "center", color: "var(--muted)", padding: "24px 0" }}>Sin resultados</td></tr>
+                  )}
+                  {filteredUsers.map((user) => (
                     <tr key={user.id} style={{ ...p.tr, opacity: user.is_active ? 1 : 0.55 }}>
                       <td style={p.td}>
                         <span style={{ fontWeight: user.email === userEmail ? 700 : 400 }}>{user.email}</span>
@@ -1146,6 +1254,9 @@ const p: Record<string, React.CSSProperties> = {
   tableActions: { display: "flex", alignItems: "center", justifyContent: "space-between" },
   tableCount: { fontSize: 13, color: "var(--muted)", fontWeight: 600 },
   refreshBtn: { padding: "6px 14px", borderRadius: 999, background: "rgba(0,0,0,0.04)", border: "1px solid rgba(0,0,0,0.08)", fontSize: 13, fontWeight: 600, cursor: "pointer", color: "var(--muted)" },
+  filterBar: { display: "flex", gap: 8, flexWrap: "wrap" as const, alignItems: "center" },
+  searchInput: { flex: "1 1 200px", fontSize: 13, padding: "7px 12px" },
+  filterSelect: { flex: "0 0 auto", fontSize: 13, padding: "7px 10px", minWidth: 140 },
   miniBtn: { padding: "4px 10px", borderRadius: 999, background: "rgba(0,0,0,0.04)", border: "1px solid rgba(0,0,0,0.1)", fontSize: 12, fontWeight: 600, cursor: "pointer", color: "#374151" },
   miniLink: { padding: "4px 10px", borderRadius: 999, background: "rgba(0,0,0,0.04)", border: "1px solid rgba(0,0,0,0.1)", fontSize: 12, fontWeight: 600, cursor: "pointer", color: "#374151", textDecoration: "none", display: "inline-block" },
   youPill: { marginLeft: 6, fontSize: 10, fontWeight: 700, padding: "1px 7px", borderRadius: 999, background: "rgba(124,58,237,0.1)", color: "#6d28d9", verticalAlign: "middle" },
