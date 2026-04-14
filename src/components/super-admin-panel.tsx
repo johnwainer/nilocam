@@ -1115,11 +1115,24 @@ function PaymentsTab({
               style={{ fontSize: 13, fontFamily: "monospace" }}
             />
           </div>
+          <div style={p.payField}>
+            <label style={p.formLabel}>Webhook Signing Secret (whsec_…)</label>
+            <PasswordInput
+              className="input"
+              value={draft.stripe_webhook_secret}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => set("stripe_webhook_secret", e.target.value)}
+              placeholder="whsec_…"
+              style={{ fontSize: 13, fontFamily: "monospace" }}
+            />
+          </div>
         </div>
-        <p style={{ margin: 0, fontSize: 12, color: "var(--muted)" }}>
-          Las claves las encuentras en <strong>dashboard.stripe.com → Developers → API keys</strong>.
-          El webhook URL para configurar en Stripe es: <code style={{ fontSize: 11 }}>/api/payments/stripe/webhook</code>
-        </p>
+        <div style={{ background: "rgba(0,0,0,0.025)", borderRadius: 12, padding: "10px 14px" }}>
+          <p style={{ margin: 0, fontSize: 12, color: "var(--muted)", lineHeight: 1.6 }}>
+            <strong>Claves API:</strong> dashboard.stripe.com → Developers → API keys<br />
+            <strong>Webhook:</strong> dashboard.stripe.com → Developers → Webhooks → Add endpoint<br />
+            URL a registrar: <code style={{ fontSize: 11, background: "rgba(0,0,0,0.05)", padding: "1px 5px", borderRadius: 4 }}>https://tudominio.com/api/payments/stripe/webhook</code> · Evento: <code style={{ fontSize: 11, background: "rgba(0,0,0,0.05)", padding: "1px 5px", borderRadius: 4 }}>payment_intent.succeeded</code>
+          </p>
+        </div>
       </div>
 
       {/* PayPal */}
@@ -1161,9 +1174,22 @@ function PaymentsTab({
             />
           </div>
         </div>
-        <p style={{ margin: 0, fontSize: 12, color: "var(--muted)" }}>
-          Credenciales de <strong>developer.paypal.com → My Apps & Credentials</strong>. Usa modo Live para producción.
-        </p>
+        <label style={{ ...p.toggleLabel, gap: 8 }}>
+          <input
+            type="checkbox"
+            checked={draft.paypal_sandbox}
+            onChange={(e) => set("paypal_sandbox", e.target.checked)}
+          />
+          <span style={{ fontSize: 13, fontWeight: 600, color: draft.paypal_sandbox ? "#92400e" : "#059669" }}>
+            {draft.paypal_sandbox ? "🧪 Modo sandbox (pruebas)" : "🚀 Modo producción (Live)"}
+          </span>
+        </label>
+        <div style={{ background: "rgba(0,0,0,0.025)", borderRadius: 12, padding: "10px 14px" }}>
+          <p style={{ margin: 0, fontSize: 12, color: "var(--muted)", lineHeight: 1.6 }}>
+            <strong>Credenciales:</strong> developer.paypal.com → My Apps & Credentials<br />
+            Usa credenciales <strong>Sandbox</strong> para pruebas y <strong>Live</strong> para producción. El toggle de arriba controla a qué entorno se conecta.
+          </p>
+        </div>
       </div>
 
       {/* Bank Transfer */}

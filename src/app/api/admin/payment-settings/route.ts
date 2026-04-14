@@ -42,8 +42,8 @@ export async function POST(request: Request) {
   // Only allow known fields to prevent injection
   const allowed: (keyof PaymentSettings)[] = [
     "credit_price_usd",
-    "stripe_enabled", "stripe_public_key", "stripe_secret_key",
-    "paypal_enabled", "paypal_client_id", "paypal_secret",
+    "stripe_enabled", "stripe_public_key", "stripe_secret_key", "stripe_webhook_secret",
+    "paypal_enabled", "paypal_client_id", "paypal_secret", "paypal_sandbox",
     "bank_transfer_enabled", "bank_transfer_info",
   ];
 

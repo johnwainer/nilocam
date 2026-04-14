@@ -181,9 +181,11 @@ export type PaymentSettings = {
   stripe_enabled: boolean;
   stripe_public_key: string;
   stripe_secret_key: string;
+  stripe_webhook_secret: string;
   paypal_enabled: boolean;
   paypal_client_id: string;
   paypal_secret: string;
+  paypal_sandbox: boolean;
   bank_transfer_enabled: boolean;
   bank_transfer_info: BankTransferInfo;
 };

@@ -11,35 +11,35 @@ function serviceClient() {
 }
 
 // POST /api/payments/stripe/webhook
-// Stripe calls this after payment events. Set STRIPE_WEBHOOK_SECRET in env.
+// Stripe calls this after payment events.
+// Webhook secret is configured from the super admin panel (Pagos tab).
 // This is a backup — the /confirm route is the primary grant path.
 export async function POST(request: NextRequest) {
   const payload = await request.text();
   const signature = request.headers.get("stripe-signature") ?? "";
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-
-  if (!webhookSecret) {
-    return NextResponse.json({ ok: false, message: "Webhook secret not configured." }, { status: 503 });
-  }
 
   const admin = serviceClient();
   const { data: settings } = await admin
     .from("payment_settings")
-    .select("stripe_secret_key")
+    .select("stripe_secret_key,stripe_webhook_secret")
     .eq("id", 1)
     .single();
 
   if (!settings?.stripe_secret_key) {
-    return NextResponse.json({ ok: false }, { status: 503 });
+    return NextResponse.json({ ok: false, message: "Stripe no configurado." }, { status: 503 });
+  }
+
+  if (!settings.stripe_webhook_secret) {
+    return NextResponse.json({ ok: false, message: "Webhook secret no configurado en el panel de pagos." }, { status: 503 });
   }
 
   const stripe = new Stripe(settings.stripe_secret_key);
 
   let event: Stripe.Event;
   try {
-    event = stripe.webhooks.constructEvent(payload, signature, webhookSecret);
+    event = stripe.webhooks.constructEvent(payload, signature, settings.stripe_webhook_secret);
   } catch {
-    return NextResponse.json({ ok: false, message: "Invalid signature." }, { status: 400 });
+    return NextResponse.json({ ok: false, message: "Firma inválida." }, { status: 400 });
   }
 
   if (event.type === "payment_intent.succeeded") {

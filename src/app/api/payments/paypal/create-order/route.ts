@@ -10,8 +10,12 @@ function serviceClient() {
   );
 }
 
-async function getPayPalAccessToken(clientId: string, secret: string): Promise<string> {
-  const base = process.env.PAYPAL_BASE_URL ?? "https://api-m.paypal.com";
+function paypalBase(sandbox: boolean) {
+  return sandbox ? "https://api-m.sandbox.paypal.com" : "https://api-m.paypal.com";
+}
+
+async function getPayPalAccessToken(clientId: string, secret: string, sandbox: boolean): Promise<string> {
+  const base = paypalBase(sandbox);
   const res = await fetch(`${base}/v1/oauth2/token`, {
     method: "POST",
     headers: {
@@ -37,7 +41,7 @@ export async function POST(request: Request) {
   const admin = serviceClient();
   const { data: settings } = await admin
     .from("payment_settings")
-    .select("paypal_enabled,paypal_client_id,paypal_secret,credit_price_usd")
+    .select("paypal_enabled,paypal_client_id,paypal_secret,paypal_sandbox,credit_price_usd")
     .eq("id", 1)
     .single();
 
@@ -65,8 +69,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, message: "Error creando registro de compra." }, { status: 500 });
   }
 
-  const accessToken = await getPayPalAccessToken(settings.paypal_client_id, settings.paypal_secret);
-  const base = process.env.PAYPAL_BASE_URL ?? "https://api-m.paypal.com";
+  const sandbox = settings.paypal_sandbox ?? false;
+  const accessToken = await getPayPalAccessToken(settings.paypal_client_id, settings.paypal_secret, sandbox);
+  const base = paypalBase(sandbox);
 
   const orderRes = await fetch(`${base}/v2/checkout/orders`, {
     method: "POST",
