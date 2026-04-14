@@ -3,6 +3,7 @@
 import { useState, useEffect, type FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
+import { PasswordInput } from "@/components/password-input";
 
 const supabase = createSupabaseBrowserClient();
 
@@ -171,9 +172,8 @@ export function AdminLogin() {
             {mode !== "reset" && (
               <label style={s.fieldWrap}>
                 <span className="label">Contraseña</span>
-                <input
+                <PasswordInput
                   className="input"
-                  type="password"
                   placeholder="Mínimo 8 caracteres"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}

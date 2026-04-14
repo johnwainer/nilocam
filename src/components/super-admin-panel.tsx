@@ -5,6 +5,7 @@ import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { formatDate, siteUrl } from "@/lib/utils";
 import type { CreditPricing, EventRecord } from "@/types";
 import { SuperCreditsPanel } from "@/components/credits-panel";
+import { PasswordInput } from "@/components/password-input";
 
 const supabase = createSupabaseBrowserClient();
 
@@ -916,9 +917,8 @@ function ResetPasswordForm({ user, onSaved, onCancel }: {
       <div style={p.formRow}>
         <div style={p.formField}>
           <label style={p.formLabel}>Nueva contraseña (mín. 8 caracteres)</label>
-          <input
+          <PasswordInput
             className="input"
-            type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Nueva contraseña"
@@ -928,9 +928,8 @@ function ResetPasswordForm({ user, onSaved, onCancel }: {
         </div>
         <div style={p.formField}>
           <label style={p.formLabel}>Confirmar contraseña</label>
-          <input
+          <PasswordInput
             className="input"
-            type="password"
             value={confirm}
             onChange={(e) => setConfirm(e.target.value)}
             placeholder="Repetir contraseña"

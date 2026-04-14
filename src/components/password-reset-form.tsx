@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
+import { PasswordInput } from "@/components/password-input";
 
 const supabase = createSupabaseBrowserClient();
 
@@ -55,9 +56,8 @@ export function PasswordResetForm() {
         <form onSubmit={submit} style={styles.form}>
           <label>
             <span className="label">Nueva contraseña</span>
-            <input
+            <PasswordInput
               className="input"
-              type="password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               autoComplete="new-password"
@@ -67,9 +67,8 @@ export function PasswordResetForm() {
           </label>
           <label>
             <span className="label">Confirmar contraseña</span>
-            <input
+            <PasswordInput
               className="input"
-              type="password"
               value={confirmPassword}
               onChange={(event) => setConfirmPassword(event.target.value)}
               autoComplete="new-password"
