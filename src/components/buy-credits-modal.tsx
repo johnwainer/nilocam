@@ -91,6 +91,7 @@ export function BuyCreditsModal({
   // PayPal state
   const paypalContainerRef = useRef<HTMLDivElement>(null);
   const paypalRendered = useRef(false);
+  const effectiveCreditsRef = useRef(10);
 
   // ── load settings ──────────────────────────────────────────────────────────
 
@@ -111,6 +112,9 @@ export function BuyCreditsModal({
 
   const effectiveCredits = customCredits !== "" ? Math.max(1, parseInt(customCredits) || 0) : credits;
   const amountUsd = settings ? effectiveCredits * settings.credit_price_usd : 0;
+
+  // Keep ref in sync so PayPal/Stripe closures always read the latest value
+  effectiveCreditsRef.current = effectiveCredits;
 
   const activeMethods = settings
     ? [
@@ -191,7 +195,7 @@ export function BuyCreditsModal({
         const res = await fetch("/api/payments/paypal/create-order", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ credits: effectiveCredits }),
+          body: JSON.stringify({ credits: effectiveCreditsRef.current }),
         });
         const json = await res.json() as { ok: boolean; orderId: string; purchaseId: string; message?: string };
         if (!json.ok) throw new Error(json.message ?? "Error creando orden.");
@@ -224,7 +228,7 @@ export function BuyCreditsModal({
         setStep("error");
       },
     }).render(container);
-  }, [settings, effectiveCredits, onSuccess]);
+  }, [settings, onSuccess]);
 
   // ── step transitions ───────────────────────────────────────────────────────
 

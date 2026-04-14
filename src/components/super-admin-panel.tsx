@@ -1075,7 +1075,11 @@ function PaymentsTab({
   saving: boolean;
   onSave: (patch: Partial<PaymentSettings>) => void;
 }) {
-  const [draft, setDraft] = useState<PaymentSettings>({ ...settings });
+  const [draft, setDraft] = useState<PaymentSettings>({
+    ...settings,
+    stripe_webhook_secret: settings.stripe_webhook_secret ?? "",
+    paypal_sandbox: settings.paypal_sandbox ?? false,
+  });
 
   const set = <K extends keyof PaymentSettings>(key: K, value: PaymentSettings[K]) =>
     setDraft((prev) => ({ ...prev, [key]: value }));

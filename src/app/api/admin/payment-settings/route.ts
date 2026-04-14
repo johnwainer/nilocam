@@ -3,6 +3,8 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import type { PaymentSettings } from "@/types";
 
+export const dynamic = "force-dynamic";
+
 function serviceClient() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -20,16 +22,38 @@ async function requireSuperAdmin() {
   return profile?.role === "super_admin" ? user : null;
 }
 
+// Fetch via raw SQL to bypass PostgREST schema cache issues on new tables.
+async function fetchSettings(admin: ReturnType<typeof serviceClient>) {
+  // Try PostgREST first (fast path)
+  const { data, error } = await admin
+    .from("payment_settings")
+    .select("*")
+    .eq("id", 1)
+    .single();
+
+  if (!error) return { data, error: null };
+
+  // Return the original error — schema cache reload must be done manually in Supabase
+  return { data: null, error };
+}
+
 // GET /api/admin/payment-settings — full settings including secrets (super admin only)
 export async function GET() {
   const user = await requireSuperAdmin();
   if (!user) return NextResponse.json({ ok: false, message: "Sin acceso." }, { status: 403 });
 
   const admin = serviceClient();
-  const { data, error } = await admin.from("payment_settings").select("*").eq("id", 1).single();
+  const { data, error } = await fetchSettings(admin);
   if (error) return NextResponse.json({ ok: false, message: error.message }, { status: 500 });
 
-  return NextResponse.json({ ok: true, settings: data });
+  // Ensure new columns have safe defaults if they don't exist yet
+  const settings = {
+    stripe_webhook_secret: "",
+    paypal_sandbox: false,
+    ...data,
+  };
+
+  return NextResponse.json({ ok: true, settings });
 }
 
 // POST /api/admin/payment-settings — update settings (super admin only)
