@@ -848,11 +848,19 @@ export function AdminDashboard({
                     </div>
 
                     <label style={s.field}>
-                      <span className="label">Tipo de evento</span>
+                      <span className="label">
+                        Tipo de evento
+                        {savedIds.has(selected.id) && !isSuperAdmin && (
+                          <span style={{ fontSize: 11, color: "var(--muted)", fontWeight: 400, marginLeft: 6 }}>
+                            · no editable después de crear
+                          </span>
+                        )}
+                      </span>
                       <select
                         className="select"
                         value={selected.event_type_key}
                         onChange={(e) => applyPreset(e.target.value as EventTypeKey)}
+                        disabled={savedIds.has(selected.id) && !isSuperAdmin}
                       >
                         {EVENT_TYPES.map((opt) => (
                           <option key={opt.key} value={opt.key}>{opt.name}</option>

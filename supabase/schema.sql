@@ -105,6 +105,8 @@ create or replace function public.is_super_admin()
 returns boolean
 language sql
 stable
+security definer
+set search_path = public
 as $$
   select exists (
     select 1
@@ -118,10 +120,14 @@ create or replace function public.is_event_owner_or_admin(event_owner_email text
 returns boolean
 language sql
 stable
+security definer
+set search_path = public
 as $$
   select public.is_super_admin()
-    or auth.role() = 'authenticated'
-       and auth.jwt() ->> 'email' = event_owner_email;
+    or (
+      auth.role() = 'authenticated'
+      and auth.jwt() ->> 'email' = event_owner_email
+    );
 $$;
 
 alter table public.profiles enable row level security;
