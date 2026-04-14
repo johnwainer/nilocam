@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { formatDate, siteUrl } from "@/lib/utils";
-import type { CreditPricing, EventRecord } from "@/types";
+import type { CreditPricing, CreditPurchase, EventRecord, PaymentSettings } from "@/types";
 import { SuperCreditsPanel } from "@/components/credits-panel";
 import { PasswordInput } from "@/components/password-input";
 
@@ -44,7 +44,7 @@ type RecentPhoto = {
   moderation_status: string;
 };
 
-type SATab = "stats" | "events" | "users" | "pricing" | "credits";
+type SATab = "stats" | "events" | "users" | "pricing" | "credits" | "payments";
 
 const ROLE_LABELS: Record<string, string> = {
   owner: "Owner",
@@ -106,6 +106,16 @@ export function SuperAdminPanel({
   const [pricingLoading, setPricingLoading] = useState(false);
   const [savingPriceKey, setSavingPriceKey] = useState<string | null>(null);
   const [editingPrices, setEditingPrices] = useState<Record<string, number>>({});
+
+  // Payments
+  const [paySettings, setPaySettings] = useState<PaymentSettings | null>(null);
+  const [payLoading, setPayLoading] = useState(false);
+  const [paySaving, setPaySaving] = useState(false);
+  const [purchases, setPurchases] = useState<CreditPurchase[]>([]);
+  const [purchasesLoading, setPurchasesLoading] = useState(false);
+  const [purchaseFilter, setPurchaseFilter] = useState<"all" | "pending" | "completed" | "rejected">("pending");
+  const [processingPurchaseId, setProcessingPurchaseId] = useState<string | null>(null);
+  const [adminNotes, setAdminNotes] = useState<Record<string, string>>({});
 
   const flash = useCallback((text: string, ok: boolean) => {
     setNotice({ text, ok });
@@ -221,12 +231,35 @@ export function SuperAdminPanel({
     }
   }, []);
 
+  const loadPayments = useCallback(async () => {
+    setPayLoading(true);
+    try {
+      const res = await fetch("/api/admin/payment-settings");
+      const json = await res.json();
+      if (json.ok) setPaySettings(json.settings);
+    } finally {
+      setPayLoading(false);
+    }
+  }, []);
+
+  const loadPurchases = useCallback(async (status: string) => {
+    setPurchasesLoading(true);
+    try {
+      const res = await fetch(`/api/admin/purchases?status=${status}`);
+      const json = await res.json();
+      if (json.ok) setPurchases(json.purchases);
+    } finally {
+      setPurchasesLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     if (tab === "stats") loadStats();
     else if (tab === "events") loadEvents();
     else if (tab === "users") loadUsers();
     else if (tab === "pricing") loadPricing();
-  }, [tab, loadStats, loadEvents, loadUsers, loadPricing]);
+    else if (tab === "payments") { loadPayments(); loadPurchases("pending"); }
+  }, [tab, loadStats, loadEvents, loadUsers, loadPricing, loadPayments, loadPurchases]);
 
   // ── event actions ───────────────────────────────────────────────────────────
 
@@ -431,9 +464,9 @@ export function SuperAdminPanel({
           <span style={p.panelSub}>Sesión como {userEmail}</span>
         </div>
         <div style={p.tabBar}>
-          {(["stats", "events", "users", "pricing", "credits"] as SATab[]).map((t) => (
+          {(["stats", "events", "users", "pricing", "credits", "payments"] as SATab[]).map((t) => (
             <button key={t} type="button" onClick={() => setTab(t)} style={tab === t ? p.tabActive : p.tab}>
-              {t === "stats" ? "Estadísticas" : t === "events" ? "Eventos" : t === "users" ? "Usuarios" : t === "pricing" ? "Precios" : "Créditos"}
+              {t === "stats" ? "Estadísticas" : t === "events" ? "Eventos" : t === "users" ? "Usuarios" : t === "pricing" ? "Precios" : t === "credits" ? "Créditos" : "Pagos"}
             </button>
           ))}
         </div>
@@ -793,6 +826,154 @@ export function SuperAdminPanel({
       )}
 
       {/* ── PRICING ── */}
+      {/* ── PAYMENTS ── */}
+      {tab === "payments" && (
+        <div style={p.content}>
+          {payLoading ? <p style={p.loading}>Cargando configuración…</p> : paySettings ? (
+            <PaymentsTab
+              settings={paySettings}
+              saving={paySaving}
+              onSave={async (patch) => {
+                setPaySaving(true);
+                try {
+                  const res = await fetch("/api/admin/payment-settings", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(patch),
+                  });
+                  const json = await res.json();
+                  if (!json.ok) throw new Error(json.message);
+                  setPaySettings((prev) => prev ? { ...prev, ...patch } : prev);
+                  flash("Configuración de pagos guardada", true);
+                } catch (e) {
+                  flash(e instanceof Error ? e.message : "Error", false);
+                } finally {
+                  setPaySaving(false);
+                }
+              }}
+            />
+          ) : (
+            <p style={p.loading}>Error cargando configuración. Asegúrate de haber ejecutado el SQL de add-payment-tables.sql.</p>
+          )}
+
+          {/* Pending purchases */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" as const }}>
+              <h3 style={p.sectionTitle}>Compras de créditos</h3>
+              <div style={{ display: "flex", gap: 6 }}>
+                {(["pending", "completed", "rejected", "all"] as const).map((f) => (
+                  <button
+                    key={f}
+                    type="button"
+                    style={purchaseFilter === f ? { ...p.miniBtn, background: "rgba(0,0,0,0.1)", fontWeight: 700, color: "#111" } : p.miniBtn}
+                    onClick={() => { setPurchaseFilter(f); loadPurchases(f); }}
+                  >
+                    {f === "pending" ? "Pendientes" : f === "completed" ? "Aprobadas" : f === "rejected" ? "Rechazadas" : "Todas"}
+                  </button>
+                ))}
+                <button type="button" style={p.miniBtn} onClick={() => loadPurchases(purchaseFilter)} disabled={purchasesLoading}>
+                  {purchasesLoading ? "…" : "↺"}
+                </button>
+              </div>
+            </div>
+
+            {purchasesLoading ? (
+              <p style={p.loading}>Cargando…</p>
+            ) : purchases.length === 0 ? (
+              <p style={p.loading}>No hay compras {purchaseFilter === "pending" ? "pendientes" : ""}.</p>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {purchases.map((pur) => (
+                  <div key={pur.id} style={p.purchaseRow}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" as const }}>
+                        <strong style={{ fontSize: 14, color: "#111" }}>{pur.user_email}</strong>
+                        <PurchaseStatusPill status={pur.status} />
+                        <span style={{ fontSize: 12, color: "var(--muted)" }}>
+                          {pur.payment_method === "stripe" ? "💳 Tarjeta" : pur.payment_method === "paypal" ? "🅿 PayPal" : "🏦 Transferencia"}
+                        </span>
+                      </div>
+                      <div style={{ fontSize: 13, color: "#374151", marginTop: 3 }}>
+                        <strong style={{ color: "#6d28d9" }}>{pur.credits} créditos</strong>
+                        {" · "}
+                        <span>${pur.amount_usd} USD</span>
+                        {" · "}
+                        <span style={{ color: "var(--muted)" }}>{fmtDate(pur.created_at)}</span>
+                      </div>
+                      {pur.proof_url && (
+                        <a href={pur.proof_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: "#2563eb", marginTop: 4, display: "inline-block" }}>
+                          📎 Ver comprobante
+                        </a>
+                      )}
+                      {pur.admin_notes && (
+                        <p style={{ margin: "4px 0 0", fontSize: 12, color: "var(--muted)" }}>Nota: {pur.admin_notes}</p>
+                      )}
+                      {pur.status === "pending" && (
+                        <div style={{ marginTop: 8, display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" as const }}>
+                          <input
+                            className="input"
+                            type="text"
+                            placeholder="Nota opcional…"
+                            value={adminNotes[pur.id] ?? ""}
+                            onChange={(e) => setAdminNotes((prev) => ({ ...prev, [pur.id]: e.target.value }))}
+                            style={{ fontSize: 13, flex: "1 1 200px" }}
+                          />
+                          <button
+                            type="button"
+                            className="btn btn-primary"
+                            style={{ fontSize: 12, padding: "6px 14px", background: "#059669", borderColor: "#059669" }}
+                            disabled={processingPurchaseId === pur.id}
+                            onClick={async () => {
+                              setProcessingPurchaseId(pur.id);
+                              try {
+                                const res = await fetch(`/api/admin/purchases/${pur.id}`, {
+                                  method: "PATCH",
+                                  headers: { "Content-Type": "application/json" },
+                                  body: JSON.stringify({ action: "approve", admin_notes: adminNotes[pur.id] }),
+                                });
+                                const json = await res.json();
+                                if (!json.ok) throw new Error(json.message);
+                                flash(`Compra aprobada — ${pur.credits} créditos otorgados a ${pur.user_email}`, true);
+                                loadPurchases(purchaseFilter);
+                              } catch (e) { flash(e instanceof Error ? e.message : "Error", false); }
+                              finally { setProcessingPurchaseId(null); }
+                            }}
+                          >
+                            ✓ Aprobar
+                          </button>
+                          <button
+                            type="button"
+                            style={{ ...p.miniBtn, color: "#b91c1c", borderColor: "rgba(239,68,68,0.3)", background: "rgba(239,68,68,0.06)" }}
+                            disabled={processingPurchaseId === pur.id}
+                            onClick={async () => {
+                              setProcessingPurchaseId(pur.id);
+                              try {
+                                const res = await fetch(`/api/admin/purchases/${pur.id}`, {
+                                  method: "PATCH",
+                                  headers: { "Content-Type": "application/json" },
+                                  body: JSON.stringify({ action: "reject", admin_notes: adminNotes[pur.id] }),
+                                });
+                                const json = await res.json();
+                                if (!json.ok) throw new Error(json.message);
+                                flash("Compra rechazada.", true);
+                                loadPurchases(purchaseFilter);
+                              } catch (e) { flash(e instanceof Error ? e.message : "Error", false); }
+                              finally { setProcessingPurchaseId(null); }
+                            }}
+                          >
+                            ✗ Rechazar
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {tab === "pricing" && (
         <div style={p.content}>
           <div style={p.tableActions}>
@@ -843,6 +1024,226 @@ export function SuperAdminPanel({
         </div>
       )}
     </div>
+  );
+}
+
+// ─── PaymentsTab ──────────────────────────────────────────────────────────────
+
+function PaymentsTab({
+  settings,
+  saving,
+  onSave,
+}: {
+  settings: PaymentSettings;
+  saving: boolean;
+  onSave: (patch: Partial<PaymentSettings>) => void;
+}) {
+  const [draft, setDraft] = useState<PaymentSettings>({ ...settings });
+
+  const set = <K extends keyof PaymentSettings>(key: K, value: PaymentSettings[K]) =>
+    setDraft((prev) => ({ ...prev, [key]: value }));
+
+  const setBankInfo = (key: string, value: string) =>
+    setDraft((prev) => ({
+      ...prev,
+      bank_transfer_info: { ...prev.bank_transfer_info, [key]: value },
+    }));
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      {/* Credit price */}
+      <div style={p.paySection}>
+        <div style={p.paySectionHead}>
+          <span style={p.paySectionTitle}>💰 Valor del crédito</span>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <span style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>1 crédito =</span>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ fontSize: 14, fontWeight: 700, color: "var(--muted)" }}>$</span>
+            <input
+              className="input"
+              type="number"
+              min={0.01}
+              step={0.01}
+              value={draft.credit_price_usd}
+              onChange={(e) => set("credit_price_usd", parseFloat(e.target.value) || 0)}
+              style={{ width: 100, fontSize: 15, fontWeight: 700, textAlign: "center" }}
+            />
+            <span style={{ fontSize: 13, fontWeight: 600, color: "#374151" }}>USD</span>
+          </div>
+        </div>
+        <p style={{ margin: 0, fontSize: 12, color: "var(--muted)" }}>
+          Define cuánto cuesta un crédito en USD. Se aplica a todas las compras nuevas.
+        </p>
+      </div>
+
+      {/* Stripe */}
+      <div style={p.paySection}>
+        <div style={p.paySectionHead}>
+          <span style={p.paySectionTitle}>💳 Stripe</span>
+          <label style={p.toggleLabel}>
+            <input
+              type="checkbox"
+              checked={draft.stripe_enabled}
+              onChange={(e) => set("stripe_enabled", e.target.checked)}
+              style={{ marginRight: 6 }}
+            />
+            <span style={{ fontSize: 13, fontWeight: 600, color: draft.stripe_enabled ? "#059669" : "var(--muted)" }}>
+              {draft.stripe_enabled ? "Activo" : "Inactivo"}
+            </span>
+          </label>
+        </div>
+        <div style={p.payFieldRow}>
+          <div style={p.payField}>
+            <label style={p.formLabel}>Clave pública (pk_live_… / pk_test_…)</label>
+            <input
+              className="input"
+              type="text"
+              value={draft.stripe_public_key}
+              onChange={(e) => set("stripe_public_key", e.target.value)}
+              placeholder="pk_live_…"
+              style={{ fontSize: 13, fontFamily: "monospace" }}
+            />
+          </div>
+          <div style={p.payField}>
+            <label style={p.formLabel}>Clave secreta (sk_live_… / sk_test_…)</label>
+            <PasswordInput
+              className="input"
+              value={draft.stripe_secret_key}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => set("stripe_secret_key", e.target.value)}
+              placeholder="sk_live_…"
+              style={{ fontSize: 13, fontFamily: "monospace" }}
+            />
+          </div>
+        </div>
+        <p style={{ margin: 0, fontSize: 12, color: "var(--muted)" }}>
+          Las claves las encuentras en <strong>dashboard.stripe.com → Developers → API keys</strong>.
+          El webhook URL para configurar en Stripe es: <code style={{ fontSize: 11 }}>/api/payments/stripe/webhook</code>
+        </p>
+      </div>
+
+      {/* PayPal */}
+      <div style={p.paySection}>
+        <div style={p.paySectionHead}>
+          <span style={p.paySectionTitle}>🅿 PayPal</span>
+          <label style={p.toggleLabel}>
+            <input
+              type="checkbox"
+              checked={draft.paypal_enabled}
+              onChange={(e) => set("paypal_enabled", e.target.checked)}
+              style={{ marginRight: 6 }}
+            />
+            <span style={{ fontSize: 13, fontWeight: 600, color: draft.paypal_enabled ? "#059669" : "var(--muted)" }}>
+              {draft.paypal_enabled ? "Activo" : "Inactivo"}
+            </span>
+          </label>
+        </div>
+        <div style={p.payFieldRow}>
+          <div style={p.payField}>
+            <label style={p.formLabel}>Client ID</label>
+            <input
+              className="input"
+              type="text"
+              value={draft.paypal_client_id}
+              onChange={(e) => set("paypal_client_id", e.target.value)}
+              placeholder="AYz..."
+              style={{ fontSize: 13, fontFamily: "monospace" }}
+            />
+          </div>
+          <div style={p.payField}>
+            <label style={p.formLabel}>Secret</label>
+            <PasswordInput
+              className="input"
+              value={draft.paypal_secret}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => set("paypal_secret", e.target.value)}
+              placeholder="Secret"
+              style={{ fontSize: 13, fontFamily: "monospace" }}
+            />
+          </div>
+        </div>
+        <p style={{ margin: 0, fontSize: 12, color: "var(--muted)" }}>
+          Credenciales de <strong>developer.paypal.com → My Apps & Credentials</strong>. Usa modo Live para producción.
+        </p>
+      </div>
+
+      {/* Bank Transfer */}
+      <div style={p.paySection}>
+        <div style={p.paySectionHead}>
+          <span style={p.paySectionTitle}>🏦 Transferencia bancaria</span>
+          <label style={p.toggleLabel}>
+            <input
+              type="checkbox"
+              checked={draft.bank_transfer_enabled}
+              onChange={(e) => set("bank_transfer_enabled", e.target.checked)}
+              style={{ marginRight: 6 }}
+            />
+            <span style={{ fontSize: 13, fontWeight: 600, color: draft.bank_transfer_enabled ? "#059669" : "var(--muted)" }}>
+              {draft.bank_transfer_enabled ? "Activo" : "Inactivo"}
+            </span>
+          </label>
+        </div>
+        <div style={p.payFieldRow}>
+          <div style={p.payField}>
+            <label style={p.formLabel}>Banco</label>
+            <input className="input" type="text" value={draft.bank_transfer_info.bank_name ?? ""} onChange={(e) => setBankInfo("bank_name", e.target.value)} placeholder="ej. Banco Nacional" style={{ fontSize: 13 }} />
+          </div>
+          <div style={p.payField}>
+            <label style={p.formLabel}>Titular de la cuenta</label>
+            <input className="input" type="text" value={draft.bank_transfer_info.account_holder ?? ""} onChange={(e) => setBankInfo("account_holder", e.target.value)} placeholder="Nombre completo" style={{ fontSize: 13 }} />
+          </div>
+          <div style={p.payField}>
+            <label style={p.formLabel}>Número de cuenta / CLABE</label>
+            <input className="input" type="text" value={draft.bank_transfer_info.account_number ?? ""} onChange={(e) => setBankInfo("account_number", e.target.value)} placeholder="XXXXXXXXXXXXXXXXXXXX" style={{ fontSize: 13 }} />
+          </div>
+          <div style={p.payField}>
+            <label style={p.formLabel}>ABA / Routing (opcional)</label>
+            <input className="input" type="text" value={draft.bank_transfer_info.routing_number ?? ""} onChange={(e) => setBankInfo("routing_number", e.target.value)} placeholder="XXXXXXXXX" style={{ fontSize: 13 }} />
+          </div>
+          <div style={p.payField}>
+            <label style={p.formLabel}>SWIFT / IBAN (opcional)</label>
+            <input className="input" type="text" value={draft.bank_transfer_info.swift_code ?? ""} onChange={(e) => setBankInfo("swift_code", e.target.value)} placeholder="XXXXXXXXXX" style={{ fontSize: 13 }} />
+          </div>
+          <div style={{ ...p.payField, flex: "2 1 360px" }}>
+            <label style={p.formLabel}>Instrucciones adicionales</label>
+            <textarea
+              className="input"
+              value={draft.bank_transfer_info.instructions ?? ""}
+              onChange={(e) => setBankInfo("instructions", e.target.value)}
+              placeholder="ej. Incluye tu email en el concepto de la transferencia"
+              rows={2}
+              style={{ fontSize: 13, resize: "vertical" as const }}
+            />
+          </div>
+        </div>
+      </div>
+
+      <button
+        type="button"
+        className="btn btn-primary"
+        style={{ alignSelf: "flex-start", padding: "10px 28px" }}
+        disabled={saving}
+        onClick={() => onSave(draft)}
+      >
+        {saving ? "Guardando…" : "Guardar configuración de pagos"}
+      </button>
+    </div>
+  );
+}
+
+// ─── PurchaseStatusPill ───────────────────────────────────────────────────────
+
+function PurchaseStatusPill({ status }: { status: string }) {
+  const cfg: Record<string, { bg: string; color: string; label: string }> = {
+    pending:   { bg: "rgba(245,158,11,0.1)",  color: "#78350f", label: "Pendiente" },
+    approved:  { bg: "rgba(16,185,129,0.1)",  color: "#065f46", label: "Aprobada" },
+    completed: { bg: "rgba(16,185,129,0.1)",  color: "#065f46", label: "Completada" },
+    rejected:  { bg: "rgba(239,68,68,0.1)",   color: "#991b1b", label: "Rechazada" },
+  };
+  const c = cfg[status] ?? cfg.pending;
+  return (
+    <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 999, background: c.bg, color: c.color }}>
+      {c.label}
+    </span>
   );
 }
 
@@ -1375,5 +1776,55 @@ const p: Record<string, React.CSSProperties> = {
     whiteSpace: "nowrap" as const,
     display: "block",
     minWidth: 0,
+  },
+
+  // Payments tab
+  paySection: {
+    background: "#fff",
+    border: "1px solid rgba(0,0,0,0.07)",
+    borderRadius: 20,
+    padding: "18px 20px",
+    display: "flex",
+    flexDirection: "column" as const,
+    gap: 14,
+  },
+  paySectionHead: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+  paySectionTitle: {
+    fontSize: 15,
+    fontWeight: 700,
+    color: "#111",
+    letterSpacing: "-0.02em",
+  },
+  toggleLabel: {
+    display: "flex",
+    alignItems: "center",
+    cursor: "pointer",
+    userSelect: "none" as const,
+  },
+  payFieldRow: {
+    display: "flex",
+    flexWrap: "wrap" as const,
+    gap: 12,
+  },
+  payField: {
+    display: "flex",
+    flexDirection: "column" as const,
+    gap: 6,
+    flex: "1 1 220px",
+  },
+
+  // Purchase rows
+  purchaseRow: {
+    background: "#fff",
+    border: "1px solid rgba(0,0,0,0.07)",
+    borderRadius: 16,
+    padding: "14px 16px",
+    display: "flex",
+    gap: 12,
   },
 };

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import type { CreditTransaction } from "@/types";
+import { BuyCreditsModal } from "@/components/buy-credits-modal";
 
 // ─── types ───────────────────────────────────────────────────────────────────
 
@@ -67,6 +68,7 @@ export function CreditsPanel({
   const [transactions, setTransactions] = useState(initialTransactions);
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState<TxFilter>("all");
+  const [showBuy, setShowBuy] = useState(false);
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -94,10 +96,30 @@ export function CreditsPanel({
           <h2 style={r.title}>Mis créditos</h2>
           <span style={r.sub}>{userEmail}</span>
         </div>
-        <button type="button" style={r.refreshBtn} onClick={refresh} disabled={loading}>
-          {loading ? "Cargando…" : "↺ Actualizar"}
-        </button>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button
+            type="button"
+            style={{ ...r.refreshBtn, background: "rgba(109,40,217,0.09)", borderColor: "rgba(109,40,217,0.25)", color: "#6d28d9", fontWeight: 700 }}
+            onClick={() => setShowBuy(true)}
+          >
+            + Comprar créditos
+          </button>
+          <button type="button" style={r.refreshBtn} onClick={refresh} disabled={loading}>
+            {loading ? "…" : "↺"}
+          </button>
+        </div>
       </div>
+
+      {showBuy && (
+        <BuyCreditsModal
+          onClose={() => setShowBuy(false)}
+          onSuccess={(newBalance) => {
+            setCredits(newBalance);
+            setShowBuy(false);
+            refresh();
+          }}
+        />
+      )}
 
       {/* Balance cards */}
       <div style={r.balanceGrid}>

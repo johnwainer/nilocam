@@ -163,6 +163,56 @@ export type PhotoRecord = {
   created_at: string;
 };
 
+export type PaymentMethod = "stripe" | "paypal" | "bank_transfer";
+
+export type PurchaseStatus = "pending" | "approved" | "rejected" | "completed";
+
+export type BankTransferInfo = {
+  bank_name?: string;
+  account_holder?: string;
+  account_number?: string;
+  routing_number?: string;
+  swift_code?: string;
+  instructions?: string;
+};
+
+export type PaymentSettings = {
+  credit_price_usd: number;
+  stripe_enabled: boolean;
+  stripe_public_key: string;
+  stripe_secret_key: string;
+  paypal_enabled: boolean;
+  paypal_client_id: string;
+  paypal_secret: string;
+  bank_transfer_enabled: boolean;
+  bank_transfer_info: BankTransferInfo;
+};
+
+export type PublicPaymentSettings = {
+  credit_price_usd: number;
+  stripe_enabled: boolean;
+  stripe_public_key: string;
+  paypal_enabled: boolean;
+  paypal_client_id: string;
+  bank_transfer_enabled: boolean;
+  bank_transfer_info: BankTransferInfo;
+};
+
+export type CreditPurchase = {
+  id: string;
+  user_id: string | null;
+  user_email: string;
+  credits: number;
+  amount_usd: number;
+  payment_method: PaymentMethod;
+  status: PurchaseStatus;
+  payment_reference: string | null;
+  proof_url: string | null;
+  admin_notes: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export type LandingTemplatePreset = {
   key: string;
   name: string;

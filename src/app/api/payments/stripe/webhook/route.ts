@@ -1,0 +1,85 @@
+import Stripe from "stripe";
+import { createClient } from "@supabase/supabase-js";
+import { NextResponse, type NextRequest } from "next/server";
+
+function serviceClient() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { persistSession: false, autoRefreshToken: false } }
+  );
+}
+
+// POST /api/payments/stripe/webhook
+// Stripe calls this after payment events. Set STRIPE_WEBHOOK_SECRET in env.
+// This is a backup — the /confirm route is the primary grant path.
+export async function POST(request: NextRequest) {
+  const payload = await request.text();
+  const signature = request.headers.get("stripe-signature") ?? "";
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+  if (!webhookSecret) {
+    return NextResponse.json({ ok: false, message: "Webhook secret not configured." }, { status: 503 });
+  }
+
+  const admin = serviceClient();
+  const { data: settings } = await admin
+    .from("payment_settings")
+    .select("stripe_secret_key")
+    .eq("id", 1)
+    .single();
+
+  if (!settings?.stripe_secret_key) {
+    return NextResponse.json({ ok: false }, { status: 503 });
+  }
+
+  const stripe = new Stripe(settings.stripe_secret_key);
+
+  let event: Stripe.Event;
+  try {
+    event = stripe.webhooks.constructEvent(payload, signature, webhookSecret);
+  } catch {
+    return NextResponse.json({ ok: false, message: "Invalid signature." }, { status: 400 });
+  }
+
+  if (event.type === "payment_intent.succeeded") {
+    const intent = event.data.object as Stripe.PaymentIntent;
+    const purchaseId = intent.metadata?.purchase_id;
+    if (!purchaseId) return NextResponse.json({ ok: true });
+
+    const { data: purchase } = await admin
+      .from("credit_purchases")
+      .select("*")
+      .eq("id", purchaseId)
+      .single();
+
+    if (!purchase || purchase.status === "completed") return NextResponse.json({ ok: true });
+
+    await admin
+      .from("credit_purchases")
+      .update({ status: "completed", updated_at: new Date().toISOString() })
+      .eq("id", purchaseId);
+
+    const { data: profile } = await admin
+      .from("profiles")
+      .select("id, credits")
+      .eq("email", purchase.user_email)
+      .single();
+
+    if (profile) {
+      const newBalance = (profile.credits ?? 0) + purchase.credits;
+      await admin.from("profiles").update({ credits: newBalance }).eq("id", profile.id);
+      await admin.from("credit_transactions").insert({
+        user_id: profile.id,
+        user_email: purchase.user_email,
+        amount: purchase.credits,
+        type: "purchase_stripe",
+        event_id: null,
+        event_slug: null,
+        description: `Compra con tarjeta — ${purchase.credits} créditos ($${purchase.amount_usd} USD)`,
+      });
+    }
+  }
+
+  return NextResponse.json({ ok: true });
+}
