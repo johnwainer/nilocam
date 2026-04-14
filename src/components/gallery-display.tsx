@@ -116,7 +116,7 @@ export function GalleryDisplay({
   useEffect(() => {
     ctrlTimerRef.current = setTimeout(() => setCtrlVisible(false), 3200);
     return () => { if (ctrlTimerRef.current) clearTimeout(ctrlTimerRef.current); };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   // ── Fullscreen ───────────────────────────────────────────────────────────
   const toggleFullscreen = useCallback(() => {

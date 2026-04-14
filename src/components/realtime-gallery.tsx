@@ -204,6 +204,25 @@ function SliderView({
     return () => clearInterval(id);
   }, [autoplay, paused, count, autoplayInterval, next]);
 
+  const enterFullscreen = useCallback(async () => {
+    const el = wrapRef.current;
+    if (!el) return;
+    if (el.requestFullscreen) {
+      try { await el.requestFullscreen(); return; } catch { /* fallthrough */ }
+    }
+    setIsFullscreen(true);
+    document.body.style.overflow = "hidden";
+  }, []);
+
+  const exitFullscreen = useCallback(() => {
+    if (document.fullscreenElement) {
+      document.exitFullscreen();
+    } else {
+      setIsFullscreen(false);
+      document.body.style.overflow = "";
+    }
+  }, []);
+
   // Fullscreen API sync
   useEffect(() => {
     const onChange = () => setIsFullscreen(!!document.fullscreenElement);
@@ -220,35 +239,13 @@ function SliderView({
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [prev, next, isFullscreen]);
+  }, [prev, next, isFullscreen, exitFullscreen]);
 
-  // Cleanup
+  // Cleanup timers + body scroll on unmount
   useEffect(() => () => {
     if (resumeTimer.current) clearTimeout(resumeTimer.current);
+    document.body.style.overflow = "";
   }, []);
-
-  const enterFullscreen = useCallback(async () => {
-    const el = wrapRef.current;
-    if (!el) return;
-    if (el.requestFullscreen) {
-      try { await el.requestFullscreen(); return; } catch { /* fallthrough */ }
-    }
-    // CSS fallback (iOS Safari)
-    setIsFullscreen(true);
-    document.body.style.overflow = "hidden";
-  }, []);
-
-  const exitFullscreen = useCallback(() => {
-    if (document.fullscreenElement) {
-      document.exitFullscreen();
-    } else {
-      setIsFullscreen(false);
-      document.body.style.overflow = "";
-    }
-  }, []);
-
-  // Restore body scroll if unmounted while in CSS-fullscreen
-  useEffect(() => () => { document.body.style.overflow = ""; }, []);
 
   if (count === 0) return null;
 
