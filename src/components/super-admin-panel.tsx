@@ -602,7 +602,7 @@ export function SuperAdminPanel({
                             >
                               {togglingUserId === user.id ? "…" : user.is_active ? "Desactivar" : "Activar"}
                             </button>
-                            {!user.confirmed_at && (
+                            {!user.last_sign_in_at && (
                               <button
                                 type="button"
                                 style={{ ...p.miniBtn, color: "#1d4ed8", borderColor: "rgba(29,78,216,0.3)" }}
