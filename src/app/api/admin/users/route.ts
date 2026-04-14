@@ -66,23 +66,28 @@ export async function POST(request: Request) {
 
   const admin = serviceClient();
 
-  // Invite by email — sends a magic link
-  const { data: invited, error: inviteErr } = await admin.auth.admin.inviteUserByEmail(email, {
-    data: { full_name: display_name ?? email },
+  // Generate an invite link without auto-sending email, so we can return it
+  const { data: linkData, error: linkErr } = await admin.auth.admin.generateLink({
+    type: "invite",
+    email,
+    options: { data: { full_name: display_name ?? email } },
   });
-  if (inviteErr) {
-    return NextResponse.json({ ok: false, message: inviteErr.message }, { status: 500 });
+  if (linkErr) {
+    return NextResponse.json({ ok: false, message: linkErr.message }, { status: 500 });
   }
+
+  const userId = linkData.user.id;
+  const magicLink = linkData.properties?.action_link ?? null;
 
   // Upsert profile with desired role and display_name
   await admin.from("profiles").upsert({
-    id: invited.user.id,
+    id: userId,
     email,
     display_name: display_name ?? email,
     role,
   }, { onConflict: "id" });
 
-  return NextResponse.json({ ok: true, id: invited.user.id });
+  return NextResponse.json({ ok: true, id: userId, magic_link: magicLink });
 }
 
 // PATCH /api/admin/users — update role, display_name, or ban status

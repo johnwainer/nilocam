@@ -518,6 +518,24 @@ export function SuperAdminPanel({
 
 // ─── NewUserForm ─────────────────────────────────────────────────────────────
 
+const ROLE_DESCRIPTIONS: Record<string, { label: string; desc: string; color: string }> = {
+  owner: {
+    label: "Owner",
+    desc: "Puede crear y gestionar sus propios eventos desde el panel. No ve eventos de otros usuarios.",
+    color: "#374151",
+  },
+  admin: {
+    label: "Admin",
+    desc: "Igual que Owner pero con acceso a funciones avanzadas de administración de sus eventos.",
+    color: "#1d4ed8",
+  },
+  super_admin: {
+    label: "Super admin",
+    desc: "Acceso total al sistema: ve y edita todos los eventos, gestiona usuarios y estadísticas.",
+    color: "#6d28d9",
+  },
+};
+
 function NewUserForm({ onSaved, onCancel, onError }: {
   onSaved: () => void;
   onCancel: () => void;
@@ -527,6 +545,8 @@ function NewUserForm({ onSaved, onCancel, onError }: {
   const [displayName, setDisplayName] = useState("");
   const [role, setRole] = useState("owner");
   const [saving, setSaving] = useState(false);
+  const [magicLink, setMagicLink] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
   const emailRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { emailRef.current?.focus(); }, []);
@@ -542,7 +562,11 @@ function NewUserForm({ onSaved, onCancel, onError }: {
       });
       const json = await res.json();
       if (!json.ok) throw new Error(json.message);
-      onSaved();
+      if (json.magic_link) {
+        setMagicLink(json.magic_link);
+      } else {
+        onSaved();
+      }
     } catch (e) {
       onError(e instanceof Error ? e.message : "Error");
     } finally {
@@ -550,6 +574,50 @@ function NewUserForm({ onSaved, onCancel, onError }: {
     }
   };
 
+  const copyLink = async () => {
+    if (!magicLink) return;
+    await navigator.clipboard.writeText(magicLink);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2500);
+  };
+
+  const roleCfg = ROLE_DESCRIPTIONS[role];
+
+  // ── Magic link success state ──
+  if (magicLink) {
+    return (
+      <div style={p.inlineForm}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <span style={{ fontSize: 20 }}>✅</span>
+          <div>
+            <strong style={{ fontSize: 14, fontWeight: 700, display: "block" }}>Usuario creado</strong>
+            <span style={{ fontSize: 13, color: "var(--muted)" }}>{email} · <RolePill role={role} /></span>
+          </div>
+        </div>
+        <div style={p.magicLinkBox}>
+          <div style={p.magicLinkLabel}>Magic link de activación</div>
+          <div style={p.magicLinkRow}>
+            <code style={p.magicLinkCode}>{magicLink}</code>
+            <button
+              type="button"
+              style={{ ...p.miniBtn, minWidth: 76, color: copied ? "#065f46" : "#374151", borderColor: copied ? "rgba(16,185,129,0.4)" : undefined, background: copied ? "rgba(16,185,129,0.08)" : undefined }}
+              onClick={copyLink}
+            >
+              {copied ? "¡Copiado!" : "Copiar"}
+            </button>
+          </div>
+          <p style={{ margin: 0, fontSize: 12, color: "var(--muted)", lineHeight: 1.5 }}>
+            Este enlace solo funciona una vez. Compártelo con el usuario por WhatsApp, email u otro medio. Expira en 24 h.
+          </p>
+        </div>
+        <button type="button" className="btn btn-primary" style={{ fontSize: 13, padding: "8px 18px", alignSelf: "flex-start" }} onClick={onSaved}>
+          Listo
+        </button>
+      </div>
+    );
+  }
+
+  // ── Form state ──
   return (
     <form onSubmit={submit} style={p.inlineForm}>
       <strong style={{ fontSize: 14, fontWeight: 700 }}>Nuevo usuario</strong>
@@ -571,13 +639,22 @@ function NewUserForm({ onSaved, onCancel, onError }: {
           </select>
         </div>
       </div>
+
+      {/* Role description */}
+      <div style={{ ...p.roleDesc, borderColor: roleCfg.color + "33", background: roleCfg.color + "08" }}>
+        <span style={{ ...p.roleDescTitle, color: roleCfg.color }}>{roleCfg.label}</span>
+        <span style={p.roleDescText}>{roleCfg.desc}</span>
+      </div>
+
       <div style={{ display: "flex", gap: 8 }}>
         <button type="submit" className="btn btn-primary" style={{ fontSize: 13, padding: "8px 18px" }} disabled={saving}>
-          {saving ? "Enviando invitación…" : "Enviar invitación"}
+          {saving ? "Generando enlace…" : "Generar magic link"}
         </button>
         <button type="button" className="btn btn-ghost" style={{ fontSize: 13 }} onClick={onCancel}>Cancelar</button>
       </div>
-      <p style={{ margin: 0, fontSize: 12, color: "var(--muted)" }}>Se enviará un magic link al correo para que el usuario active su cuenta.</p>
+      <p style={{ margin: 0, fontSize: 12, color: "var(--muted)" }}>
+        Se generará un enlace de activación único. Podrás copiarlo y enviarlo por el medio que prefieras.
+      </p>
     </form>
   );
 }
@@ -745,4 +822,42 @@ const p: Record<string, React.CSSProperties> = {
   formField: { display: "flex", flexDirection: "column", gap: 6, flex: "1 1 180px" },
   formLabel: { fontSize: 12, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.06em" },
   formInput: { fontSize: 14 },
+
+  roleDesc: {
+    display: "flex",
+    flexDirection: "column" as const,
+    gap: 4,
+    padding: "10px 14px",
+    borderRadius: 12,
+    border: "1px solid",
+  },
+  roleDescTitle: { fontSize: 12, fontWeight: 800, letterSpacing: "0.04em", textTransform: "uppercase" as const },
+  roleDescText: { fontSize: 13, color: "var(--muted)", lineHeight: 1.5 },
+
+  magicLinkBox: {
+    display: "flex",
+    flexDirection: "column" as const,
+    gap: 10,
+    background: "rgba(0,0,0,0.025)",
+    border: "1px solid rgba(0,0,0,0.08)",
+    borderRadius: 14,
+    padding: "14px 16px",
+  },
+  magicLinkLabel: { fontSize: 11, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.08em", color: "var(--muted)" },
+  magicLinkRow: { display: "flex", gap: 10, alignItems: "center" },
+  magicLinkCode: {
+    flex: 1,
+    fontSize: 11,
+    fontFamily: "monospace",
+    color: "#374151",
+    background: "#fff",
+    border: "1px solid rgba(0,0,0,0.08)",
+    borderRadius: 8,
+    padding: "6px 10px",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap" as const,
+    display: "block",
+    minWidth: 0,
+  },
 };
