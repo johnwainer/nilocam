@@ -87,6 +87,7 @@ export function SuperAdminPanel({
   const [adjustingCreditsFor, setAdjustingCreditsFor] = useState<ProfileWithStats | null>(null);
   const [regeneratingLinkFor, setRegeneratingLinkFor] = useState<string | null>(null);
   const [regeneratedLink, setRegeneratedLink] = useState<{ email: string; link: string } | null>(null);
+  const [resettingPasswordFor, setResettingPasswordFor] = useState<ProfileWithStats | null>(null);
 
   // Pricing
   const [pricingList, setPricingList] = useState<CreditPricing[]>([]);
@@ -290,6 +291,22 @@ export function SuperAdminPanel({
     } finally {
       setDeletingUserId(null);
       setConfirmDeleteUserId(null);
+    }
+  };
+
+  const resetPassword = async (user: ProfileWithStats, newPassword: string) => {
+    try {
+      const res = await fetch("/api/admin/users", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "reset_password", id: user.id, new_password: newPassword }),
+      });
+      const json = await res.json();
+      if (!json.ok) throw new Error(json.message);
+      flash(`Contraseña actualizada para ${user.email}`, true);
+      setResettingPasswordFor(null);
+    } catch (e) {
+      flash(e instanceof Error ? e.message : "Error", false);
     }
   };
 
@@ -555,6 +572,14 @@ export function SuperAdminPanel({
             />
           )}
 
+          {resettingPasswordFor && (
+            <ResetPasswordForm
+              user={resettingPasswordFor}
+              onSaved={(pwd) => resetPassword(resettingPasswordFor, pwd)}
+              onCancel={() => setResettingPasswordFor(null)}
+            />
+          )}
+
           {usersLoading ? <p style={p.loading}>Cargando…</p> : (
             <div style={p.tableWrap}>
               <table style={p.table}>
@@ -602,12 +627,19 @@ export function SuperAdminPanel({
                             >
                               {togglingUserId === user.id ? "…" : user.is_active ? "Desactivar" : "Activar"}
                             </button>
+                            <button
+                              type="button"
+                              style={{ ...p.miniBtn, color: "#374151" }}
+                              onClick={() => { setResettingPasswordFor(user); setRegeneratedLink(null); }}
+                            >
+                              Contraseña
+                            </button>
                             {!user.last_sign_in_at && (
                               <button
                                 type="button"
                                 style={{ ...p.miniBtn, color: "#1d4ed8", borderColor: "rgba(29,78,216,0.3)" }}
                                 disabled={regeneratingLinkFor === user.id}
-                                onClick={() => { setRegeneratedLink(null); regenerateLink(user); }}
+                                onClick={() => { setRegeneratedLink(null); setResettingPasswordFor(null); regenerateLink(user); }}
                               >
                                 {regeneratingLinkFor === user.id ? "…" : "↻ Link"}
                               </button>
@@ -863,6 +895,64 @@ function NewUserForm({ onSaved, onCancel, onError }: {
         Se generará un enlace de activación único. Podrás copiarlo y enviarlo por el medio que prefieras.
       </p>
     </form>
+  );
+}
+
+// ─── ResetPasswordForm ────────────────────────────────────────────────────────
+
+function ResetPasswordForm({ user, onSaved, onCancel }: {
+  user: ProfileWithStats;
+  onSaved: (password: string) => void;
+  onCancel: () => void;
+}) {
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const mismatch = confirm.length > 0 && password !== confirm;
+  const valid = password.length >= 8 && password === confirm;
+
+  return (
+    <div style={p.inlineForm}>
+      <strong style={{ fontSize: 14, fontWeight: 700 }}>Restablecer contraseña — {user.email}</strong>
+      <div style={p.formRow}>
+        <div style={p.formField}>
+          <label style={p.formLabel}>Nueva contraseña (mín. 8 caracteres)</label>
+          <input
+            className="input"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Nueva contraseña"
+            style={p.formInput}
+            autoComplete="new-password"
+          />
+        </div>
+        <div style={p.formField}>
+          <label style={p.formLabel}>Confirmar contraseña</label>
+          <input
+            className="input"
+            type="password"
+            value={confirm}
+            onChange={(e) => setConfirm(e.target.value)}
+            placeholder="Repetir contraseña"
+            style={{ ...p.formInput, borderColor: mismatch ? "#dc2626" : undefined }}
+            autoComplete="new-password"
+          />
+          {mismatch && <span style={{ fontSize: 12, color: "#dc2626" }}>Las contraseñas no coinciden</span>}
+        </div>
+      </div>
+      <div style={{ display: "flex", gap: 8 }}>
+        <button
+          type="button"
+          className="btn btn-primary"
+          style={{ fontSize: 13, padding: "8px 18px" }}
+          disabled={!valid}
+          onClick={() => onSaved(password)}
+        >
+          Guardar contraseña
+        </button>
+        <button type="button" className="btn btn-ghost" style={{ fontSize: 13 }} onClick={onCancel}>Cancelar</button>
+      </div>
+    </div>
   );
 }
 

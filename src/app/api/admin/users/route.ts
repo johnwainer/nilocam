@@ -112,8 +112,9 @@ export async function PATCH(request: Request) {
     role?: string;
     display_name?: string;
     is_active?: boolean;
+    new_password?: string;
   };
-  const { id, email, action, role, display_name, is_active } = body;
+  const { id, email, action, role, display_name, is_active, new_password } = body;
 
   // Regenerate invite link for an existing user using the app's own registration page
   if (action === "regenerate_link") {
@@ -129,6 +130,18 @@ export async function PATCH(request: Request) {
     if (profile?.display_name) params.set("name", profile.display_name);
     const inviteLink = `${origin}/auth?${params.toString()}`;
     return NextResponse.json({ ok: true, magic_link: inviteLink });
+  }
+
+  // Reset user password
+  if (action === "reset_password") {
+    if (!id) return NextResponse.json({ ok: false, message: "Falta id." }, { status: 400 });
+    if (!new_password || new_password.length < 8) {
+      return NextResponse.json({ ok: false, message: "La contraseña debe tener al menos 8 caracteres." }, { status: 400 });
+    }
+    const admin = serviceClient();
+    const { error } = await admin.auth.admin.updateUserById(id, { password: new_password });
+    if (error) return NextResponse.json({ ok: false, message: error.message }, { status: 500 });
+    return NextResponse.json({ ok: true });
   }
 
   if (!id) return NextResponse.json({ ok: false, message: "Falta id." }, { status: 400 });
