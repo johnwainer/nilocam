@@ -653,9 +653,43 @@ img {
   to   { width: 100%; }
 }
 
+/* Native fullscreen — browser expands the element to fill the screen */
+.rg-slider-wrap:fullscreen,
+.rg-slider-wrap:-webkit-full-screen {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none !important;
+  border-radius: 0 !important;
+  aspect-ratio: unset !important;
+  background: #000 !important;
+}
+
+/* In fullscreen mode, contain the image so nothing is cropped */
+.rg-slider-wrap:fullscreen img,
+.rg-slider-wrap:-webkit-full-screen img {
+  object-fit: contain !important;
+}
+
+/* CSS fallback fullscreen (iOS) */
+.rg-slider-fullscreen {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 9998 !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none !important;
+  border-radius: 0 !important;
+  aspect-ratio: unset !important;
+  background: #000 !important;
+}
+
+.rg-slider-fullscreen img {
+  object-fit: contain !important;
+}
+
 /* Mobile: portrait-friendly height, smaller arrows */
 @media (max-width: 600px) {
-  .rg-slider-wrap {
+  .rg-slider-wrap:not(.rg-slider-fullscreen):not(:fullscreen) {
     aspect-ratio: unset !important;
     height: 76vw !important;
     border-radius: 14px !important;

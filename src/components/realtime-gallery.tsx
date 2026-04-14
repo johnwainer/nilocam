@@ -131,7 +131,7 @@ export function RealtimeGallery({
 
 // ── Slider view ───────────────────────────────────────────────────────────────
 
-const AUTOPLAY_RESUME_DELAY = 3000; // ms idle before resuming after manual nav
+const AUTOPLAY_RESUME_DELAY = 3000;
 
 function SliderView({
   photos,
@@ -148,16 +148,16 @@ function SliderView({
   const [animKey, setAnimKey] = useState(0);
   const [animDir, setAnimDir] = useState<"left" | "right">("right");
   const [paused, setPaused] = useState(false);
-  // progress bar key — reset on each slide change
   const [progressKey, setProgressKey] = useState(0);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
+  const wrapRef = useRef<HTMLDivElement>(null);
   const touchStartX = useRef<number | null>(null);
   const prevLengthRef = useRef(photos.length);
   const resumeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const indexRef = useRef(index);
   const countRef = useRef(photos.length);
 
-  // Keep refs in sync (no deps — runs after every render)
   useEffect(() => {
     indexRef.current = index;
     countRef.current = photos.length;
@@ -165,7 +165,7 @@ function SliderView({
 
   const count = photos.length;
 
-  // When new photo arrives at front, keep visual index on same photo
+  // Keep visual index stable when new photos arrive at front
   useEffect(() => {
     const prev = prevLengthRef.current;
     if (photos.length > prev) {
@@ -188,38 +188,67 @@ function SliderView({
   }, [autoplay]);
 
   const prev = useCallback(() => {
-    const i = indexRef.current;
-    const c = countRef.current;
+    const i = indexRef.current; const c = countRef.current;
     go(i > 0 ? i - 1 : c - 1, "left", true);
   }, [go]);
 
   const next = useCallback((manual = false) => {
-    const i = indexRef.current;
-    const c = countRef.current;
+    const i = indexRef.current; const c = countRef.current;
     go(i < c - 1 ? i + 1 : 0, "right", manual);
   }, [go]);
 
-  // Autoplay interval
+  // Autoplay
   useEffect(() => {
     if (!autoplay || paused || count < 2) return;
     const id = setInterval(() => next(false), autoplayInterval * 1000);
     return () => clearInterval(id);
   }, [autoplay, paused, count, autoplayInterval, next]);
 
-  // Keyboard nav
+  // Fullscreen API sync
+  useEffect(() => {
+    const onChange = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener("fullscreenchange", onChange);
+    return () => document.removeEventListener("fullscreenchange", onChange);
+  }, []);
+
+  // Keyboard: arrows + Escape
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key === "ArrowLeft") prev();
+      if (e.key === "ArrowLeft")  prev();
       if (e.key === "ArrowRight") next(true);
+      if (e.key === "Escape" && isFullscreen) exitFullscreen();
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [prev, next]);
+  }, [prev, next, isFullscreen]);
 
-  // Cleanup resume timer on unmount
+  // Cleanup
   useEffect(() => () => {
     if (resumeTimer.current) clearTimeout(resumeTimer.current);
   }, []);
+
+  const enterFullscreen = useCallback(async () => {
+    const el = wrapRef.current;
+    if (!el) return;
+    if (el.requestFullscreen) {
+      try { await el.requestFullscreen(); return; } catch { /* fallthrough */ }
+    }
+    // CSS fallback (iOS Safari)
+    setIsFullscreen(true);
+    document.body.style.overflow = "hidden";
+  }, []);
+
+  const exitFullscreen = useCallback(() => {
+    if (document.fullscreenElement) {
+      document.exitFullscreen();
+    } else {
+      setIsFullscreen(false);
+      document.body.style.overflow = "";
+    }
+  }, []);
+
+  // Restore body scroll if unmounted while in CSS-fullscreen
+  useEffect(() => () => { document.body.style.overflow = ""; }, []);
 
   if (count === 0) return null;
 
@@ -230,15 +259,17 @@ function SliderView({
   const isNew = freshIds.has(photo.id);
   const showArrows = count > 1;
 
+  const wrapStyle: React.CSSProperties = isFullscreen && !document.fullscreenElement
+    ? { ...sl.cardWrap, ...sl.cardWrapFullscreen }
+    : sl.cardWrap;
+
   return (
     <div style={sl.root}>
-      {/* Card — fills full width, arrows overlay on sides */}
       <div
-        className="rg-slider-wrap"
-        style={sl.cardWrap}
-        onTouchStart={(e) => {
-          touchStartX.current = e.touches[0].clientX;
-        }}
+        ref={wrapRef}
+        className={`rg-slider-wrap${isFullscreen ? " rg-slider-fullscreen" : ""}`}
+        style={wrapStyle}
+        onTouchStart={(e) => { touchStartX.current = e.touches[0].clientX; }}
         onTouchEnd={(e) => {
           if (touchStartX.current === null) return;
           const dx = e.changedTouches[0].clientX - touchStartX.current;
@@ -259,19 +290,13 @@ function SliderView({
           <img
             src={url}
             alt={uploader ? `Foto de ${uploader}` : "Foto del evento"}
-            style={sl.img}
+            style={isFullscreen ? sl.imgFullscreen : sl.img}
           />
-
-          {/* Gradient bottom overlay */}
           <div style={sl.overlay} />
 
           {/* Bottom row: uploader + counter */}
           <div style={sl.bottomRow}>
-            {uploader ? (
-              <span style={sl.captionName}>{uploader}</span>
-            ) : (
-              <span />
-            )}
+            {uploader ? <span style={sl.captionName}>{uploader}</span> : <span />}
             <span style={sl.counter}>
               {safeIndex + 1}<span style={{ opacity: 0.35 }}> / {count}</span>
             </span>
@@ -283,42 +308,37 @@ function SliderView({
           {/* Autoplay progress bar */}
           {autoplay && !paused && count > 1 && (
             <div key={progressKey} style={sl.progressTrack}>
-              <div
-                className="rg-progress-bar"
-                style={{
-                  ...sl.progressBar,
-                  animationDuration: `${autoplayInterval}s`,
-                }}
-              />
+              <div style={{ ...sl.progressBar, animationDuration: `${autoplayInterval}s` }} />
             </div>
           )}
         </div>
 
-        {/* Prev arrow — overlay left */}
+        {/* Prev arrow */}
         {showArrows && (
-          <button
-            className="rg-slider-arrow"
-            style={{ ...sl.arrow, left: 10 }}
-            onClick={prev}
-            aria-label="Anterior"
-            type="button"
-          >
+          <button className="rg-slider-arrow" style={{ ...sl.arrow, left: 12 }}
+            onClick={prev} aria-label="Anterior" type="button">
             <ChevronLeftIcon />
           </button>
         )}
 
-        {/* Next arrow — overlay right */}
+        {/* Next arrow */}
         {showArrows && (
-          <button
-            className="rg-slider-arrow"
-            style={{ ...sl.arrow, right: 10 }}
-            onClick={() => next(true)}
-            aria-label="Siguiente"
-            type="button"
-          >
+          <button className="rg-slider-arrow" style={{ ...sl.arrow, right: 12 }}
+            onClick={() => next(true)} aria-label="Siguiente" type="button">
             <ChevronRightIcon />
           </button>
         )}
+
+        {/* Fullscreen toggle — top-right corner */}
+        <button
+          className="rg-slider-fs-btn"
+          style={sl.fsBtn}
+          onClick={isFullscreen ? exitFullscreen : enterFullscreen}
+          aria-label={isFullscreen ? "Salir de pantalla completa" : "Pantalla completa"}
+          type="button"
+        >
+          {isFullscreen ? <CollapseIcon /> : <ExpandIcon />}
+        </button>
       </div>
     </div>
   );
@@ -481,6 +501,24 @@ function Lightbox({
 }
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
+
+function ExpandIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <polyline points="15 3 21 3 21 9" /><polyline points="9 21 3 21 3 15" />
+      <line x1="21" y1="3" x2="14" y2="10" /><line x1="3" y1="21" x2="10" y2="14" />
+    </svg>
+  );
+}
+
+function CollapseIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <polyline points="4 14 10 14 10 20" /><polyline points="20 10 14 10 14 4" />
+      <line x1="10" y1="14" x2="3" y2="21" /><line x1="21" y1="3" x2="14" y2="10" />
+    </svg>
+  );
+}
 
 function ChevronLeftIcon() {
   return (
@@ -780,5 +818,41 @@ const sl: Record<string, React.CSSProperties> = {
     animationName: "sliderProgress",
     animationTimingFunction: "linear",
     animationFillMode: "forwards",
+  },
+  fsBtn: {
+    position: "absolute",
+    top: 12,
+    right: 12,
+    zIndex: 5,
+    width: 38,
+    height: 38,
+    borderRadius: 999,
+    background: "rgba(0,0,0,0.45)",
+    backdropFilter: "blur(8px)",
+    WebkitBackdropFilter: "blur(8px)",
+    border: "1px solid rgba(255,255,255,0.12)",
+    color: "#fff",
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  } as React.CSSProperties,
+  // CSS-based fullscreen overlay (iOS Safari fallback)
+  cardWrapFullscreen: {
+    position: "fixed",
+    inset: 0,
+    zIndex: 9998,
+    width: "100%",
+    height: "100%",
+    maxWidth: "none",
+    borderRadius: 0,
+    aspectRatio: "unset",
+    background: "#000",
+  } as React.CSSProperties,
+  imgFullscreen: {
+    width: "100%",
+    height: "100%",
+    objectFit: "contain",
+    display: "block",
   },
 };
