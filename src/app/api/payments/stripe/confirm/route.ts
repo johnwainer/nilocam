@@ -41,11 +41,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, message: "Estado de compra inválido." }, { status: 409 });
   }
 
-  const { data: settings } = await admin
-    .from("payment_settings")
-    .select("stripe_secret_key")
-    .eq("id", 1)
-    .single();
+  const { data: settings } = await admin.rpc("get_payment_settings");
 
   if (!settings?.stripe_secret_key) {
     return NextResponse.json({ ok: false, message: "Stripe no configurado." }, { status: 503 });

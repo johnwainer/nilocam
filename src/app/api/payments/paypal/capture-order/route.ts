@@ -55,11 +55,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, message: "Estado de compra inválido." }, { status: 409 });
   }
 
-  const { data: settings } = await admin
-    .from("payment_settings")
-    .select("paypal_client_id,paypal_secret,paypal_sandbox")
-    .eq("id", 1)
-    .single();
+  const { data: settings } = await admin.rpc("get_payment_settings");
 
   if (!settings?.paypal_client_id || !settings.paypal_secret) {
     return NextResponse.json({ ok: false, message: "PayPal no configurado." }, { status: 503 });

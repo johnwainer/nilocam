@@ -39,11 +39,7 @@ export async function POST(request: Request) {
   if (credits < 1) return NextResponse.json({ ok: false, message: "Cantidad inválida." }, { status: 400 });
 
   const admin = serviceClient();
-  const { data: settings } = await admin
-    .from("payment_settings")
-    .select("paypal_enabled,paypal_client_id,paypal_secret,paypal_sandbox,credit_price_usd")
-    .eq("id", 1)
-    .single();
+  const { data: settings } = await admin.rpc("get_payment_settings");
 
   if (!settings?.paypal_enabled || !settings.paypal_client_id || !settings.paypal_secret) {
     return NextResponse.json({ ok: false, message: "PayPal no está habilitado." }, { status: 503 });

@@ -25,11 +25,7 @@ export async function POST(request: Request) {
   if (!proofUrl) return NextResponse.json({ ok: false, message: "El comprobante es requerido." }, { status: 400 });
 
   const admin = serviceClient();
-  const { data: settings } = await admin
-    .from("payment_settings")
-    .select("bank_transfer_enabled,credit_price_usd")
-    .eq("id", 1)
-    .single();
+  const { data: settings } = await admin.rpc("get_payment_settings");
 
   if (!settings?.bank_transfer_enabled) {
     return NextResponse.json({ ok: false, message: "Transferencia bancaria no está habilitada." }, { status: 503 });
