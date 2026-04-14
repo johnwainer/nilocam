@@ -28,25 +28,29 @@ export function RealtimeGallery({
   }, [initialPhotos]);
 
   useEffect(() => {
+    const handleRow = (row: PhotoRecord) => {
+      if (row.moderation_status !== "approved") return;
+      const withUrl: PhotoRecord = row.public_url
+        ? row
+        : { ...row, public_url: publicStorageUrl(row.storage_path) };
+      setPhotos((cur) => {
+        if (cur.some((p) => p.id === withUrl.id)) return cur;
+        return [withUrl, ...cur].slice(0, 60);
+      });
+      setFreshIds((cur) => new Set([...cur, withUrl.id]));
+    };
+
     const channel = supabase
-      .channel(`event-photos-${event.id}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "photos",
-          filter: `event_id=eq.${event.id}`,
-        },
-        (payload) => {
-          const row = payload.new as PhotoRecord;
-          if (row.moderation_status !== "approved") return;
-          setPhotos((cur) => {
-            if (cur.some((p) => p.id === row.id)) return cur;
-            return [row, ...cur].slice(0, 60);
-          });
-          setFreshIds((cur) => new Set([...cur, row.id]));
-        }
+      .channel(`gallery-${event.id}`)
+      // Auto-moderation: photo inserted directly as "approved"
+      .on("postgres_changes",
+        { event: "INSERT", schema: "public", table: "photos", filter: `event_id=eq.${event.id}` },
+        (payload) => handleRow(payload.new as PhotoRecord)
+      )
+      // Manual moderation: admin approves → status UPDATE → "approved"
+      .on("postgres_changes",
+        { event: "UPDATE", schema: "public", table: "photos", filter: `event_id=eq.${event.id}` },
+        (payload) => handleRow(payload.new as PhotoRecord)
       )
       .subscribe();
 

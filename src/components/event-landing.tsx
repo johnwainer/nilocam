@@ -1,10 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { EventRecord, PhotoRecord } from "@/types";
-import { formatDate } from "@/lib/utils";
+import { formatDate, publicStorageUrl } from "@/lib/utils";
 import { PhotoComposer } from "@/components/photo-composer";
 import { RealtimeGallery } from "@/components/realtime-gallery";
+import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
+
+const supabase = createSupabaseBrowserClient();
 
 function isDark(hex: string): boolean {
   const h = hex.replace("#", "");
@@ -39,6 +42,37 @@ export function EventLanding({
   initialPhotos: PhotoRecord[];
 }) {
   const [livePhotos, setLivePhotos] = useState<PhotoRecord[]>([]);
+
+  // Always-on realtime subscription — runs even when the gallery section is
+  // hidden (0 initial photos) so the first approved photo makes it appear.
+  // Handles both auto-moderation (INSERT as approved) and manual moderation
+  // (INSERT as pending → UPDATE to approved by admin).
+  useEffect(() => {
+    const addIfApproved = (row: PhotoRecord) => {
+      if (row.moderation_status !== "approved") return;
+      const withUrl: PhotoRecord = row.public_url
+        ? row
+        : { ...row, public_url: publicStorageUrl(row.storage_path) };
+      setLivePhotos((prev) => {
+        if (prev.some((p) => p.id === withUrl.id)) return prev;
+        return [withUrl, ...prev];
+      });
+    };
+
+    const channel = supabase
+      .channel(`landing-live-${event.id}`)
+      .on("postgres_changes",
+        { event: "INSERT", schema: "public", table: "photos", filter: `event_id=eq.${event.id}` },
+        (payload) => addIfApproved(payload.new as PhotoRecord)
+      )
+      .on("postgres_changes",
+        { event: "UPDATE", schema: "public", table: "photos", filter: `event_id=eq.${event.id}` },
+        (payload) => addIfApproved(payload.new as PhotoRecord)
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [event.id]);
 
   const cfg = event.landing_config;
   const theme = cfg.theme;
