@@ -110,6 +110,7 @@ export function SuperAdminPanel({
   // Payments
   const [paySettings, setPaySettings] = useState<PaymentSettings | null>(null);
   const [payLoading, setPayLoading] = useState(false);
+  const [payError, setPayError] = useState<string | null>(null);
   const [paySaving, setPaySaving] = useState(false);
   const [purchases, setPurchases] = useState<CreditPurchase[]>([]);
   const [purchasesLoading, setPurchasesLoading] = useState(false);
@@ -233,10 +234,17 @@ export function SuperAdminPanel({
 
   const loadPayments = useCallback(async () => {
     setPayLoading(true);
+    setPayError(null);
     try {
       const res = await fetch("/api/admin/payment-settings");
       const json = await res.json();
-      if (json.ok) setPaySettings(json.settings);
+      if (json.ok) {
+        setPaySettings(json.settings);
+      } else {
+        setPayError(json.message ?? `HTTP ${res.status}`);
+      }
+    } catch (e) {
+      setPayError(e instanceof Error ? e.message : "Error de red");
     } finally {
       setPayLoading(false);
     }
@@ -853,7 +861,36 @@ export function SuperAdminPanel({
               }}
             />
           ) : (
-            <p style={p.loading}>Error cargando configuración. Asegúrate de haber ejecutado el SQL de add-payment-tables.sql.</p>
+            <div style={{ background: "rgba(239,68,68,0.07)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 14, padding: "14px 18px" }}>
+              <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: "#991b1b" }}>Error cargando configuración de pagos</p>
+              {payError && <p style={{ margin: "6px 0 0", fontSize: 13, color: "#b91c1c", fontFamily: "monospace" }}>{payError}</p>}
+              <p style={{ margin: "8px 0 0", fontSize: 13, color: "var(--muted)" }}>
+                Si aún no has ejecutado el SQL, corre en Supabase SQL Editor:
+              </p>
+              <pre style={{ margin: "6px 0 0", fontSize: 11, background: "rgba(0,0,0,0.05)", borderRadius: 8, padding: "8px 12px", overflowX: "auto" }}>{`create table if not exists public.payment_settings (
+  id smallint primary key default 1,
+  credit_price_usd numeric(10,2) not null default 1.00,
+  stripe_enabled boolean not null default false,
+  stripe_public_key text not null default '',
+  stripe_secret_key text not null default '',
+  stripe_webhook_secret text not null default '',
+  paypal_enabled boolean not null default false,
+  paypal_client_id text not null default '',
+  paypal_secret text not null default '',
+  paypal_sandbox boolean not null default false,
+  bank_transfer_enabled boolean not null default true,
+  bank_transfer_info jsonb not null default '{}',
+  updated_at timestamptz not null default now(),
+  constraint single_row check (id = 1)
+);
+insert into public.payment_settings (id) values (1) on conflict do nothing;
+
+-- Si la tabla ya existe, solo agrega las columnas nuevas:
+alter table public.payment_settings
+  add column if not exists stripe_webhook_secret text not null default '',
+  add column if not exists paypal_sandbox boolean not null default false;`}</pre>
+              <button type="button" style={{ ...p.refreshBtn, marginTop: 10 }} onClick={loadPayments}>↺ Reintentar</button>
+            </div>
           )}
 
           {/* Pending purchases */}
