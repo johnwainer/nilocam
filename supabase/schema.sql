@@ -310,3 +310,26 @@ drop policy if exists "event photos super admin delete" on storage.objects;
 create policy "event photos super admin delete"
   on storage.objects for delete
   using (bucket_id = 'event-photos' and public.is_super_admin());
+
+-- ─── Columnas opcionales (ALTER para DBs existentes) ─────────────────────────
+-- CREATE TABLE IF NOT EXISTS no agrega columnas a tablas ya existentes.
+-- Estos ALTER son idempotentes y aseguran que DBs existentes queden al día.
+
+alter table public.profiles
+  add column if not exists credits integer not null default 0;
+
+alter table public.events
+  add column if not exists is_active   boolean not null default true,
+  add column if not exists photo_limit integer not null default 0;
+
+alter table public.photos
+  add column if not exists original_size_bytes bigint,
+  add column if not exists original_mime_type  text,
+  add column if not exists original_width      integer,
+  add column if not exists original_height     integer,
+  add column if not exists exif_data           jsonb,
+  add column if not exists device_data         jsonb,
+  add column if not exists upload_ip           text;
+
+-- Fuerza a PostgREST a recargar su caché del schema.
+notify pgrst, 'reload schema';
