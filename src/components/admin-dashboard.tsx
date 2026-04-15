@@ -177,9 +177,7 @@ export function AdminDashboard({
   const [credits, setCredits] = useState<number | null>(null);
   const [pricing, setPricing] = useState<Record<string, CreditPricing>>({});
   const [transactions, setTransactions] = useState<CreditTransaction[]>([]);
-  const [showCreditsHistory, setShowCreditsHistory] = useState(false);
   const [purchasingPack, setPurchasingPack] = useState<string | null>(null);
-  const [showCreateConfirm, setShowCreateConfirm] = useState(false);
 
   // Track which event ids exist in DB (not drafts)
   const [savedIds] = useState<Set<string>>(() => new Set(initialEvents.map((e) => e.id)));
@@ -634,16 +632,11 @@ export function AdminDashboard({
           {/* Right actions */}
           <div style={s.headerRight}>
             {credits !== null && (
-              <button
-                type="button"
-                style={s.creditsChip}
-                onClick={() => setShowCreditsHistory((v) => !v)}
-                title="Ver historial de créditos"
-              >
+              <div style={s.creditsChip} title="Saldo actual">
                 <span style={s.creditsIcon}>◈</span>
                 <span style={{ fontWeight: 800 }}>{credits}</span>
                 <span style={{ opacity: 0.65, fontSize: 11 }}>créditos</span>
-              </button>
+              </div>
             )}
             <span className="admin-header-email" style={s.headerEmail}>{userEmail}</span>
             <button className="btn btn-ghost" style={s.headerBtn} onClick={signOut} type="button">

@@ -174,7 +174,10 @@ export function SuperCreditsPanel({ userEmail }: { userEmail: string }) {
   const [adjusting, setAdjusting] = useState<UserBalance | null>(null);
   const [adjAmount, setAdjAmount] = useState(10);
   const [adjDesc, setAdjDesc] = useState("");
+  const [bulkAmount, setBulkAmount] = useState(5);
+  const [bulkDesc, setBulkDesc] = useState("Créditos globales");
   const [saving, setSaving] = useState(false);
+  const [bulkSaving, setBulkSaving] = useState(false);
   const [notice, setNotice] = useState<{ text: string; ok: boolean } | null>(null);
 
   const load = useCallback(async (emailFilter?: string) => {
@@ -223,6 +226,34 @@ export function SuperCreditsPanel({ userEmail }: { userEmail: string }) {
     } finally { setSaving(false); }
   };
 
+  const submitBulkAdjust = async () => {
+    setBulkSaving(true);
+    try {
+      const res = await fetch("/api/admin/credits", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          scope: "all",
+          amount: bulkAmount,
+          description: bulkDesc,
+        }),
+      });
+      const json = await res.json();
+      if (!json.ok) throw new Error(json.message);
+      await load(filterEmail.trim() || undefined);
+      flash(
+        bulkAmount >= 0
+          ? `Se agregaron ${bulkAmount} ◈ a todos los usuarios.`
+          : `Se descontaron ${Math.abs(bulkAmount)} ◈ a todos los usuarios.`,
+        true
+      );
+    } catch (e) {
+      flash(e instanceof Error ? e.message : "Error", false);
+    } finally {
+      setBulkSaving(false);
+    }
+  };
+
   const totalTx = transactions.length;
   const totalDebits = transactions.filter((t) => t.amount < 0).reduce((s, t) => s + Math.abs(t.amount), 0);
   const totalCredits = transactions.filter((t) => t.amount > 0).reduce((s, t) => s + t.amount, 0);
@@ -263,6 +294,45 @@ export function SuperCreditsPanel({ userEmail }: { userEmail: string }) {
           <span style={r.balanceIcon}>📤</span>
           <span style={r.balanceValue}>{totalDebits}</span>
           <span style={r.balanceLabel}>◈ gastados</span>
+        </div>
+      </div>
+
+      {/* Bulk credits action */}
+      <div style={r.adjustForm}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12, flexWrap: "wrap" }}>
+          <span style={{ fontWeight: 700, fontSize: 14 }}>Créditos globales</span>
+          <span style={{ fontSize: 13, color: "var(--muted)" }}>Aplicar el mismo ajuste a todos los usuarios</span>
+        </div>
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "flex-end" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            <label style={r.adjLabel}>Cantidad (+ / -)</label>
+            <input
+              className="input"
+              type="number"
+              value={bulkAmount}
+              onChange={(e) => setBulkAmount(parseInt(e.target.value) || 0)}
+              style={{ width: 120, fontSize: 15, fontWeight: 700, textAlign: "center" }}
+            />
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 6, flex: "1 1 240px" }}>
+            <label style={r.adjLabel}>Descripción</label>
+            <input
+              className="input"
+              type="text"
+              value={bulkDesc}
+              onChange={(e) => setBulkDesc(e.target.value)}
+              placeholder="ej. Bonificación especial"
+            />
+          </div>
+          <button
+            type="button"
+            className="btn btn-primary"
+            style={{ fontSize: 13, padding: "10px 18px" }}
+            disabled={bulkSaving}
+            onClick={submitBulkAdjust}
+          >
+            {bulkSaving ? "Aplicando…" : "Aplicar a todos"}
+          </button>
         </div>
       </div>
 

@@ -28,18 +28,62 @@ export async function PATCH(request: Request) {
   if (!caller) return NextResponse.json({ ok: false, message: "Sin acceso." }, { status: 403 });
 
   const body = await request.json() as {
+    scope?: "single" | "all";
     user_id?: string;   // UUID or email — we look up by whichever is provided
     user_email?: string;
     amount?: number;
     description?: string;
   };
 
-  const { user_id, user_email, amount, description = "" } = body;
-  if ((!user_id && !user_email) || amount === undefined) {
+  const { scope = "single", user_id, user_email, amount, description = "" } = body;
+  if (amount === undefined) {
     return NextResponse.json({ ok: false, message: "Faltan parámetros." }, { status: 400 });
   }
 
   const admin = serviceClient();
+
+  if (scope === "all") {
+    const { data: profiles, error: profilesError } = await admin
+      .from("profiles")
+      .select("id, email, credits")
+      .order("email", { ascending: true });
+
+    if (profilesError) {
+      return NextResponse.json({ ok: false, message: profilesError.message }, { status: 500 });
+    }
+
+    const updated: Array<{ id: string; email: string; credits: number }> = [];
+    for (const profile of profiles ?? []) {
+      const newBalance = Math.max(0, (profile.credits ?? 0) + amount);
+      const { error: updateError } = await admin.from("profiles").update({ credits: newBalance }).eq("id", profile.id);
+      if (updateError) {
+        return NextResponse.json({ ok: false, message: updateError.message }, { status: 500 });
+      }
+
+      const { error: txError } = await admin.from("credit_transactions").insert({
+        user_id: profile.id,
+        user_email: profile.email,
+        amount,
+        type: amount >= 0 ? "manual_grant" : "manual_deduct",
+        description: description || (amount >= 0 ? "Créditos globales otorgados por super admin" : "Créditos globales descontados por super admin"),
+      });
+      if (txError) {
+        return NextResponse.json({ ok: false, message: txError.message }, { status: 500 });
+      }
+
+      updated.push({ id: profile.id, email: profile.email, credits: newBalance });
+    }
+
+    return NextResponse.json({
+      ok: true,
+      scope: "all",
+      updated,
+    });
+  }
+
+  if ((!user_id && !user_email)) {
+    return NextResponse.json({ ok: false, message: "Faltan parámetros." }, { status: 400 });
+  }
 
   // Resolve profile by UUID or by email
   const isUUID = user_id && /^[0-9a-f-]{36}$/.test(user_id);
@@ -63,5 +107,5 @@ export async function PATCH(request: Request) {
     description: description || (amount >= 0 ? "Créditos otorgados por admin" : "Créditos descontados por admin"),
   });
 
-  return NextResponse.json({ ok: true, credits: newBalance });
+  return NextResponse.json({ ok: true, credits: newBalance, scope: "single" });
 }
