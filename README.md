@@ -60,27 +60,62 @@ npm run dev
 
 ## Configuración de Supabase
 
-Ejecuta los archivos en **SQL Editor** en este orden:
+### Paso 1 — Ejecutar los SQL
 
-| # | Archivo | Descripción |
-|---|---------|-------------|
-| 1 | `supabase/schema.sql` | Tablas, índices, triggers, funciones, RLS y storage. Idempotente. |
-| 2 | `supabase/setup-payments-complete.sql` | Tablas de pagos + funciones RPC SECURITY DEFINER. Idempotente. |
-| 3 | `supabase/super-admin.sql` | Otorga rol `super_admin` a tu usuario. Edita el email antes de ejecutar. |
-| 4 | `supabase/seed.sql` | Evento demo (opcional). |
+Ve a tu proyecto en [supabase.com](https://supabase.com) → **SQL Editor** y ejecuta los archivos en este orden:
 
-> Todos los archivos son idempotentes — seguros de re-ejecutar si algo falla.
+#### 1. `supabase/schema.sql`
+Crea todas las tablas, índices, triggers, funciones de autorización, políticas RLS y el bucket de storage. Es el punto de partida obligatorio.
 
-### 3. Auth → URL Configuration
-- **Site URL:** `https://nilocam.vercel.app`
-- **Redirect URL:** `https://nilocam.vercel.app/auth/callback`
+```
+Supabase → SQL Editor → New query → pegar contenido → Run
+```
 
-### 4. Auth → Providers → Email
-- Activa login con correo y contraseña
-- Desactiva "Confirm email" para flujo inmediato (recomendado)
+#### 2. `supabase/setup-payments-complete.sql`
+Crea las tablas `payment_settings` y `credit_purchases`, y registra las funciones RPC con `SECURITY DEFINER` que usa el sistema de pagos. Necesario para que el panel de Pagos funcione.
 
-### 5. Storage
-- Verifica que exista el bucket `event-photos` y que sea **público para lectura**
+```
+Supabase → SQL Editor → New query → pegar contenido → Run
+```
+
+#### 3. `supabase/super-admin.sql`
+Otorga el rol `super_admin` a tu usuario. **Antes de ejecutarlo**, abre el archivo y reemplaza `tu@email.com` con tu email real.
+
+```
+Supabase → SQL Editor → New query → pegar contenido (con email editado) → Run
+```
+
+#### 4. `supabase/seed.sql` _(opcional)_
+Inserta un evento de demostración para probar la landing. Solo útil en desarrollo.
+
+```
+Supabase → SQL Editor → New query → pegar contenido → Run
+```
+
+> Todos los archivos son idempotentes — seguros de re-ejecutar si algo falla a mitad.
+
+---
+
+### Paso 2 — Auth → URL Configuration
+
+En tu proyecto de Supabase, ve a **Authentication → URL Configuration** y agrega:
+
+- **Site URL:** `https://tu-dominio.vercel.app`
+- **Redirect URLs:** `https://tu-dominio.vercel.app/auth/callback`
+
+Para desarrollo local agrega también:
+- `http://localhost:3000`
+- `http://localhost:3000/auth/callback`
+
+### Paso 3 — Auth → Providers → Email
+
+En **Authentication → Providers → Email**:
+- Activa **Enable Email provider**
+- Desactiva **Confirm email** para que los accesos queden activos de inmediato (recomendado)
+
+### Paso 4 — Storage
+
+El archivo `schema.sql` crea el bucket `event-photos` automáticamente. Si por alguna razón no existe, créalo manualmente en **Storage** con visibilidad **Public**.
 
 ---
 
