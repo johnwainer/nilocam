@@ -215,6 +215,26 @@ export type CreditPurchase = {
   updated_at: string;
 };
 
+export type EmailSettings = {
+  provider: "disabled" | "resend" | "smtp";
+  resend_api_key: string;
+  smtp_host: string;
+  smtp_port: number;
+  smtp_user: string;
+  smtp_password: string;
+  smtp_secure: boolean;
+  from_name: string;
+  from_email: string;
+  tpl_welcome_subject: string;
+  tpl_welcome_body: string;
+  tpl_payment_confirmed_subject: string;
+  tpl_payment_confirmed_body: string;
+  tpl_bank_approved_subject: string;
+  tpl_bank_approved_body: string;
+  tpl_bank_rejected_subject: string;
+  tpl_bank_rejected_body: string;
+};
+
 export type LandingTemplatePreset = {
   key: string;
   name: string;

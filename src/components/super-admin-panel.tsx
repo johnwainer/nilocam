@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { formatDate, siteUrl } from "@/lib/utils";
-import type { CreditPricing, CreditPurchase, EventRecord, PaymentSettings } from "@/types";
+import type { CreditPricing, CreditPurchase, EmailSettings, EventRecord, PaymentSettings } from "@/types";
 import { SuperCreditsPanel } from "@/components/credits-panel";
 import { PasswordInput } from "@/components/password-input";
 
@@ -44,7 +44,7 @@ type RecentPhoto = {
   moderation_status: string;
 };
 
-type SATab = "stats" | "events" | "users" | "pricing" | "credits" | "payments";
+type SATab = "stats" | "events" | "users" | "pricing" | "credits" | "payments" | "email";
 
 const ROLE_LABELS: Record<string, string> = {
   owner: "Owner",
@@ -118,6 +118,13 @@ export function SuperAdminPanel({
   const [purchaseFilter, setPurchaseFilter] = useState<"all" | "pending" | "completed" | "rejected">("pending");
   const [processingPurchaseId, setProcessingPurchaseId] = useState<string | null>(null);
   const [adminNotes, setAdminNotes] = useState<Record<string, string>>({});
+
+  // Email
+  const [emailSettings, setEmailSettings] = useState<EmailSettings | null>(null);
+  const [emailLoading, setEmailLoading] = useState(false);
+  const [emailSaving, setEmailSaving] = useState(false);
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [emailTestSending, setEmailTestSending] = useState(false);
 
   const flash = useCallback((text: string, ok: boolean) => {
     setNotice({ text, ok });
@@ -262,13 +269,32 @@ export function SuperAdminPanel({
     }
   }, []);
 
+  const loadEmailSettings = useCallback(async () => {
+    setEmailLoading(true);
+    setEmailError(null);
+    try {
+      const res = await fetch("/api/admin/email-settings");
+      const json = await res.json();
+      if (json.ok) {
+        setEmailSettings(json.settings);
+      } else {
+        setEmailError(json.message ?? `HTTP ${res.status}`);
+      }
+    } catch (e) {
+      setEmailError(e instanceof Error ? e.message : "Error de red");
+    } finally {
+      setEmailLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     if (tab === "stats") loadStats();
     else if (tab === "events") loadEvents();
     else if (tab === "users") loadUsers();
     else if (tab === "pricing") loadPricing();
     else if (tab === "payments") loadPayments();
-  }, [tab, loadStats, loadEvents, loadUsers, loadPricing, loadPayments, loadPurchases]);
+    else if (tab === "email") loadEmailSettings();
+  }, [tab, loadStats, loadEvents, loadUsers, loadPricing, loadPayments, loadPurchases, loadEmailSettings]);
 
   // ── event actions ───────────────────────────────────────────────────────────
 
@@ -473,9 +499,9 @@ export function SuperAdminPanel({
           <span style={p.panelSub}>Sesión como {userEmail}</span>
         </div>
         <div style={p.tabBar}>
-          {(["stats", "events", "users", "pricing", "credits", "payments"] as SATab[]).map((t) => (
+          {(["stats", "events", "users", "pricing", "credits", "payments", "email"] as SATab[]).map((t) => (
             <button key={t} type="button" onClick={() => setTab(t)} style={tab === t ? p.tabActive : p.tab}>
-              {t === "stats" ? "Estadísticas" : t === "events" ? "Eventos" : t === "users" ? "Usuarios" : t === "pricing" ? "Precios" : t === "credits" ? "Créditos" : "Pagos"}
+              {t === "stats" ? "Estadísticas" : t === "events" ? "Eventos" : t === "users" ? "Usuarios" : t === "pricing" ? "Precios" : t === "credits" ? "Créditos" : t === "payments" ? "Pagos" : "Email"}
             </button>
           ))}
         </div>
@@ -1068,6 +1094,65 @@ export function SuperAdminPanel({
               })}
             </div>
           )}
+        </div>
+      )}
+
+      {/* ── EMAIL ── */}
+      {tab === "email" && (
+        <div style={p.content}>
+          {emailLoading ? (
+            <p style={p.loading}>Cargando configuración de email…</p>
+          ) : emailError ? (
+            <div style={{ background: "rgba(239,68,68,0.07)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 14, padding: "14px 18px" }}>
+              <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: "#991b1b" }}>Error cargando configuración</p>
+              <p style={{ margin: "6px 0 0", fontSize: 13, color: "#b91c1c", fontFamily: "monospace" }}>{emailError}</p>
+              <p style={{ margin: "8px 0 0", fontSize: 13, color: "var(--muted)" }}>
+                Ejecuta el archivo <strong>supabase/setup-email-settings.sql</strong> en Supabase SQL Editor y luego reintenta.
+              </p>
+              <button type="button" style={{ ...p.refreshBtn, marginTop: 10 }} onClick={loadEmailSettings}>↺ Reintentar</button>
+            </div>
+          ) : emailSettings ? (
+            <EmailTab
+              settings={emailSettings}
+              saving={emailSaving}
+              testSending={emailTestSending}
+              onSave={async (draft) => {
+                setEmailSaving(true);
+                try {
+                  const res = await fetch("/api/admin/email-settings", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(draft),
+                  });
+                  const json = await res.json();
+                  if (!json.ok) throw new Error(json.message);
+                  setEmailSettings(draft);
+                  flash("Configuración de email guardada", true);
+                } catch (e) {
+                  flash(e instanceof Error ? e.message : "Error", false);
+                } finally {
+                  setEmailSaving(false);
+                }
+              }}
+              onTest={async (draft) => {
+                setEmailTestSending(true);
+                try {
+                  const res = await fetch("/api/admin/email-settings/test", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ settings: draft }),
+                  });
+                  const json = await res.json();
+                  if (!json.ok) throw new Error(json.message);
+                  flash(json.message ?? "Email de prueba enviado", true);
+                } catch (e) {
+                  flash(e instanceof Error ? e.message : "Error enviando email de prueba", false);
+                } finally {
+                  setEmailTestSending(false);
+                }
+              }}
+            />
+          ) : null}
         </div>
       )}
     </div>
@@ -1710,6 +1795,235 @@ function fmtDate(iso: string) {
   try {
     return new Date(iso).toLocaleDateString("es-MX", { day: "2-digit", month: "short", year: "numeric" });
   } catch { return iso; }
+}
+
+// ─── EmailTab ────────────────────────────────────────────────────────────────
+
+const DEFAULT_SUBJECTS: Record<string, string> = {
+  tpl_welcome_subject:           "Bienvenido a {{app_name}}, {{name}}",
+  tpl_payment_confirmed_subject: "Pago confirmado — {{credits}} créditos",
+  tpl_bank_approved_subject:     "Transferencia aprobada — {{credits}} créditos acreditados",
+  tpl_bank_rejected_subject:     "Transferencia bancaria — revisión requerida",
+};
+
+const TEMPLATE_VARS: Record<string, string> = {
+  tpl_welcome:           "{{name}}, {{email}}, {{credits}}, {{app_name}}",
+  tpl_payment_confirmed: "{{email}}, {{credits}}, {{amount}}, {{method}}, {{balance}}",
+  tpl_bank_approved:     "{{email}}, {{credits}}, {{amount}}, {{balance}}",
+  tpl_bank_rejected:     "{{email}}, {{credits}}, {{amount}}, {{notes}}",
+};
+
+function EmailTab({
+  settings,
+  saving,
+  testSending,
+  onSave,
+  onTest,
+}: {
+  settings: EmailSettings;
+  saving: boolean;
+  testSending: boolean;
+  onSave: (draft: EmailSettings) => void;
+  onTest: (draft: EmailSettings) => void;
+}) {
+  const [draft, setDraft] = useState<EmailSettings>({ ...settings });
+  const set = <K extends keyof EmailSettings>(key: K, value: EmailSettings[K]) =>
+    setDraft((prev) => ({ ...prev, [key]: value }));
+
+  const templates: Array<{ key: string; label: string }> = [
+    { key: "welcome",           label: "Bienvenida (registro nuevo)" },
+    { key: "payment_confirmed", label: "Pago confirmado (Stripe / PayPal)" },
+    { key: "bank_approved",     label: "Transferencia bancaria aprobada" },
+    { key: "bank_rejected",     label: "Transferencia bancaria rechazada" },
+  ];
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+
+      {/* Provider */}
+      <div style={p.paySection}>
+        <div style={p.paySectionHead}>
+          <span style={p.paySectionTitle}>Proveedor de email</span>
+        </div>
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" as const }}>
+          {(["disabled", "resend", "smtp"] as const).map((prov) => (
+            <button
+              key={prov}
+              type="button"
+              onClick={() => set("provider", prov)}
+              style={{
+                padding: "8px 18px",
+                borderRadius: 999,
+                border: "1.5px solid",
+                borderColor: draft.provider === prov ? "#6d28d9" : "rgba(0,0,0,0.12)",
+                background: draft.provider === prov ? "rgba(109,40,217,0.08)" : "transparent",
+                color: draft.provider === prov ? "#6d28d9" : "#555",
+                fontWeight: draft.provider === prov ? 700 : 400,
+                fontSize: 14,
+                cursor: "pointer",
+              }}
+            >
+              {prov === "disabled" ? "Desactivado" : prov === "resend" ? "Resend" : "SMTP"}
+            </button>
+          ))}
+        </div>
+        {draft.provider === "disabled" && (
+          <p style={{ margin: "6px 0 0", fontSize: 13, color: "var(--muted)" }}>
+            Los emails transaccionales están desactivados. Los pagos y registros seguirán funcionando, pero sin notificaciones por correo.
+          </p>
+        )}
+      </div>
+
+      {/* Resend credentials */}
+      {draft.provider === "resend" && (
+        <div style={p.paySection}>
+          <span style={p.paySectionTitle}>Resend</span>
+          <p style={{ margin: "0 0 10px", fontSize: 13, color: "var(--muted)" }}>
+            Crea tu cuenta y clave en <strong>resend.com</strong>. Plan gratuito: 3,000 emails/mes.
+          </p>
+          <div style={p.payField}>
+            <label style={p.formLabel}>API Key</label>
+            <PasswordInput
+              className="input"
+              value={draft.resend_api_key}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => set("resend_api_key", e.target.value)}
+              placeholder="re_xxxxxxxxxxxxxxxxxxxxxxxx"
+              style={{ fontSize: 13, fontFamily: "monospace" }}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* SMTP credentials */}
+      {draft.provider === "smtp" && (
+        <div style={p.paySection}>
+          <span style={p.paySectionTitle}>SMTP</span>
+          <div style={p.payFieldRow}>
+            <div style={p.payField}>
+              <label style={p.formLabel}>Servidor (host)</label>
+              <input className="input" type="text" value={draft.smtp_host} onChange={(e) => set("smtp_host", e.target.value)} placeholder="smtp.ejemplo.com" style={{ fontSize: 13 }} />
+            </div>
+            <div style={{ ...p.payField, flex: "0 0 120px" }}>
+              <label style={p.formLabel}>Puerto</label>
+              <input className="input" type="number" value={draft.smtp_port} onChange={(e) => set("smtp_port", parseInt(e.target.value) || 587)} placeholder="587" style={{ fontSize: 13 }} />
+            </div>
+            <div style={p.payField}>
+              <label style={p.formLabel}>Usuario</label>
+              <input className="input" type="text" value={draft.smtp_user} onChange={(e) => set("smtp_user", e.target.value)} placeholder="usuario@ejemplo.com" style={{ fontSize: 13 }} />
+            </div>
+            <div style={p.payField}>
+              <label style={p.formLabel}>Contraseña</label>
+              <PasswordInput
+                className="input"
+                value={draft.smtp_password}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => set("smtp_password", e.target.value)}
+                placeholder="••••••••"
+                style={{ fontSize: 13 }}
+              />
+            </div>
+          </div>
+          <label style={{ ...p.toggleLabel, gap: 8 }}>
+            <input type="checkbox" checked={draft.smtp_secure} onChange={(e) => set("smtp_secure", e.target.checked)} />
+            <span style={{ fontSize: 13, fontWeight: 600 }}>
+              {draft.smtp_secure ? "TLS (puerto 465)" : "STARTTLS (puerto 587)"}
+            </span>
+          </label>
+        </div>
+      )}
+
+      {/* From */}
+      {draft.provider !== "disabled" && (
+        <div style={p.paySection}>
+          <span style={p.paySectionTitle}>Remitente</span>
+          <div style={p.payFieldRow}>
+            <div style={p.payField}>
+              <label style={p.formLabel}>Nombre del remitente</label>
+              <input className="input" type="text" value={draft.from_name} onChange={(e) => set("from_name", e.target.value)} placeholder="Nilo Cam" style={{ fontSize: 13 }} />
+            </div>
+            <div style={{ ...p.payField, flex: "2 1 280px" }}>
+              <label style={p.formLabel}>Email del remitente</label>
+              <input className="input" type="email" value={draft.from_email} onChange={(e) => set("from_email", e.target.value)} placeholder="hola@tudominio.com" style={{ fontSize: 13 }} />
+            </div>
+          </div>
+          {draft.provider === "resend" && (
+            <p style={{ margin: 0, fontSize: 12, color: "var(--muted)", lineHeight: 1.6 }}>
+              En el plan gratuito de Resend solo puedes usar <code style={{ fontSize: 11, background: "rgba(0,0,0,0.06)", padding: "1px 5px", borderRadius: 4 }}>onboarding@resend.dev</code> hasta verificar un dominio propio.
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* Templates */}
+      {draft.provider !== "disabled" && (
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <h3 style={p.sectionTitle}>Plantillas de email</h3>
+          <p style={{ margin: 0, fontSize: 13, color: "var(--muted)" }}>
+            El asunto y cuerpo de cada email. Usa variables entre dobles llaves. Si el cuerpo está vacío se usa el diseño por defecto del sistema.
+          </p>
+          {templates.map(({ key, label }) => {
+            const subjectKey = `tpl_${key}_subject` as keyof EmailSettings;
+            const bodyKey    = `tpl_${key}_body`    as keyof EmailSettings;
+            return (
+              <div key={key} style={p.paySection}>
+                <strong style={{ fontSize: 14, color: "#111" }}>{label}</strong>
+                <p style={{ margin: "2px 0 6px", fontSize: 12, color: "var(--muted)" }}>
+                  Variables disponibles: <code style={{ fontSize: 11, background: "rgba(0,0,0,0.05)", padding: "1px 6px", borderRadius: 4 }}>{TEMPLATE_VARS[`tpl_${key}`]}</code>
+                </p>
+                <div style={p.payFieldRow}>
+                  <div style={{ ...p.payField, flex: "2 1 300px" }}>
+                    <label style={p.formLabel}>Asunto</label>
+                    <input
+                      className="input"
+                      type="text"
+                      value={draft[subjectKey] as string}
+                      onChange={(e) => set(subjectKey, e.target.value)}
+                      placeholder={DEFAULT_SUBJECTS[subjectKey as string] ?? ""}
+                      style={{ fontSize: 13 }}
+                    />
+                  </div>
+                  <div style={{ ...p.payField, flex: "3 1 400px" }}>
+                    <label style={p.formLabel}>Cuerpo (HTML) — vacío = usa diseño por defecto</label>
+                    <textarea
+                      className="input"
+                      value={draft[bodyKey] as string}
+                      onChange={(e) => set(bodyKey, e.target.value)}
+                      placeholder={`<h2>Hola {{name}}</h2><p>Tu mensaje aquí...</p>`}
+                      rows={4}
+                      style={{ fontSize: 12, fontFamily: "monospace", resize: "vertical" as const }}
+                    />
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Actions */}
+      <div style={{ display: "flex", gap: 10, flexWrap: "wrap" as const }}>
+        <button
+          type="button"
+          className="btn btn-primary"
+          style={{ padding: "10px 28px" }}
+          disabled={saving}
+          onClick={() => onSave(draft)}
+        >
+          {saving ? "Guardando…" : "Guardar configuración"}
+        </button>
+        {draft.provider !== "disabled" && (
+          <button
+            type="button"
+            className="btn btn-ghost"
+            style={{ padding: "10px 20px" }}
+            disabled={testSending}
+            onClick={() => onTest(draft)}
+          >
+            {testSending ? "Enviando…" : "✉ Enviar email de prueba"}
+          </button>
+        )}
+      </div>
+    </div>
+  );
 }
 
 // ─── styles ───────────────────────────────────────────────────────────────────
