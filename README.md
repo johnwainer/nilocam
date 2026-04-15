@@ -60,21 +60,16 @@ npm run dev
 
 ## Configuración de Supabase
 
-### 1. Tablas y schema base
-Ejecuta en **SQL Editor** en este orden:
+Ejecuta los archivos en **SQL Editor** en este orden:
 
-```
-supabase/schema.sql          ← tablas, triggers, policies base
-supabase/seed.sql            ← evento demo (opcional)
-supabase/super-admin.sql     ← marca tu usuario como super_admin
-```
+| # | Archivo | Descripción |
+|---|---------|-------------|
+| 1 | `supabase/schema.sql` | Tablas, índices, triggers, funciones, RLS y storage. Idempotente. |
+| 2 | `supabase/setup-payments-complete.sql` | Tablas de pagos + funciones RPC SECURITY DEFINER. Idempotente. |
+| 3 | `supabase/super-admin.sql` | Otorga rol `super_admin` a tu usuario. Edita el email antes de ejecutar. |
+| 4 | `supabase/seed.sql` | Evento demo (opcional). |
 
-### 2. Sistema de pagos
-```
-supabase/setup-payments-complete.sql   ← tablas payment_settings + credit_purchases
-                                          + funciones RPC SECURITY DEFINER
-```
-> Este archivo es idempotente — seguro de re-ejecutar.
+> Todos los archivos son idempotentes — seguros de re-ejecutar si algo falla.
 
 ### 3. Auth → URL Configuration
 - **Site URL:** `https://nilocam.vercel.app`
@@ -133,8 +128,8 @@ src/
     buy-credits-modal.tsx   ← modal de compra (Stripe / PayPal / banco)
     credits-panel.tsx       ← panel de créditos del usuario
 supabase/
-  schema.sql
-  seed.sql
-  super-admin.sql
-  setup-payments-complete.sql   ← ⬅ ejecutar para habilitar pagos
+  schema.sql                    ← 1. ejecutar primero (schema completo)
+  setup-payments-complete.sql   ← 2. ejecutar para habilitar pagos
+  super-admin.sql               ← 3. editar email y ejecutar
+  seed.sql                      ← 4. opcional — evento demo
 ```
