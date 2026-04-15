@@ -598,7 +598,12 @@ export function PhotoComposer({ event, onUploaded, compact, accentColor }: Compo
                     <input type="checkbox" checked={acceptedTerms}
                       onChange={(e) => setAcceptedTerms(e.target.checked)} />
                     <span style={{ color: "rgba(255,255,255,0.7)", fontSize: 13 }}>
-                      Acepto que esta foto se muestre en el evento.
+                      Acepto los{" "}
+                      <a href="/terms" target="_blank" rel="noopener noreferrer"
+                        style={{ color: "inherit", textDecoration: "underline" }}>
+                        términos de uso
+                      </a>{" "}
+                      y que esta foto se muestre en el evento.
                     </span>
                   </label>
                 ) : null}

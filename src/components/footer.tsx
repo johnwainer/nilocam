@@ -63,6 +63,10 @@ export function Footer() {
             © {year} {APP_NAME}. Todos los derechos reservados.
           </span>
           <div style={s.bottomLinks}>
+            <Link href="/terms" style={s.bottomLink}>Términos</Link>
+            <span className="muted" style={{ fontSize: 13, opacity: 0.4 }}>·</span>
+            <Link href="/privacy" style={s.bottomLink}>Privacidad</Link>
+            <span className="muted" style={{ fontSize: 13, opacity: 0.4 }}>·</span>
             <Link href="/admin" style={s.bottomLink}>Panel de administración</Link>
             <span className="muted" style={{ fontSize: 13, opacity: 0.4 }}>·</span>
             <Link href="/event/demo-nilo-cam" style={s.bottomLink}>Ver demo</Link>
