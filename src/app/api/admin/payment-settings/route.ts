@@ -22,37 +22,23 @@ async function requireSuperAdmin() {
   return profile?.role === "super_admin" ? user : null;
 }
 
-// Fetch via raw SQL to bypass PostgREST schema cache issues on new tables.
-async function fetchSettings(admin: ReturnType<typeof serviceClient>) {
-  // Try PostgREST first (fast path)
-  const { data, error } = await admin
-    .from("payment_settings")
-    .select("*")
-    .eq("id", 1)
-    .single();
-
-  if (!error) return { data, error: null };
-
-  // Return the original error — schema cache reload must be done manually in Supabase
-  return { data: null, error };
-}
-
 // GET /api/admin/payment-settings — full settings including secrets (super admin only)
 export async function GET() {
   const user = await requireSuperAdmin();
   if (!user) return NextResponse.json({ ok: false, message: "Sin acceso." }, { status: 403 });
 
   const admin = serviceClient();
-  const { data, error } = await fetchSettings(admin);
-  if (error) return NextResponse.json({ ok: false, message: error.message }, { status: 500 });
+  const { data, error } = await admin.rpc("get_payment_settings");
 
-  // Ensure new columns have safe defaults if they don't exist yet
-  const settings = {
-    stripe_webhook_secret: "",
-    paypal_sandbox: false,
-    ...data,
-  };
+  if (error || !data) {
+    return NextResponse.json({
+      ok: false,
+      message: error?.message ?? "Error obteniendo configuración. Ejecuta el SQL de add-payment-rpc-functions.sql en Supabase.",
+    }, { status: 500 });
+  }
 
+  // Ensure new columns have safe defaults
+  const settings = { stripe_webhook_secret: "", paypal_sandbox: false, ...data };
   return NextResponse.json({ ok: true, settings });
 }
 
@@ -61,9 +47,8 @@ export async function POST(request: Request) {
   const user = await requireSuperAdmin();
   if (!user) return NextResponse.json({ ok: false, message: "Sin acceso." }, { status: 403 });
 
-  const body = await request.json() as Partial<PaymentSettings> & { credit_price_usd?: number };
+  const body = await request.json() as Partial<PaymentSettings>;
 
-  // Only allow known fields to prevent injection
   const allowed: (keyof PaymentSettings)[] = [
     "credit_price_usd",
     "stripe_enabled", "stripe_public_key", "stripe_secret_key", "stripe_webhook_secret",
@@ -71,7 +56,7 @@ export async function POST(request: Request) {
     "bank_transfer_enabled", "bank_transfer_info",
   ];
 
-  const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
+  const patch: Record<string, unknown> = {};
   for (const key of allowed) {
     if (key in body) patch[key] = body[key];
   }
@@ -84,7 +69,7 @@ export async function POST(request: Request) {
   }
 
   const admin = serviceClient();
-  const { error } = await admin.from("payment_settings").update(patch).eq("id", 1);
+  const { error } = await admin.rpc("set_payment_settings", { patch });
   if (error) return NextResponse.json({ ok: false, message: error.message }, { status: 500 });
 
   return NextResponse.json({ ok: true });

@@ -2,6 +2,8 @@ import { createClient } from "@supabase/supabase-js";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
+export const dynamic = "force-dynamic";
+
 function serviceClient() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -87,7 +89,16 @@ export async function POST(request: Request) {
     }),
   });
 
-  const order = await orderRes.json() as { id: string };
+  if (!orderRes.ok) {
+    await admin.from("credit_purchases").delete().eq("id", purchase.id);
+    return NextResponse.json({ ok: false, message: "Error al crear orden en PayPal." }, { status: 502 });
+  }
+
+  const order = await orderRes.json() as { id?: string };
+  if (!order.id) {
+    await admin.from("credit_purchases").delete().eq("id", purchase.id);
+    return NextResponse.json({ ok: false, message: "Respuesta inválida de PayPal." }, { status: 502 });
+  }
 
   await admin
     .from("credit_purchases")

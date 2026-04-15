@@ -3,6 +3,8 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import type { EventRecord } from "@/types";
 
+export const dynamic = "force-dynamic";
+
 function serviceClient() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -50,8 +52,19 @@ export async function POST(request: Request) {
   const { data: event, error: eventErr } = await admin
     .from("events")
     .insert({
-      ...body,
-      owner_email: body.owner_email ?? user.email,
+      slug: body.slug,
+      title: body.title,
+      subtitle: body.subtitle,
+      event_type_key: body.event_type_key,
+      event_date: body.event_date,
+      venue_name: body.venue_name,
+      venue_city: body.venue_city,
+      moderation_mode: body.moderation_mode,
+      max_upload_mb: body.max_upload_mb,
+      cover_image_url: body.cover_image_url,
+      landing_config: body.landing_config,
+      allow_guest_upload: body.allow_guest_upload,
+      owner_email: user.email,
       is_active: true,
       photo_limit: 0,
     })

@@ -3,6 +3,8 @@ import { createClient } from "@supabase/supabase-js";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
+export const dynamic = "force-dynamic";
+
 function serviceClient() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -22,11 +24,7 @@ export async function POST(request: Request) {
   if (credits < 1) return NextResponse.json({ ok: false, message: "Cantidad inválida." }, { status: 400 });
 
   const admin = serviceClient();
-  const { data: settings } = await admin
-    .from("payment_settings")
-    .select("stripe_enabled,stripe_secret_key,credit_price_usd")
-    .eq("id", 1)
-    .single();
+  const { data: settings } = await admin.rpc("get_payment_settings");
 
   if (!settings?.stripe_enabled || !settings.stripe_secret_key) {
     return NextResponse.json({ ok: false, message: "Stripe no está habilitado." }, { status: 503 });

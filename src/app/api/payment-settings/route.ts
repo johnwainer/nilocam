@@ -15,14 +15,10 @@ function serviceClient() {
 // Public endpoint — returns only what the client needs (no secrets).
 export async function GET() {
   const admin = serviceClient();
-  const { data, error } = await admin
-    .from("payment_settings")
-    .select("credit_price_usd,stripe_enabled,stripe_public_key,paypal_enabled,paypal_client_id,bank_transfer_enabled,bank_transfer_info")
-    .eq("id", 1)
-    .single();
+  const { data, error } = await admin.rpc("get_public_payment_settings");
 
-  if (error) {
-    // Table may not exist yet — return safe defaults
+  if (error || !data) {
+    // Functions not created yet — return safe defaults so the modal still works
     return NextResponse.json({
       ok: true,
       settings: {

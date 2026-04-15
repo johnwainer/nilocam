@@ -2,6 +2,8 @@ import { createClient } from "@supabase/supabase-js";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
+export const dynamic = "force-dynamic";
+
 function serviceClient() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -73,7 +75,11 @@ export async function POST(request: Request) {
     },
   });
 
-  const capture = await captureRes.json() as { status: string };
+  if (!captureRes.ok) {
+    return NextResponse.json({ ok: false, message: "Error al capturar pago en PayPal." }, { status: 502 });
+  }
+
+  const capture = await captureRes.json() as { status?: string };
 
   if (capture.status !== "COMPLETED") {
     return NextResponse.json({ ok: false, message: `Captura fallida (estado: ${capture.status}).` }, { status: 402 });
