@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import { sendBankTransferApprovedEmail, sendBankTransferRejectedEmail } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
 
@@ -82,7 +83,10 @@ export async function PATCH(
         event_slug: null,
         description: `Compra por transferencia bancaria — ${purchase.credits} créditos ($${purchase.amount_usd} USD)`,
       });
+      sendBankTransferApprovedEmail(purchase.user_email, purchase.credits, purchase.amount_usd, newBalance).catch(() => null);
     }
+  } else {
+    sendBankTransferRejectedEmail(purchase.user_email, purchase.credits, purchase.amount_usd, admin_notes).catch(() => null);
   }
 
   return NextResponse.json({ ok: true, status: newStatus });

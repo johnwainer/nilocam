@@ -2,6 +2,7 @@ import Stripe from "stripe";
 import { createClient } from "@supabase/supabase-js";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import { sendPaymentConfirmedEmail } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
 
@@ -88,6 +89,8 @@ export async function POST(request: Request) {
     event_slug: null,
     description: `Compra con tarjeta — ${purchase.credits} créditos ($${purchase.amount_usd} USD)`,
   });
+
+  sendPaymentConfirmedEmail(user.email, purchase.credits, purchase.amount_usd, "Stripe", newBalance).catch(() => null);
 
   return NextResponse.json({ ok: true, credits: newBalance, purchased: purchase.credits });
 }

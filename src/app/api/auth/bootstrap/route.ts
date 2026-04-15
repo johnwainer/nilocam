@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
+import { sendWelcomeEmail } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
 
@@ -132,6 +133,15 @@ export async function POST(request: Request) {
   // Grant initial credits only on first-time registration
   if (isNewUser) {
     await grantInitialCredits(supabase, userId, email);
+
+    const { data: pricingRow } = await supabase
+      .from("credit_pricing")
+      .select("credits")
+      .eq("key", "initial_credits")
+      .single();
+    const initialCredits: number = pricingRow?.credits ?? 0;
+
+    sendWelcomeEmail(email, displayName || metadata.full_name, initialCredits).catch(() => null);
   }
 
   return NextResponse.json({ ok: true, message: "Acceso listo." });
