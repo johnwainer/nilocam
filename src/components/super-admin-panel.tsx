@@ -767,9 +767,7 @@ export function SuperAdminPanel({
                       <td style={{ ...p.td, textAlign: "right" }}>
                         <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 6 }}>
                           <span style={{ fontWeight: 700, color: "#6d28d9" }}>◈ {user.credits}</span>
-                          {user.email !== userEmail && (
-                            <button type="button" style={{ ...p.miniBtn, fontSize: 10 }} onClick={() => setAdjustingCreditsFor(user)}>±</button>
-                          )}
+                          <button type="button" style={{ ...p.miniBtn, fontSize: 10 }} onClick={() => setAdjustingCreditsFor(user)}>±</button>
                         </div>
                       </td>
                       <td style={p.td}><ActivePill active={user.is_active} /></td>
