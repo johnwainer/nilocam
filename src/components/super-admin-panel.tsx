@@ -45,7 +45,7 @@ type RecentPhoto = {
   moderation_status: string;
 };
 
-type SATab = "stats" | "events" | "users" | "pricing" | "credits" | "payments" | "email";
+type SATab = "stats" | "events" | "users" | "credits" | "payments" | "email";
 
 const ROLE_LABELS: Record<string, string> = {
   owner: "Owner",
@@ -126,6 +126,7 @@ export function SuperAdminPanel({
   const [emailSaving, setEmailSaving] = useState(false);
   const [emailError, setEmailError] = useState<string | null>(null);
   const [emailTestSending, setEmailTestSending] = useState(false);
+  const [creditsSubTab, setCreditsSubTab] = useState<"saldos" | "precios">("saldos");
 
   const flash = useCallback((text: string, ok: boolean) => {
     setNotice({ text, ok });
@@ -292,10 +293,9 @@ export function SuperAdminPanel({
     if (tab === "stats") loadStats();
     else if (tab === "events") loadEvents();
     else if (tab === "users") loadUsers();
-    else if (tab === "pricing") loadPricing();
     else if (tab === "payments") loadPayments();
     else if (tab === "email") loadEmailSettings();
-  }, [tab, loadStats, loadEvents, loadUsers, loadPricing, loadPayments, loadPurchases, loadEmailSettings]);
+  }, [tab, loadStats, loadEvents, loadUsers, loadPayments, loadEmailSettings]);
 
   // ── event actions ───────────────────────────────────────────────────────────
 
@@ -491,105 +491,148 @@ export function SuperAdminPanel({
 
   // ── render ──────────────────────────────────────────────────────────────────
 
+  const NAV_ITEMS: Array<{ tab: SATab; icon: string; label: string; sub: string }> = [
+    { tab: "stats",    icon: "▦",  label: "Dashboard",  sub: "Visión general" },
+    { tab: "events",   icon: "📅", label: "Eventos",    sub: "Gestión de eventos" },
+    { tab: "users",    icon: "👤", label: "Usuarios",   sub: "Cuentas y roles" },
+    { tab: "credits",  icon: "◈",  label: "Créditos",   sub: "Saldos y precios" },
+    { tab: "payments", icon: "💳", label: "Pagos",      sub: "Métodos y compras" },
+    { tab: "email",    icon: "✉",  label: "Email",      sub: "Config. y plantillas" },
+  ];
+
   return (
     <div style={p.shell}>
-      {/* Header */}
-      <div style={p.panelHeader}>
-        <div>
-          <h2 style={p.panelTitle}>Panel de sistema</h2>
-          <span style={p.panelSub}>Sesión como {userEmail}</span>
-        </div>
-        <div style={p.tabBar}>
-          {(["stats", "events", "users", "pricing", "credits", "payments", "email"] as SATab[]).map((t) => (
-            <button key={t} type="button" onClick={() => setTab(t)} style={tab === t ? p.tabActive : p.tab}>
-              {t === "stats" ? "Estadísticas" : t === "events" ? "Eventos" : t === "users" ? "Usuarios" : t === "pricing" ? "Precios" : t === "credits" ? "Créditos" : t === "payments" ? "Pagos" : "Email"}
-            </button>
-          ))}
-        </div>
-      </div>
+      <div style={p.layout}>
 
-      {notice && (
-        <div style={{ ...p.notice, background: notice.ok ? "rgba(16,185,129,0.12)" : "rgba(239,68,68,0.1)", borderColor: notice.ok ? "rgba(16,185,129,0.3)" : "rgba(239,68,68,0.3)", color: notice.ok ? "#065f46" : "#991b1b" }}>
-          {notice.text}
-        </div>
-      )}
-
-      {/* ── STATS ── */}
-      {tab === "stats" && (
-        <div style={p.content}>
-          {statsLoading ? <p style={p.loading}>Cargando estadísticas…</p> : stats ? (
-            <>
-              <div style={p.metricGrid}>
-                <MetricCard label="Eventos activos" value={stats.activeEvents} total={stats.totalEvents} icon="📅" accent />
-                <MetricCard label="Fotos totales" value={stats.totalPhotos} icon="🖼" />
-                <MetricCard label="Fotos hoy" value={stats.photosToday} icon="⚡" highlight />
-                <MetricCard label="Esta semana" value={stats.photosThisWeek} icon="📈" />
-                <MetricCard label="Usuarios" value={stats.totalUsers} icon="👤" />
-              </div>
-              <div style={p.section}>
-                <h3 style={p.sectionTitle}>Top eventos por fotos</h3>
-                <div style={p.tableWrap}>
-                  <table style={p.table}>
-                    <thead><tr>
-                      <th style={p.th}>Evento</th>
-                      <th style={p.th}>Responsable</th>
-                      <th style={{ ...p.th, textAlign: "right" }}>Fotos</th>
-                      <th style={p.th}>Estado</th>
-                      <th style={p.th}>Acciones</th>
-                    </tr></thead>
-                    <tbody>
-                      {topEvents.map((ev) => (
-                        <tr key={ev.id} style={p.tr}>
-                          <td style={p.td}><strong style={{ fontSize: 14 }}>{ev.title}</strong><br /><span style={p.tdMuted}>/{ev.slug}</span></td>
-                          <td style={{ ...p.td, ...p.tdMuted }}>{ev.owner_email ?? "—"}</td>
-                          <td style={{ ...p.td, textAlign: "right", fontWeight: 700 }}>{ev.photo_count}</td>
-                          <td style={p.td}><ActivePill active={ev.is_active} /></td>
-                          <td style={p.td}>
-                            <button type="button" style={p.miniBtn} onClick={() => onSelectEvent(ev.id)}>Editar</button>
-                            {ev.slug && <a href={siteUrl(`/event/${ev.slug}`)} target="_blank" rel="noopener noreferrer" style={p.miniLink}>Landing ↗</a>}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-              <div style={p.section}>
-                <h3 style={p.sectionTitle}>Actividad reciente</h3>
-                <div style={p.tableWrap}>
-                  <table style={p.table}>
-                    <thead><tr>
-                      <th style={p.th}>Evento</th>
-                      <th style={p.th}>Subida por</th>
-                      <th style={p.th}>Estado</th>
-                      <th style={p.th}>Fecha</th>
-                    </tr></thead>
-                    <tbody>
-                      {recentPhotos.map((ph) => (
-                        <tr key={ph.id} style={p.tr}>
-                          <td style={{ ...p.td, ...p.tdMuted }}>{ph.event_title}</td>
-                          <td style={p.td}>{ph.uploaded_by_name ?? <em style={{ opacity: 0.45 }}>Anónimo</em>}</td>
-                          <td style={p.td}><StatusPill status={ph.moderation_status} /></td>
-                          <td style={{ ...p.td, ...p.tdMuted }}>{fmtDate(ph.created_at)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </>
-          ) : <p style={p.loading}>Sin datos.</p>}
-        </div>
-      )}
-
-      {/* ── EVENTS ── */}
-      {tab === "events" && (
-        <div style={p.content}>
-          <div style={p.tableActions}>
-            <span style={p.tableCount}>{filteredEvents.length} de {events.length} eventos</span>
-            <button type="button" style={p.refreshBtn} onClick={loadEvents} disabled={eventsLoading}>{eventsLoading ? "Cargando…" : "↺ Actualizar"}</button>
+        {/* ── Sidebar ── */}
+        <aside style={p.sidebar}>
+          <div style={p.sidebarBrand}>
+            <span style={{ fontSize: 24, lineHeight: 1, color: "#6d28d9" }}>◈</span>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontSize: 14, fontWeight: 800, color: "#111", letterSpacing: "-0.02em" }}>Sistema</div>
+              <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{userEmail}</div>
+            </div>
           </div>
-          <div style={p.filterBar}>
+          <nav style={{ display: "flex", flexDirection: "column", gap: 2, padding: "12px 10px" }}>
+            {NAV_ITEMS.map(({ tab: t, icon, label, sub }) => (
+              <button
+                key={t}
+                type="button"
+                onClick={() => setTab(t)}
+                style={{
+                  display: "flex", alignItems: "center", gap: 10,
+                  padding: "9px 10px", borderRadius: 10, border: "none",
+                  background: tab === t ? "rgba(109,40,217,0.1)" : "transparent",
+                  cursor: "pointer", textAlign: "left", width: "100%",
+                }}
+              >
+                <span style={{ fontSize: 15, width: 22, textAlign: "center", flexShrink: 0 }}>{icon}</span>
+                <span style={{ display: "flex", flexDirection: "column", gap: 1, minWidth: 0 }}>
+                  <span style={{ fontSize: 13, fontWeight: tab === t ? 700 : 600, color: tab === t ? "#6d28d9" : "#374151", lineHeight: 1.2 }}>{label}</span>
+                  <span style={{ fontSize: 11, color: tab === t ? "rgba(109,40,217,0.55)" : "var(--muted)", lineHeight: 1.2 }}>{sub}</span>
+                </span>
+              </button>
+            ))}
+          </nav>
+        </aside>
+
+        {/* ── Main ── */}
+        <div style={p.main}>
+          {notice && (
+            <div style={{ ...p.notice, background: notice.ok ? "rgba(16,185,129,0.12)" : "rgba(239,68,68,0.1)", borderColor: notice.ok ? "rgba(16,185,129,0.3)" : "rgba(239,68,68,0.3)", color: notice.ok ? "#065f46" : "#991b1b" }}>
+              {notice.text}
+            </div>
+          )}
+
+          {/* ── STATS ── */}
+          {tab === "stats" && (
+            <div style={p.content}>
+              <div style={p.pageHead}>
+                <div>
+                  <h2 style={p.pageTitle}>Dashboard</h2>
+                  <p style={p.pageDesc}>Resumen en tiempo real de toda la plataforma.</p>
+                </div>
+                <button type="button" style={p.refreshBtn} onClick={loadStats} disabled={statsLoading}>{statsLoading ? "Actualizando…" : "↺ Actualizar"}</button>
+              </div>
+              {statsLoading ? <p style={p.loading}>Cargando estadísticas…</p> : stats ? (
+                <>
+                  <div style={p.metricGrid}>
+                  <MetricCard label="Eventos activos" value={stats.activeEvents} total={stats.totalEvents} icon="📅" accent />
+                  <MetricCard label="Fotos totales" value={stats.totalPhotos} icon="🖼" />
+                  <MetricCard label="Fotos hoy" value={stats.photosToday} icon="⚡" highlight />
+                  <MetricCard label="Esta semana" value={stats.photosThisWeek} icon="📈" />
+                  <MetricCard label="Usuarios" value={stats.totalUsers} icon="👤" />
+                </div>
+                <div style={p.section}>
+                  <h3 style={p.sectionTitle}>Top eventos por fotos</h3>
+                  <div style={p.tableWrap}>
+                    <table style={p.table}>
+                      <thead><tr>
+                        <th style={p.th}>Evento</th>
+                        <th style={p.th}>Responsable</th>
+                        <th style={{ ...p.th, textAlign: "right" }}>Fotos</th>
+                        <th style={p.th}>Estado</th>
+                        <th style={p.th}>Acciones</th>
+                      </tr></thead>
+                      <tbody>
+                        {topEvents.map((ev) => (
+                          <tr key={ev.id} style={p.tr}>
+                            <td style={p.td}><strong style={{ fontSize: 14 }}>{ev.title}</strong><br /><span style={p.tdMuted}>/{ev.slug}</span></td>
+                            <td style={{ ...p.td, ...p.tdMuted }}>{ev.owner_email ?? "—"}</td>
+                            <td style={{ ...p.td, textAlign: "right", fontWeight: 700 }}>{ev.photo_count}</td>
+                            <td style={p.td}><ActivePill active={ev.is_active} /></td>
+                            <td style={p.td}>
+                              <button type="button" style={p.miniBtn} onClick={() => onSelectEvent(ev.id)}>Editar</button>
+                              {ev.slug && <a href={siteUrl(`/event/${ev.slug}`)} target="_blank" rel="noopener noreferrer" style={{ ...p.miniLink, marginLeft: 5 }}>Landing ↗</a>}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+                <div style={p.section}>
+                  <h3 style={p.sectionTitle}>Actividad reciente</h3>
+                  <div style={p.tableWrap}>
+                    <table style={p.table}>
+                      <thead><tr>
+                        <th style={p.th}>Evento</th>
+                        <th style={p.th}>Subida por</th>
+                        <th style={p.th}>Estado</th>
+                        <th style={p.th}>Fecha</th>
+                      </tr></thead>
+                      <tbody>
+                        {recentPhotos.map((ph) => (
+                          <tr key={ph.id} style={p.tr}>
+                            <td style={{ ...p.td, ...p.tdMuted }}>{ph.event_title}</td>
+                            <td style={p.td}>{ph.uploaded_by_name ?? <em style={{ opacity: 0.45 }}>Anónimo</em>}</td>
+                            <td style={p.td}><StatusPill status={ph.moderation_status} /></td>
+                            <td style={{ ...p.td, ...p.tdMuted }}>{fmtDate(ph.created_at)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </>
+            ) : <p style={p.loading}>Sin datos.</p>}
+          </div>
+        )}
+
+          {/* ── EVENTS ── */}
+          {tab === "events" && (
+            <div style={p.content}>
+              <div style={p.pageHead}>
+                <div>
+                  <h2 style={p.pageTitle}>Eventos</h2>
+                  <p style={p.pageDesc}>Todos los eventos del sistema. Actívalos, desactívalos o elimínalos.</p>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={p.tableCount}>{filteredEvents.length} de {events.length}</span>
+                  <button type="button" style={p.refreshBtn} onClick={loadEvents} disabled={eventsLoading}>{eventsLoading ? "Actualizando…" : "↺ Actualizar"}</button>
+                </div>
+              </div>
+              <div style={p.filterBar}>
             <div style={p.searchWrap}>
               <svg style={p.searchIcon} viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="9" cy="9" r="6"/><path d="M15 15l-3.5-3.5"/></svg>
               <input
@@ -617,77 +660,81 @@ export function SuperAdminPanel({
               </select>
             </div>
           </div>
-          {eventsLoading ? <p style={p.loading}>Cargando…</p> : (
-            <div style={p.tableWrap}>
-              <table style={p.table}>
-                <thead><tr>
-                  <th style={p.th}>Evento</th>
-                  <th style={p.th}>Responsable</th>
-                  <th style={{ ...p.th, textAlign: "right" }}>Fotos</th>
-                  <th style={p.th}>Fecha evento</th>
-                  <th style={p.th}>Estado</th>
-                  <th style={p.th}>Acciones</th>
-                </tr></thead>
-                <tbody>
-                  {filteredEvents.length === 0 && (
-                    <tr><td colSpan={6} style={{ ...p.td, textAlign: "center", color: "var(--muted)", padding: "24px 0" }}>Sin resultados</td></tr>
-                  )}
-                  {filteredEvents.map((ev) => (
-                    <tr key={ev.id} style={{ ...p.tr, opacity: ev.is_active ? 1 : 0.55 }}>
-                      <td style={p.td}>
-                        <strong style={{ fontSize: 14 }}>{ev.title}</strong>
-                        <br /><span style={p.tdMuted}>/{ev.slug}</span>
-                      </td>
-                      <td style={{ ...p.td, ...p.tdMuted }}>{ev.owner_email ?? "—"}</td>
-                      <td style={{ ...p.td, textAlign: "right", fontWeight: 700 }}>{ev.photo_count}</td>
-                      <td style={{ ...p.td, ...p.tdMuted }}>{ev.event_date ? formatDate(ev.event_date) : "—"}</td>
-                      <td style={p.td}><ActivePill active={ev.is_active} /></td>
-                      <td style={p.td}>
-                        <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
-                          <button type="button" style={p.miniBtn} onClick={() => onSelectEvent(ev.id)}>Editar</button>
-                          {ev.slug && <a href={siteUrl(`/event/${ev.slug}`)} target="_blank" rel="noopener noreferrer" style={p.miniLink}>Landing ↗</a>}
-                          <button
-                            type="button"
-                            style={{ ...p.miniBtn, color: ev.is_active ? "#78350f" : "#065f46" }}
-                            disabled={togglingEventId === ev.id}
-                            onClick={() => toggleEvent(ev.id, ev.is_active)}
-                          >
-                            {togglingEventId === ev.id ? "…" : ev.is_active ? "Desactivar" : "Activar"}
-                          </button>
-                          {confirmDeleteEventId === ev.id ? (
-                            <>
-                              <button type="button" style={{ ...p.miniBtn, color: "#dc2626", borderColor: "#dc262655" }} disabled={deletingEventId === ev.id} onClick={() => deleteEvent(ev.id)}>
-                                {deletingEventId === ev.id ? "Eliminando…" : "¿Confirmar?"}
+              {eventsLoading ? <p style={p.loading}>Cargando…</p> : (
+                <div style={p.tableWrap}>
+                  <table style={p.table}>
+                    <thead><tr>
+                      <th style={p.th}>Evento</th>
+                      <th style={p.th}>Responsable</th>
+                      <th style={{ ...p.th, textAlign: "right" }}>Fotos</th>
+                      <th style={p.th}>Fecha evento</th>
+                      <th style={p.th}>Estado</th>
+                      <th style={p.th}>Acciones</th>
+                    </tr></thead>
+                    <tbody>
+                      {filteredEvents.length === 0 && (
+                        <tr><td colSpan={6} style={{ ...p.td, textAlign: "center", color: "var(--muted)", padding: "24px 0" }}>Sin resultados</td></tr>
+                      )}
+                      {filteredEvents.map((ev) => (
+                        <tr key={ev.id} style={{ ...p.tr, opacity: ev.is_active ? 1 : 0.55 }}>
+                          <td style={p.td}>
+                            <strong style={{ fontSize: 14 }}>{ev.title}</strong>
+                            <br /><span style={p.tdMuted}>/{ev.slug}</span>
+                          </td>
+                          <td style={{ ...p.td, ...p.tdMuted }}>{ev.owner_email ?? "—"}</td>
+                          <td style={{ ...p.td, textAlign: "right", fontWeight: 700 }}>{ev.photo_count}</td>
+                          <td style={{ ...p.td, ...p.tdMuted }}>{ev.event_date ? formatDate(ev.event_date) : "—"}</td>
+                          <td style={p.td}><ActivePill active={ev.is_active} /></td>
+                          <td style={p.td}>
+                            <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
+                              <button type="button" style={p.miniBtn} onClick={() => onSelectEvent(ev.id)}>Editar</button>
+                              {ev.slug && <a href={siteUrl(`/event/${ev.slug}`)} target="_blank" rel="noopener noreferrer" style={p.miniLink}>Landing ↗</a>}
+                              <button
+                                type="button"
+                                style={{ ...p.miniBtn, color: ev.is_active ? "#78350f" : "#065f46" }}
+                                disabled={togglingEventId === ev.id}
+                                onClick={() => toggleEvent(ev.id, ev.is_active)}
+                              >
+                                {togglingEventId === ev.id ? "…" : ev.is_active ? "Desactivar" : "Activar"}
                               </button>
-                              <button type="button" style={p.miniBtn} onClick={() => setConfirmDeleteEventId(null)}>Cancelar</button>
-                            </>
-                          ) : (
-                            <button type="button" style={{ ...p.miniBtn, color: "#dc2626", borderColor: "#dc262655" }} onClick={() => setConfirmDeleteEventId(ev.id)}>Eliminar</button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                              {confirmDeleteEventId === ev.id ? (
+                                <>
+                                  <button type="button" style={{ ...p.miniBtn, color: "#dc2626", borderColor: "#dc262655" }} disabled={deletingEventId === ev.id} onClick={() => deleteEvent(ev.id)}>
+                                    {deletingEventId === ev.id ? "Eliminando…" : "¿Confirmar?"}
+                                  </button>
+                                  <button type="button" style={p.miniBtn} onClick={() => setConfirmDeleteEventId(null)}>Cancelar</button>
+                                </>
+                              ) : (
+                                <button type="button" style={{ ...p.miniBtn, color: "#dc2626", borderColor: "#dc262655" }} onClick={() => setConfirmDeleteEventId(ev.id)}>Eliminar</button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           )}
-        </div>
-      )}
 
-      {/* ── USERS ── */}
-      {tab === "users" && (
-        <div style={p.content}>
-          <div style={p.tableActions}>
-            <span style={p.tableCount}>{filteredUsers.length} de {users.length} usuarios</span>
-            <div style={{ display: "flex", gap: 8 }}>
-              <button type="button" style={{ ...p.refreshBtn, color: "#6d28d9", borderColor: "rgba(124,58,237,0.3)", background: "rgba(124,58,237,0.06)" }} onClick={() => setShowNewUser(true)}>
-                + Nuevo usuario
-              </button>
-              <button type="button" style={p.refreshBtn} onClick={loadUsers} disabled={usersLoading}>{usersLoading ? "Cargando…" : "↺ Actualizar"}</button>
-            </div>
-          </div>
-          <div style={p.filterBar}>
+          {/* ── USERS ── */}
+          {tab === "users" && (
+            <div style={p.content}>
+              <div style={p.pageHead}>
+                <div>
+                  <h2 style={p.pageTitle}>Usuarios</h2>
+                  <p style={p.pageDesc}>Gestiona cuentas, roles, créditos y acceso al sistema.</p>
+                </div>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <span style={{ ...p.tableCount, alignSelf: "center" }}>{filteredUsers.length} de {users.length}</span>
+                  <button type="button" style={{ ...p.refreshBtn, color: "#6d28d9", borderColor: "rgba(124,58,237,0.3)", background: "rgba(124,58,237,0.06)" }} onClick={() => setShowNewUser(true)}>
+                    + Nuevo usuario
+                  </button>
+                  <button type="button" style={p.refreshBtn} onClick={loadUsers} disabled={usersLoading}>{usersLoading ? "Actualizando…" : "↺ Actualizar"}</button>
+                </div>
+              </div>
+              <div style={p.filterBar}>
             <div style={p.searchWrap}>
               <svg style={p.searchIcon} viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="9" cy="9" r="6"/><path d="M15 15l-3.5-3.5"/></svg>
               <input
@@ -765,397 +812,409 @@ export function SuperAdminPanel({
             />
           )}
 
-          {usersLoading ? <p style={p.loading}>Cargando…</p> : (
-            <div style={p.tableWrap}>
-              <table style={p.table}>
-                <thead><tr>
-                  <th style={p.th}>Email</th>
-                  <th style={p.th}>Nombre</th>
-                  <th style={p.th}>Rol</th>
-                  <th style={{ ...p.th, textAlign: "right" }}>Eventos</th>
-                  <th style={{ ...p.th, textAlign: "right" }}>Créditos</th>
-                  <th style={p.th}>Estado</th>
-                  <th style={p.th}>Registro</th>
-                  <th style={p.th}>Acciones</th>
-                </tr></thead>
-                <tbody>
-                  {filteredUsers.length === 0 && (
-                    <tr><td colSpan={8} style={{ ...p.td, textAlign: "center", color: "var(--muted)", padding: "24px 0" }}>Sin resultados</td></tr>
-                  )}
-                  {filteredUsers.map((user) => (
-                    <tr key={user.id} style={{ ...p.tr, opacity: user.is_active ? 1 : 0.55 }}>
-                      <td style={p.td}>
-                        <span style={{ fontWeight: user.email === userEmail ? 700 : 400 }}>{user.email}</span>
-                        {user.email === userEmail && <span style={p.youPill}>tú</span>}
-                      </td>
-                      <td style={{ ...p.td, ...p.tdMuted }}>{user.display_name || "—"}</td>
-                      <td style={p.td}><RolePill role={user.role} /></td>
-                      <td style={{ ...p.td, textAlign: "right", fontWeight: 600 }}>{user.event_count}</td>
-                      <td style={{ ...p.td, textAlign: "right" }}>
-                        <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 6 }}>
-                          <span style={{ fontWeight: 700, color: "#6d28d9" }}>◈ {user.credits}</span>
-                          <button type="button" style={{ ...p.miniBtn, fontSize: 10 }} onClick={() => setAdjustingCreditsFor(user)}>±</button>
-                        </div>
-                      </td>
-                      <td style={p.td}><ActivePill active={user.is_active} /></td>
-                      <td style={{ ...p.td, ...p.tdMuted }}>{fmtDate(user.created_at)}</td>
-                      <td style={p.td}>
-                        {user.email === userEmail ? (
-                          <span style={{ fontSize: 12, opacity: 0.4 }}>—</span>
-                        ) : (
-                          <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
-                            <button type="button" style={p.miniBtn} onClick={() => setEditingUser(user)}>Editar</button>
-                            <button
-                              type="button"
-                              style={{ ...p.miniBtn, color: user.is_active ? "#78350f" : "#065f46" }}
-                              disabled={togglingUserId === user.id}
-                              onClick={() => toggleUser(user)}
-                            >
-                              {togglingUserId === user.id ? "…" : user.is_active ? "Desactivar" : "Activar"}
-                            </button>
-                            <button
-                              type="button"
-                              style={{ ...p.miniBtn, color: "#374151" }}
-                              onClick={() => { setResettingPasswordFor(user); setRegeneratedLink(null); }}
-                            >
-                              Contraseña
-                            </button>
-                            {!user.last_sign_in_at && (
-                              <button
-                                type="button"
-                                style={{ ...p.miniBtn, color: "#1d4ed8", borderColor: "rgba(29,78,216,0.3)" }}
-                                disabled={regeneratingLinkFor === user.id}
-                                onClick={() => { setRegeneratedLink(null); setResettingPasswordFor(null); regenerateLink(user); }}
-                              >
-                                {regeneratingLinkFor === user.id ? "…" : "↻ Link"}
-                              </button>
-                            )}
-                            {confirmDeleteUserId === user.id ? (
-                              <>
-                                <button type="button" style={{ ...p.miniBtn, color: "#dc2626", borderColor: "#dc262655" }} disabled={deletingUserId === user.id} onClick={() => deleteUser(user.id)}>
-                                  {deletingUserId === user.id ? "Eliminando…" : "¿Confirmar?"}
-                                </button>
-                                <button type="button" style={p.miniBtn} onClick={() => setConfirmDeleteUserId(null)}>Cancelar</button>
-                              </>
+              {usersLoading ? <p style={p.loading}>Cargando…</p> : (
+                <div style={p.tableWrap}>
+                  <table style={p.table}>
+                    <thead><tr>
+                      <th style={p.th}>Email</th>
+                      <th style={p.th}>Nombre</th>
+                      <th style={p.th}>Rol</th>
+                      <th style={{ ...p.th, textAlign: "right" }}>Eventos</th>
+                      <th style={{ ...p.th, textAlign: "right" }}>Créditos</th>
+                      <th style={p.th}>Estado</th>
+                      <th style={p.th}>Registro</th>
+                      <th style={p.th}>Acciones</th>
+                    </tr></thead>
+                    <tbody>
+                      {filteredUsers.length === 0 && (
+                        <tr><td colSpan={8} style={{ ...p.td, textAlign: "center", color: "var(--muted)", padding: "24px 0" }}>Sin resultados</td></tr>
+                      )}
+                      {filteredUsers.map((user) => (
+                        <tr key={user.id} style={{ ...p.tr, opacity: user.is_active ? 1 : 0.55 }}>
+                          <td style={p.td}>
+                            <span style={{ fontWeight: user.email === userEmail ? 700 : 400 }}>{user.email}</span>
+                            {user.email === userEmail && <span style={p.youPill}>tú</span>}
+                          </td>
+                          <td style={{ ...p.td, ...p.tdMuted }}>{user.display_name || "—"}</td>
+                          <td style={p.td}><RolePill role={user.role} /></td>
+                          <td style={{ ...p.td, textAlign: "right", fontWeight: 600 }}>{user.event_count}</td>
+                          <td style={{ ...p.td, textAlign: "right" }}>
+                            <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 6 }}>
+                              <span style={{ fontWeight: 700, color: "#6d28d9" }}>◈ {user.credits}</span>
+                              <button type="button" style={{ ...p.miniBtn, fontSize: 10 }} onClick={() => setAdjustingCreditsFor(user)}>±</button>
+                            </div>
+                          </td>
+                          <td style={p.td}><ActivePill active={user.is_active} /></td>
+                          <td style={{ ...p.td, ...p.tdMuted }}>{fmtDate(user.created_at)}</td>
+                          <td style={p.td}>
+                            {user.email === userEmail ? (
+                              <span style={{ fontSize: 12, opacity: 0.4 }}>—</span>
                             ) : (
-                              <button type="button" style={{ ...p.miniBtn, color: "#dc2626", borderColor: "#dc262655" }} onClick={() => setConfirmDeleteUserId(user.id)}>Eliminar</button>
+                              <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
+                                <button type="button" style={p.miniBtn} onClick={() => setEditingUser(user)}>Editar</button>
+                                <button
+                                  type="button"
+                                  style={{ ...p.miniBtn, color: user.is_active ? "#78350f" : "#065f46" }}
+                                  disabled={togglingUserId === user.id}
+                                  onClick={() => toggleUser(user)}
+                                >
+                                  {togglingUserId === user.id ? "…" : user.is_active ? "Desactivar" : "Activar"}
+                                </button>
+                                <button
+                                  type="button"
+                                  style={{ ...p.miniBtn, color: "#374151" }}
+                                  onClick={() => { setResettingPasswordFor(user); setRegeneratedLink(null); }}
+                                >
+                                  Contraseña
+                                </button>
+                                {!user.last_sign_in_at && (
+                                  <button
+                                    type="button"
+                                    style={{ ...p.miniBtn, color: "#1d4ed8", borderColor: "rgba(29,78,216,0.3)" }}
+                                    disabled={regeneratingLinkFor === user.id}
+                                    onClick={() => { setRegeneratedLink(null); setResettingPasswordFor(null); regenerateLink(user); }}
+                                  >
+                                    {regeneratingLinkFor === user.id ? "…" : "↻ Link"}
+                                  </button>
+                                )}
+                                {confirmDeleteUserId === user.id ? (
+                                  <>
+                                    <button type="button" style={{ ...p.miniBtn, color: "#dc2626", borderColor: "#dc262655" }} disabled={deletingUserId === user.id} onClick={() => deleteUser(user.id)}>
+                                      {deletingUserId === user.id ? "Eliminando…" : "¿Confirmar?"}
+                                    </button>
+                                    <button type="button" style={p.miniBtn} onClick={() => setConfirmDeleteUserId(null)}>Cancelar</button>
+                                  </>
+                                ) : (
+                                  <button type="button" style={{ ...p.miniBtn, color: "#dc2626", borderColor: "#dc262655" }} onClick={() => setConfirmDeleteUserId(user.id)}>Eliminar</button>
+                                )}
+                              </div>
                             )}
-                          </div>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ── CREDITS ── */}
-      {tab === "credits" && (
-        <div style={p.content}>
-          <SuperCreditsPanel userEmail={userEmail} />
-        </div>
-      )}
-
-      {/* ── PRICING ── */}
-      {/* ── PAYMENTS ── */}
-      {tab === "payments" && (
-        <div style={p.content}>
-          {/* Sub-tab bar */}
-          <div style={{ display: "flex", gap: 6, marginBottom: 18, borderBottom: "1px solid rgba(0,0,0,0.07)", paddingBottom: 0 }}>
-            {(["config", "purchases"] as const).map((st) => (
-              <button
-                key={st}
-                type="button"
-                onClick={() => {
-                  setPaySubTab(st);
-                  if (st === "config" && !paySettings) loadPayments();
-                  if (st === "purchases") loadPurchases(purchaseFilter);
-                }}
-                style={{
-                  background: "none",
-                  border: "none",
-                  borderBottom: paySubTab === st ? "2px solid #6d28d9" : "2px solid transparent",
-                  color: paySubTab === st ? "#6d28d9" : "var(--muted)",
-                  fontWeight: paySubTab === st ? 700 : 400,
-                  fontSize: 14,
-                  padding: "8px 14px",
-                  cursor: "pointer",
-                  marginBottom: -1,
-                }}
-              >
-                {st === "config" ? "Configuración" : "Compras"}
-              </button>
-            ))}
-          </div>
-
-          {/* ── Config sub-tab ── */}
-          {paySubTab === "config" && (
-            payLoading ? <p style={p.loading}>Cargando configuración…</p> : paySettings ? (
-              <PaymentsTab
-                settings={paySettings}
-                saving={paySaving}
-                onSave={async (patch) => {
-                  setPaySaving(true);
-                  try {
-                    const res = await fetch("/api/admin/payment-settings", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify(patch),
-                    });
-                    const json = await res.json();
-                    if (!json.ok) throw new Error(json.message);
-                    setPaySettings((prev) => prev ? { ...prev, ...patch } : prev);
-                    flash("Configuración de pagos guardada", true);
-                  } catch (e) {
-                    flash(e instanceof Error ? e.message : "Error", false);
-                  } finally {
-                    setPaySaving(false);
-                  }
-                }}
-              />
-            ) : (
-              <div style={{ background: "rgba(239,68,68,0.07)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 14, padding: "14px 18px" }}>
-                <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: "#991b1b" }}>Error cargando configuración de pagos</p>
-                {payError && <p style={{ margin: "6px 0 0", fontSize: 13, color: "#b91c1c", fontFamily: "monospace" }}>{payError}</p>}
-                <p style={{ margin: "8px 0 0", fontSize: 13, color: "var(--muted)" }}>
-                  Ejecuta el archivo <strong>supabase/setup-payments-complete.sql</strong> en Supabase SQL Editor y luego reintenta.
-                </p>
-                <button type="button" style={{ ...p.refreshBtn, marginTop: 10 }} onClick={loadPayments}>↺ Reintentar</button>
-              </div>
-            )
-          )}
-
-          {/* ── Purchases sub-tab ── */}
-          {paySubTab === "purchases" && (
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" as const }}>
-                <h3 style={p.sectionTitle}>Compras de créditos</h3>
-                <div style={{ display: "flex", gap: 6 }}>
-                  {(["pending", "completed", "rejected", "all"] as const).map((f) => (
-                    <button
-                      key={f}
-                      type="button"
-                      style={purchaseFilter === f ? { ...p.miniBtn, background: "rgba(0,0,0,0.1)", fontWeight: 700, color: "#111" } : p.miniBtn}
-                      onClick={() => { setPurchaseFilter(f); loadPurchases(f); }}
-                    >
-                      {f === "pending" ? "Pendientes" : f === "completed" ? "Aprobadas" : f === "rejected" ? "Rechazadas" : "Todas"}
-                    </button>
-                  ))}
-                  <button type="button" style={p.miniBtn} onClick={() => loadPurchases(purchaseFilter)} disabled={purchasesLoading}>
-                    {purchasesLoading ? "…" : "↺"}
-                  </button>
-                </div>
-              </div>
-
-              {purchasesLoading ? (
-                <p style={p.loading}>Cargando…</p>
-              ) : purchases.length === 0 ? (
-                <p style={p.loading}>No hay compras {purchaseFilter === "pending" ? "pendientes" : ""}.</p>
-              ) : (
-                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                  {purchases.map((pur) => (
-                    <div key={pur.id} style={p.purchaseRow}>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" as const }}>
-                          <strong style={{ fontSize: 14, color: "#111" }}>{pur.user_email}</strong>
-                          <PurchaseStatusPill status={pur.status} />
-                          <span style={{ fontSize: 12, color: "var(--muted)" }}>
-                            {pur.payment_method === "stripe" ? "💳 Tarjeta" : pur.payment_method === "paypal" ? "🅿 PayPal" : "🏦 Transferencia"}
-                          </span>
-                        </div>
-                        <div style={{ fontSize: 13, color: "#374151", marginTop: 3 }}>
-                          <strong style={{ color: "#6d28d9" }}>{pur.credits} créditos</strong>
-                          {" · "}
-                          <span>${pur.amount_usd} USD</span>
-                          {" · "}
-                          <span style={{ color: "var(--muted)" }}>{fmtDate(pur.created_at)}</span>
-                        </div>
-                        {pur.proof_url && (
-                          <a href={pur.proof_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: "#2563eb", marginTop: 4, display: "inline-block" }}>
-                            📎 Ver comprobante
-                          </a>
-                        )}
-                        {pur.admin_notes && (
-                          <p style={{ margin: "4px 0 0", fontSize: 12, color: "var(--muted)" }}>Nota: {pur.admin_notes}</p>
-                        )}
-                        {pur.status === "pending" && (
-                          <div style={{ marginTop: 8, display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" as const }}>
-                            <input
-                              className="input"
-                              type="text"
-                              placeholder="Nota opcional…"
-                              value={adminNotes[pur.id] ?? ""}
-                              onChange={(e) => setAdminNotes((prev) => ({ ...prev, [pur.id]: e.target.value }))}
-                              style={{ fontSize: 13, flex: "1 1 200px" }}
-                            />
-                            <button
-                              type="button"
-                              className="btn btn-primary"
-                              style={{ fontSize: 12, padding: "6px 14px", background: "#059669", borderColor: "#059669" }}
-                              disabled={processingPurchaseId === pur.id}
-                              onClick={async () => {
-                                setProcessingPurchaseId(pur.id);
-                                try {
-                                  const res = await fetch(`/api/admin/purchases/${pur.id}`, {
-                                    method: "PATCH",
-                                    headers: { "Content-Type": "application/json" },
-                                    body: JSON.stringify({ action: "approve", admin_notes: adminNotes[pur.id] }),
-                                  });
-                                  const json = await res.json();
-                                  if (!json.ok) throw new Error(json.message);
-                                  flash(`Compra aprobada — ${pur.credits} créditos otorgados a ${pur.user_email}`, true);
-                                  loadPurchases(purchaseFilter);
-                                } catch (e) { flash(e instanceof Error ? e.message : "Error", false); }
-                                finally { setProcessingPurchaseId(null); }
-                              }}
-                            >
-                              ✓ Aprobar
-                            </button>
-                            <button
-                              type="button"
-                              style={{ ...p.miniBtn, color: "#b91c1c", borderColor: "rgba(239,68,68,0.3)", background: "rgba(239,68,68,0.06)" }}
-                              disabled={processingPurchaseId === pur.id}
-                              onClick={async () => {
-                                setProcessingPurchaseId(pur.id);
-                                try {
-                                  const res = await fetch(`/api/admin/purchases/${pur.id}`, {
-                                    method: "PATCH",
-                                    headers: { "Content-Type": "application/json" },
-                                    body: JSON.stringify({ action: "reject", admin_notes: adminNotes[pur.id] }),
-                                  });
-                                  const json = await res.json();
-                                  if (!json.ok) throw new Error(json.message);
-                                  flash("Compra rechazada.", true);
-                                  loadPurchases(purchaseFilter);
-                                } catch (e) { flash(e instanceof Error ? e.message : "Error", false); }
-                                finally { setProcessingPurchaseId(null); }
-                              }}
-                            >
-                              ✗ Rechazar
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               )}
             </div>
           )}
-        </div>
-      )}
 
-      {tab === "pricing" && (
-        <div style={p.content}>
-          <div style={p.tableActions}>
-            <span style={p.tableCount}>Precios en créditos</span>
-            <button type="button" style={p.refreshBtn} onClick={loadPricing} disabled={pricingLoading}>{pricingLoading ? "Cargando…" : "↺ Actualizar"}</button>
-          </div>
-          <p style={{ margin: 0, fontSize: 13, color: "var(--muted)", lineHeight: 1.6 }}>
-            Configura cuántos créditos cuesta cada operación. Los cambios aplican a partir de la siguiente transacción.
-          </p>
-          {pricingLoading ? <p style={p.loading}>Cargando…</p> : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              {[...pricingList].sort((a, b) => a.key === "initial_credits" ? -1 : b.key === "initial_credits" ? 1 : 0).map((pr) => {
-                const isInitial = pr.key === "initial_credits";
-                return (
-                  <div key={pr.key} style={isInitial ? p.pricingRowHighlight : p.pricingRow}>
-                    <div style={{ flex: 1 }}>
-                      {isInitial && (
-                        <span style={p.pricingBadge}>Bienvenida</span>
-                      )}
-                      <strong style={{ fontSize: 14, color: "#111", display: "block" }}>{pr.label}</strong>
-                      <p style={{ margin: "2px 0 0", fontSize: 13, color: "var(--muted)" }}>{pr.description}</p>
-                    </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <span style={{ fontSize: 13, color: "#6d28d9", fontWeight: 700 }}>◈</span>
-                      <input
-                        className="input"
-                        type="number"
-                        min={0}
-                        style={{ width: 72, fontSize: 15, fontWeight: 700, textAlign: "center", padding: "7px 8px" }}
-                        value={editingPrices[pr.key] ?? pr.credits}
-                        onChange={(e) => setEditingPrices((prev) => ({ ...prev, [pr.key]: parseInt(e.target.value) || 0 }))}
-                      />
-                      <button
-                        type="button"
-                        className="btn btn-primary"
-                        style={{ fontSize: 13, padding: "8px 16px" }}
-                        disabled={savingPriceKey === pr.key || editingPrices[pr.key] === pr.credits}
-                        onClick={() => savePrice(pr.key)}
-                      >
-                        {savingPriceKey === pr.key ? "Guardando…" : "Guardar"}
-                      </button>
-                    </div>
+          {/* ── CREDITS ── */}
+          {tab === "credits" && (
+            <div style={p.content}>
+              <div style={p.pageHead}>
+                <div>
+                  <h2 style={p.pageTitle}>Créditos</h2>
+                  <p style={p.pageDesc}>Consulta saldos de usuarios y configura el costo de cada operación.</p>
+                </div>
+              </div>
+              <div style={p.subTabBar}>
+                {(["saldos", "precios"] as const).map((st) => (
+                  <button
+                    key={st}
+                    type="button"
+                    onClick={() => { setCreditsSubTab(st); if (st === "precios" && pricingList.length === 0) loadPricing(); }}
+                    style={creditsSubTab === st ? p.subTabActive : p.subTab}
+                  >
+                    {st === "saldos" ? "Saldos por usuario" : "Tabla de precios"}
+                  </button>
+                ))}
+              </div>
+              {creditsSubTab === "saldos" && <SuperCreditsPanel userEmail={userEmail} />}
+              {creditsSubTab === "precios" && (
+                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
+                    <p style={{ margin: 0, fontSize: 13, color: "var(--muted)", lineHeight: 1.6 }}>
+                      Cuántos créditos cuesta cada operación. Los cambios aplican a la siguiente transacción.
+                    </p>
+                    <button type="button" style={p.refreshBtn} onClick={loadPricing} disabled={pricingLoading}>{pricingLoading ? "Actualizando…" : "↺ Actualizar"}</button>
                   </div>
-                );
-              })}
+                  {pricingLoading ? <p style={p.loading}>Cargando…</p> : (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                      {[...pricingList].sort((a, b) => a.key === "initial_credits" ? -1 : b.key === "initial_credits" ? 1 : 0).map((pr) => {
+                        const isInitial = pr.key === "initial_credits";
+                        return (
+                          <div key={pr.key} style={isInitial ? p.pricingRowHighlight : p.pricingRow}>
+                            <div style={{ flex: 1 }}>
+                              {isInitial && <span style={p.pricingBadge}>Bienvenida</span>}
+                              <strong style={{ fontSize: 14, color: "#111", display: "block" }}>{pr.label}</strong>
+                              <p style={{ margin: "2px 0 0", fontSize: 13, color: "var(--muted)" }}>{pr.description}</p>
+                            </div>
+                            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                              <span style={{ fontSize: 13, color: "#6d28d9", fontWeight: 700 }}>◈</span>
+                              <input
+                                className="input"
+                                type="number"
+                                min={0}
+                                style={{ width: 72, fontSize: 15, fontWeight: 700, textAlign: "center", padding: "7px 8px" }}
+                                value={editingPrices[pr.key] ?? pr.credits}
+                                onChange={(e) => setEditingPrices((prev) => ({ ...prev, [pr.key]: parseInt(e.target.value) || 0 }))}
+                              />
+                              <button
+                                type="button"
+                                className="btn btn-primary"
+                                style={{ fontSize: 13, padding: "8px 16px" }}
+                                disabled={savingPriceKey === pr.key || editingPrices[pr.key] === pr.credits}
+                                onClick={() => savePrice(pr.key)}
+                              >
+                                {savingPriceKey === pr.key ? "Guardando…" : "Guardar"}
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
-        </div>
-      )}
 
-      {/* ── EMAIL ── */}
-      {tab === "email" && (
-        <div style={p.content}>
-          {emailLoading ? (
-            <p style={p.loading}>Cargando configuración de email…</p>
-          ) : emailError ? (
-            <div style={{ background: "rgba(239,68,68,0.07)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 14, padding: "14px 18px" }}>
-              <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: "#991b1b" }}>Error cargando configuración</p>
-              <p style={{ margin: "6px 0 0", fontSize: 13, color: "#b91c1c", fontFamily: "monospace" }}>{emailError}</p>
-              <p style={{ margin: "8px 0 0", fontSize: 13, color: "var(--muted)" }}>
-                Ejecuta el archivo <strong>supabase/setup-email-settings.sql</strong> en Supabase SQL Editor y luego reintenta.
-              </p>
-              <button type="button" style={{ ...p.refreshBtn, marginTop: 10 }} onClick={loadEmailSettings}>↺ Reintentar</button>
+          {/* ── PAYMENTS ── */}
+          {tab === "payments" && (
+            <div style={p.content}>
+              <div style={p.pageHead}>
+                <div>
+                  <h2 style={p.pageTitle}>Pagos</h2>
+                  <p style={p.pageDesc}>Configura los métodos de pago aceptados y revisa las compras de créditos.</p>
+                </div>
+              </div>
+              <div style={p.subTabBar}>
+                {(["config", "purchases"] as const).map((st) => (
+                  <button
+                    key={st}
+                    type="button"
+                    onClick={() => {
+                      setPaySubTab(st);
+                      if (st === "config" && !paySettings) loadPayments();
+                      if (st === "purchases") loadPurchases(purchaseFilter);
+                    }}
+                    style={paySubTab === st ? p.subTabActive : p.subTab}
+                  >
+                    {st === "config" ? "Métodos de pago" : "Compras de créditos"}
+                  </button>
+                ))}
+              </div>
+
+              {paySubTab === "config" && (
+                payLoading ? <p style={p.loading}>Cargando configuración…</p> : paySettings ? (
+                  <PaymentsTab
+                    settings={paySettings}
+                    saving={paySaving}
+                    onSave={async (patch) => {
+                      setPaySaving(true);
+                      try {
+                        const res = await fetch("/api/admin/payment-settings", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify(patch),
+                        });
+                        const json = await res.json();
+                        if (!json.ok) throw new Error(json.message);
+                        setPaySettings((prev) => prev ? { ...prev, ...patch } : prev);
+                        flash("Configuración de pagos guardada", true);
+                      } catch (e) {
+                        flash(e instanceof Error ? e.message : "Error", false);
+                      } finally {
+                        setPaySaving(false);
+                      }
+                    }}
+                  />
+                ) : (
+                  <div style={{ background: "rgba(239,68,68,0.07)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 14, padding: "14px 18px" }}>
+                    <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: "#991b1b" }}>Error cargando configuración de pagos</p>
+                    {payError && <p style={{ margin: "6px 0 0", fontSize: 13, color: "#b91c1c", fontFamily: "monospace" }}>{payError}</p>}
+                    <p style={{ margin: "8px 0 0", fontSize: 13, color: "var(--muted)" }}>
+                      Ejecuta el archivo <strong>supabase/setup-payments-complete.sql</strong> en Supabase SQL Editor y luego reintenta.
+                    </p>
+                    <button type="button" style={{ ...p.refreshBtn, marginTop: 10 }} onClick={loadPayments}>↺ Reintentar</button>
+                  </div>
+                )
+              )}
+
+              {paySubTab === "purchases" && (
+                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" as const }}>
+                    {(["pending", "completed", "rejected", "all"] as const).map((f) => (
+                      <button
+                        key={f}
+                        type="button"
+                        style={purchaseFilter === f ? { ...p.miniBtn, background: "rgba(0,0,0,0.1)", fontWeight: 700, color: "#111" } : p.miniBtn}
+                        onClick={() => { setPurchaseFilter(f); loadPurchases(f); }}
+                      >
+                        {f === "pending" ? "Pendientes" : f === "completed" ? "Aprobadas" : f === "rejected" ? "Rechazadas" : "Todas"}
+                      </button>
+                    ))}
+                    <button type="button" style={p.miniBtn} onClick={() => loadPurchases(purchaseFilter)} disabled={purchasesLoading}>
+                      {purchasesLoading ? "…" : "↺"}
+                    </button>
+                  </div>
+
+                  {purchasesLoading ? (
+                    <p style={p.loading}>Cargando…</p>
+                  ) : purchases.length === 0 ? (
+                    <p style={p.loading}>No hay compras {purchaseFilter === "pending" ? "pendientes" : ""}.</p>
+                  ) : (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                      {purchases.map((pur) => (
+                        <div key={pur.id} style={p.purchaseRow}>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" as const }}>
+                              <strong style={{ fontSize: 14, color: "#111" }}>{pur.user_email}</strong>
+                              <PurchaseStatusPill status={pur.status} />
+                              <span style={{ fontSize: 12, color: "var(--muted)" }}>
+                                {pur.payment_method === "stripe" ? "💳 Tarjeta" : pur.payment_method === "paypal" ? "🅿 PayPal" : "🏦 Transferencia"}
+                              </span>
+                            </div>
+                            <div style={{ fontSize: 13, color: "#374151", marginTop: 3 }}>
+                              <strong style={{ color: "#6d28d9" }}>{pur.credits} créditos</strong>
+                              {" · "}
+                              <span>${pur.amount_usd} USD</span>
+                              {" · "}
+                              <span style={{ color: "var(--muted)" }}>{fmtDate(pur.created_at)}</span>
+                            </div>
+                            {pur.proof_url && (
+                              <a href={pur.proof_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: "#2563eb", marginTop: 4, display: "inline-block" }}>
+                                📎 Ver comprobante
+                              </a>
+                            )}
+                            {pur.admin_notes && (
+                              <p style={{ margin: "4px 0 0", fontSize: 12, color: "var(--muted)" }}>Nota: {pur.admin_notes}</p>
+                            )}
+                            {pur.status === "pending" && (
+                              <div style={{ marginTop: 8, display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" as const }}>
+                                <input
+                                  className="input"
+                                  type="text"
+                                  placeholder="Nota opcional…"
+                                  value={adminNotes[pur.id] ?? ""}
+                                  onChange={(e) => setAdminNotes((prev) => ({ ...prev, [pur.id]: e.target.value }))}
+                                  style={{ fontSize: 13, flex: "1 1 200px" }}
+                                />
+                                <button
+                                  type="button"
+                                  className="btn btn-primary"
+                                  style={{ fontSize: 12, padding: "6px 14px", background: "#059669", borderColor: "#059669" }}
+                                  disabled={processingPurchaseId === pur.id}
+                                  onClick={async () => {
+                                    setProcessingPurchaseId(pur.id);
+                                    try {
+                                      const res = await fetch(`/api/admin/purchases/${pur.id}`, {
+                                        method: "PATCH",
+                                        headers: { "Content-Type": "application/json" },
+                                        body: JSON.stringify({ action: "approve", admin_notes: adminNotes[pur.id] }),
+                                      });
+                                      const json = await res.json();
+                                      if (!json.ok) throw new Error(json.message);
+                                      flash(`Compra aprobada — ${pur.credits} créditos otorgados a ${pur.user_email}`, true);
+                                      loadPurchases(purchaseFilter);
+                                    } catch (e) { flash(e instanceof Error ? e.message : "Error", false); }
+                                    finally { setProcessingPurchaseId(null); }
+                                  }}
+                                >
+                                  ✓ Aprobar
+                                </button>
+                                <button
+                                  type="button"
+                                  style={{ ...p.miniBtn, color: "#b91c1c", borderColor: "rgba(239,68,68,0.3)", background: "rgba(239,68,68,0.06)" }}
+                                  disabled={processingPurchaseId === pur.id}
+                                  onClick={async () => {
+                                    setProcessingPurchaseId(pur.id);
+                                    try {
+                                      const res = await fetch(`/api/admin/purchases/${pur.id}`, {
+                                        method: "PATCH",
+                                        headers: { "Content-Type": "application/json" },
+                                        body: JSON.stringify({ action: "reject", admin_notes: adminNotes[pur.id] }),
+                                      });
+                                      const json = await res.json();
+                                      if (!json.ok) throw new Error(json.message);
+                                      flash("Compra rechazada.", true);
+                                      loadPurchases(purchaseFilter);
+                                    } catch (e) { flash(e instanceof Error ? e.message : "Error", false); }
+                                    finally { setProcessingPurchaseId(null); }
+                                  }}
+                                >
+                                  ✗ Rechazar
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
-          ) : emailSettings ? (
-            <EmailTab
-              settings={emailSettings}
-              saving={emailSaving}
-              testSending={emailTestSending}
-              onSave={async (draft) => {
-                setEmailSaving(true);
-                try {
-                  const res = await fetch("/api/admin/email-settings", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(draft),
-                  });
-                  const json = await res.json();
-                  if (!json.ok) throw new Error(json.message);
-                  setEmailSettings(draft);
-                  flash("Configuración de email guardada", true);
-                } catch (e) {
-                  flash(e instanceof Error ? e.message : "Error", false);
-                } finally {
-                  setEmailSaving(false);
-                }
-              }}
-              onTest={async (draft) => {
-                setEmailTestSending(true);
-                try {
-                  const res = await fetch("/api/admin/email-settings/test", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ settings: draft }),
-                  });
-                  const json = await res.json();
-                  if (!json.ok) throw new Error(json.message);
-                  flash(json.message ?? "Email de prueba enviado", true);
-                } catch (e) {
-                  flash(e instanceof Error ? e.message : "Error enviando email de prueba", false);
-                } finally {
-                  setEmailTestSending(false);
-                }
-              }}
-            />
-          ) : null}
-        </div>
-      )}
+          )}
+
+          {/* ── EMAIL ── */}
+          {tab === "email" && (
+            <div style={p.content}>
+              <div style={p.pageHead}>
+                <div>
+                  <h2 style={p.pageTitle}>Email</h2>
+                  <p style={p.pageDesc}>Configura el proveedor de envío y personaliza las plantillas de notificación automática.</p>
+                </div>
+              </div>
+              {emailLoading ? (
+                <p style={p.loading}>Cargando configuración de email…</p>
+              ) : emailError ? (
+                <div style={{ background: "rgba(239,68,68,0.07)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 14, padding: "14px 18px" }}>
+                  <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: "#991b1b" }}>Error cargando configuración</p>
+                  <p style={{ margin: "6px 0 0", fontSize: 13, color: "#b91c1c", fontFamily: "monospace" }}>{emailError}</p>
+                  <p style={{ margin: "8px 0 0", fontSize: 13, color: "var(--muted)" }}>
+                    Ejecuta el archivo <strong>supabase/setup-email-settings.sql</strong> en Supabase SQL Editor y luego reintenta.
+                  </p>
+                  <button type="button" style={{ ...p.refreshBtn, marginTop: 10 }} onClick={loadEmailSettings}>↺ Reintentar</button>
+                </div>
+              ) : emailSettings ? (
+                <EmailTab
+                  settings={emailSettings}
+                  saving={emailSaving}
+                  testSending={emailTestSending}
+                  onSave={async (draft) => {
+                    setEmailSaving(true);
+                    try {
+                      const res = await fetch("/api/admin/email-settings", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(draft),
+                      });
+                      const json = await res.json();
+                      if (!json.ok) throw new Error(json.message);
+                      setEmailSettings(draft);
+                      flash("Configuración de email guardada", true);
+                    } catch (e) {
+                      flash(e instanceof Error ? e.message : "Error", false);
+                    } finally {
+                      setEmailSaving(false);
+                    }
+                  }}
+                  onTest={async (draft) => {
+                    setEmailTestSending(true);
+                    try {
+                      const res = await fetch("/api/admin/email-settings/test", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ settings: draft }),
+                      });
+                      const json = await res.json();
+                      if (!json.ok) throw new Error(json.message);
+                      flash(json.message ?? "Email de prueba enviado", true);
+                    } catch (e) {
+                      flash(e instanceof Error ? e.message : "Error enviando email de prueba", false);
+                    } finally {
+                      setEmailTestSending(false);
+                    }
+                  }}
+                />
+              ) : null}
+            </div>
+          )}
+
+        </div>{/* /main */}
+      </div>{/* /layout */}
     </div>
   );
 }
@@ -2033,19 +2092,39 @@ function EmailTab({
 // ─── styles ───────────────────────────────────────────────────────────────────
 
 const p: Record<string, React.CSSProperties> = {
-  shell: { display: "flex", flexDirection: "column", gap: 0, minHeight: 0, flex: 1 },
-  panelHeader: {
-    display: "flex", flexDirection: "column", gap: 16,
-    padding: "24px 24px 0", borderBottom: "1px solid rgba(0,0,0,0.07)",
+  shell: { display: "flex", flexDirection: "column", minHeight: 0, flex: 1 },
+  layout: { display: "flex", flex: 1, minHeight: 0 },
+
+  // Sidebar
+  sidebar: {
+    width: 220, flexShrink: 0,
+    display: "flex", flexDirection: "column",
+    background: "#fafafa",
+    borderRight: "1px solid rgba(0,0,0,0.07)",
+    overflowY: "auto",
   },
-  panelTitle: { margin: 0, fontSize: 22, fontWeight: 800, letterSpacing: "-0.03em", color: "#111" },
-  panelSub: { fontSize: 13, color: "var(--muted)", marginTop: 2, display: "block" },
-  tabBar: { display: "flex", gap: 0, marginTop: 8 },
-  tab: { padding: "10px 18px", fontSize: 14, fontWeight: 600, background: "none", border: "none", borderBottom: "2px solid transparent", cursor: "pointer", color: "var(--muted)", borderRadius: 0 },
-  tabActive: { padding: "10px 18px", fontSize: 14, fontWeight: 700, background: "none", border: "none", borderBottom: "2px solid #111", cursor: "pointer", color: "#111", borderRadius: 0 },
+  sidebarBrand: {
+    display: "flex", alignItems: "center", gap: 10,
+    padding: "20px 16px 16px",
+    borderBottom: "1px solid rgba(0,0,0,0.06)",
+  },
+
+  // Main area
+  main: { flex: 1, display: "flex", flexDirection: "column", minWidth: 0, minHeight: 0 },
   content: { padding: "24px", display: "flex", flexDirection: "column", gap: 20, overflowY: "auto", flex: 1 },
-  loading: { color: "var(--muted)", fontSize: 14, margin: 0 },
   notice: { margin: "12px 24px 0", padding: "10px 14px", borderRadius: 12, fontSize: 13, fontWeight: 600, border: "1px solid" },
+
+  // Page header (title + description + optional action)
+  pageHead: { display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, flexWrap: "wrap" as const },
+  pageTitle: { margin: "0 0 4px", fontSize: 20, fontWeight: 800, letterSpacing: "-0.03em", color: "#111" },
+  pageDesc: { margin: 0, fontSize: 13, color: "var(--muted)", lineHeight: 1.5 },
+
+  // Sub-tab bar (used within pages)
+  subTabBar: { display: "flex", gap: 0, borderBottom: "1px solid rgba(0,0,0,0.07)", marginBottom: 4 },
+  subTab: { padding: "8px 16px", fontSize: 13, fontWeight: 600, background: "none", border: "none", borderBottom: "2px solid transparent", cursor: "pointer", color: "var(--muted)", borderRadius: 0, marginBottom: -1 },
+  subTabActive: { padding: "8px 16px", fontSize: 13, fontWeight: 700, background: "none", border: "none", borderBottom: "2px solid #6d28d9", cursor: "pointer", color: "#6d28d9", borderRadius: 0, marginBottom: -1 },
+
+  loading: { color: "var(--muted)", fontSize: 14, margin: 0 },
 
   metricGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 12 },
   metricCard: { borderRadius: 20, padding: "18px 16px", display: "flex", flexDirection: "column", gap: 6 },
