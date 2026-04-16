@@ -1976,8 +1976,8 @@ function EmailTab({
                 <p style={{ margin: "2px 0 6px", fontSize: 12, color: "var(--muted)" }}>
                   Variables disponibles: <code style={{ fontSize: 11, background: "rgba(0,0,0,0.05)", padding: "1px 6px", borderRadius: 4 }}>{TEMPLATE_VARS[`tpl_${key}`]}</code>
                 </p>
-                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                  <div style={p.payField}>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                     <label style={p.formLabel}>Asunto</label>
                     <input
                       className="input"
@@ -1988,10 +1988,8 @@ function EmailTab({
                       style={{ fontSize: 13 }}
                     />
                   </div>
-                  <div>
-                    <label style={{ ...p.formLabel, display: "block", marginBottom: 6 }}>
-                      Cuerpo HTML
-                    </label>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                    <label style={p.formLabel}>Cuerpo HTML</label>
                     <HtmlEditor
                       value={draft[bodyKey] as string}
                       onChange={(val) => set(bodyKey, val)}
