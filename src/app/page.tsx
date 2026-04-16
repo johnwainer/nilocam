@@ -4,38 +4,93 @@ import { LandingHero } from "@/components/landing-hero";
 import { TopNav } from "@/components/top-nav";
 import { EVENT_TYPES } from "@/lib/constants";
 
-const featuredSlides = [
-  {
-    title: "Una URL. Una identidad.",
-    text: "Cada evento vive en su propia landing: título, estilo y galería en un solo lugar. Lista para compartir en segundos.",
-    image:
-      "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1400&q=80",
-  },
-  {
-    title: "Inmediato. Sin espera.",
-    text: "La foto que toma un invitado aparece en pantalla grande antes de que baje el teléfono.",
-    image:
-      "https://images.unsplash.com/photo-1506869640319-fe1a24fd76dc?auto=format&fit=crop&w=1400&q=80",
-  },
-];
+// ─── Data ────────────────────────────────────────────────────────────────────
 
 const howItWorks = [
   {
     step: "1",
-    title: "Diseñas la experiencia",
-    text: "Elige el nombre, el estilo visual, el tipo de evento y cómo quieres moderar las fotos. Listo en minutos, sin tecnicismos.",
+    title: "Crea tu evento en minutos",
+    text: "Elige el nombre, el estilo visual, el tipo de evento y cómo quieres moderar las fotos. No necesitas saber de tecnología.",
   },
   {
     step: "2",
-    title: "Un QR lo activa todo",
-    text: "Imprímelo, proyéctalo o compártelo por mensaje. Al abrirlo, el invitado ya está dentro, sin apps ni cuentas.",
+    title: "Comparte el QR con tus invitados",
+    text: "Imprímelo, proyéctalo o mándalo por WhatsApp. Al abrirlo, el invitado está dentro al instante: sin apps, sin cuentas, sin pasos extra.",
   },
   {
     step: "3",
-    title: "Las fotos llegan solas",
-    text: "Cada captura aparece destacada en la galería del evento, en vivo, mientras todo sucede a tu alrededor.",
+    title: "Las fotos aparecen en vivo",
+    text: "Cada captura llega a la galería del evento en tiempo real. Todos los presentes la ven al mismo tiempo en la pantalla grande.",
   },
 ];
+
+const features = [
+  {
+    icon: "📸",
+    title: "Galería en tiempo real",
+    desc: "Las fotos aparecen en pantalla en segundos, sin recargar. El momento se ve mientras sucede.",
+  },
+  {
+    icon: "🔗",
+    title: "QR instantáneo",
+    desc: "Cada evento genera su propio código QR. Imprímelo, proyéctalo o compártelo por mensaje.",
+  },
+  {
+    icon: "🎨",
+    title: "Landing personalizable",
+    desc: "Más de 20 temas visuales, colores y textos editables. Tu evento, tu identidad.",
+  },
+  {
+    icon: "🛡",
+    title: "Moderación de fotos",
+    desc: "Aprueba manualmente o activa el modo automático. Tú decides qué aparece en pantalla.",
+  },
+  {
+    icon: "📺",
+    title: "Pantalla de proyección",
+    desc: "Slideshow en pantalla grande con efecto Ken Burns. Ideal para proyectar en el salón.",
+  },
+  {
+    icon: "📱",
+    title: "Sin app. Sin cuenta.",
+    desc: "El invitado abre el QR desde cualquier teléfono y sube la foto. Nada que instalar.",
+  },
+  {
+    icon: "🎞",
+    title: "Filtros y marcos",
+    desc: "15 filtros de cámara y 8 marcos fotográficos. Fotos con estilo desde el primer clic.",
+  },
+  {
+    icon: "⚡",
+    title: "Listo en 3 minutos",
+    desc: "Desde que creas la cuenta hasta tener un evento activo. Sin configuraciones complicadas.",
+  },
+];
+
+const faqs = [
+  {
+    q: "¿Los invitados tienen que instalar algo?",
+    a: "No. Abren el QR desde el navegador de su teléfono (iPhone o Android) y listo. No necesitan cuenta, no bajan ninguna app.",
+  },
+  {
+    q: "¿Cómo funcionan los créditos?",
+    a: "Al registrarte recibes créditos de bienvenida para empezar. Cada operación (crear un evento, subir fotos) consume créditos. Cuando los necesites, compras más directamente desde el panel.",
+  },
+  {
+    q: "¿Necesito tarjeta de crédito para comenzar?",
+    a: "No. Te registras, recibes tus créditos y puedes crear tu primer evento sin pagar nada. Solo recargas cuando los créditos se terminan.",
+  },
+  {
+    q: "¿Puedo personalizar el diseño de la landing del evento?",
+    a: "Sí. Más de 20 temas visuales, colores de acento, imagen de portada, títulos y textos completamente editables.",
+  },
+  {
+    q: "¿Las fotos se almacenan para siempre?",
+    a: "Las fotos se guardan en tu cuenta mientras el evento esté activo. Puedes desactivarlo cuando quieras.",
+  },
+];
+
+// ─── Page ────────────────────────────────────────────────────────────────────
 
 export default function HomePage() {
   return (
@@ -43,16 +98,39 @@ export default function HomePage() {
       <TopNav />
       <LandingHero />
 
-      {/* ── Cómo funciona ─────────────────────────────────── */}
+      {/* ── Trust bar ─────────────────────────────────────────── */}
+      <div style={styles.trustBar}>
+        <div className="container">
+          <div style={styles.trustInner}>
+            {[
+              { icon: "⚡", text: "Fotos en pantalla en segundos" },
+              { icon: "📱", text: "Sin apps ni cuentas para invitados" },
+              { icon: "🎨", text: "20+ temas visuales" },
+              { icon: "🛡", text: "Moderación de contenido incluida" },
+              { icon: "🚀", text: "Evento activo en 3 minutos" },
+            ].map((item) => (
+              <div key={item.text} style={styles.trustItem}>
+                <span style={styles.trustIcon}>{item.icon}</span>
+                <span style={styles.trustText}>{item.text}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Cómo funciona ─────────────────────────────────────── */}
       <section className="section" id="como-funciona">
         <div className="container">
           <div style={styles.sectionHead}>
             <span className="eyebrow">Cómo funciona</span>
             <h2 className="serif" style={styles.h2}>
-              Tan simple que no
+              De cero a galería
               <br />
-              necesita manual.
+              en 3 pasos.
             </h2>
+            <p className="muted" style={styles.sectionLead}>
+              No hay que ser técnico. Si puedes mandar un mensaje de WhatsApp, puedes usar Nilo Cam.
+            </p>
           </div>
 
           <div style={styles.stepList}>
@@ -76,51 +154,54 @@ export default function HomePage() {
               </div>
             ))}
           </div>
+
+          <div style={styles.stepCta}>
+            <Link href="/auth" className="btn btn-primary" style={{ padding: "14px 32px", fontSize: 16 }}>
+              Crear mi primer evento gratis →
+            </Link>
+          </div>
         </div>
       </section>
 
-      {/* ── Features alternas ─────────────────────────────── */}
-      <section className="section">
-        <div className="container" style={styles.featureList}>
-          {featuredSlides.map((slide, i) => (
-            <article key={slide.title} className="card glass feature-card" style={styles.featureCard}>
-              <div
-                className="feature-img"
-                style={{
-                  backgroundImage: `url(${slide.image})`,
-                  backgroundSize: "cover",
-                  backgroundPosition: "center",
-                  filter: "grayscale(1) brightness(0.5) contrast(1.22)",
-                  order: i % 2 === 0 ? 0 : 1,
-                }}
-              />
-              <div
-                className="feature-body"
-                style={{
-                  ...styles.featureBody,
-                  order: i % 2 === 0 ? 1 : 0,
-                }}
-              >
-                <h2 className="serif" style={styles.featureTitle}>
-                  {slide.title}
-                </h2>
-                <p className="muted" style={styles.featureDesc}>
-                  {slide.text}
-                </p>
+      {/* ── Qué incluye ───────────────────────────────────────── */}
+      <section className="section" style={{ background: "rgba(0,0,0,0.02)" }}>
+        <div className="container">
+          <div style={styles.sectionHead}>
+            <span className="eyebrow">Todo incluido</span>
+            <h2 className="serif" style={styles.h2}>
+              Una herramienta
+              <br />
+              completa.
+            </h2>
+            <p className="muted" style={styles.sectionLead}>
+              Todo lo que necesitas para que las fotos de tu evento sean la experiencia del evento.
+            </p>
+          </div>
+          <div style={styles.featuresGrid}>
+            {features.map((f) => (
+              <div key={f.title} className="card glass" style={styles.featureItem}>
+                <span style={styles.featureIcon}>{f.icon}</span>
+                <h3 style={styles.featureTitle}>{f.title}</h3>
+                <p className="muted" style={styles.featureDesc}>{f.desc}</p>
               </div>
-            </article>
-          ))}
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* ── Tipos de evento ───────────────────────────────── */}
+      {/* ── Tipos de evento ───────────────────────────────────── */}
       <section className="section" id="tipos">
         <div className="container">
           <div style={styles.sectionHead}>
             <span className="eyebrow">10 tipos de evento</span>
             <h2 className="serif" style={styles.h2}>
-              Hecho para cada ocasión.
+              Hecho para
+              <br />
+              cada ocasión.
             </h2>
+            <p className="muted" style={styles.sectionLead}>
+              Desde bodas hasta lanzamientos corporativos. Cada tipo trae su propio estilo visual pre-configurado.
+            </p>
           </div>
           <div className="home-event-cards" style={styles.cards}>
             {EVENT_TYPES.map((item, index) => (
@@ -140,31 +221,169 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── Demo CTA ──────────────────────────────────────── */}
-      <section className="section demo-section" id="demo" style={styles.demoSection}>
+      {/* ── Precios ───────────────────────────────────────────── */}
+      <section className="section" id="precios" style={{ background: "rgba(0,0,0,0.02)" }}>
         <div className="container">
-          <div style={styles.demoCta}>
-            <div style={styles.demoLeft}>
-              <span className="eyebrow" style={{ color: "rgba(255,255,255,0.5)" }}>
-                Demostración
-              </span>
-              <h3 className="serif" style={styles.demoTitle}>
-                Vívelo antes
-                <br />
-                de crearlo.
-              </h3>
-              <p style={styles.demoText}>
-                Abre la demo y experimenta el flujo completo: escaneas, capturas el momento
-                y ves tu foto aparecer en la galería del evento. En segundos, como debería
-                ser siempre.
+          <div style={styles.sectionHead}>
+            <span className="eyebrow">Precios</span>
+            <h2 className="serif" style={styles.h2}>
+              Simple y
+              <br />
+              sin sorpresas.
+            </h2>
+            <p className="muted" style={styles.sectionLead}>
+              Sin suscripciones mensuales. Sin contratos. Pagas solo lo que usas, cuando lo usas.
+            </p>
+          </div>
+
+          {/* Pricing model cards */}
+          <div style={styles.pricingGrid}>
+            {/* Free to start */}
+            <div className="card glass" style={{ ...styles.pricingCard, ...styles.pricingCardFeatured }}>
+              <div style={styles.pricingBadge}>Recomendado para empezar</div>
+              <div style={styles.pricingPill}>Gratis</div>
+              <h3 style={styles.pricingTitle}>Registro sin costo</h3>
+              <p className="muted" style={styles.pricingDesc}>
+                Crea tu cuenta y recibe créditos de bienvenida automáticamente. Úsalos para crear tu primer evento y vivir la experiencia completa antes de pagar nada.
               </p>
-            </div>
-            <div style={styles.demoActions}>
-              <Link className="btn btn-primary" href="/event/demo-nilo-cam" style={styles.demoBtnPrimary}>
-                Abrir landing demo
+              <ul style={styles.pricingList}>
+                {[
+                  "Créditos de bienvenida incluidos",
+                  "Crea y activa tu primer evento",
+                  "Galería en tiempo real",
+                  "QR descargable",
+                  "Moderación de fotos",
+                  "Sin tarjeta de crédito",
+                ].map((item) => (
+                  <li key={item} style={styles.pricingListItem}>
+                    <span style={styles.checkIcon}>✓</span>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+              <Link href="/auth" className="btn btn-primary" style={{ width: "100%", textAlign: "center", padding: "14px 0", fontSize: 15, fontWeight: 700 }}>
+                Crear cuenta gratis →
               </Link>
-              <Link className="btn btn-ghost" href="/admin" style={styles.demoBtnSecondary}>
-                Ir al admin
+            </div>
+
+            {/* Pay as you go */}
+            <div className="card glass" style={styles.pricingCard}>
+              <div style={styles.pricingPill}>Créditos</div>
+              <h3 style={styles.pricingTitle}>Paga lo que usas</h3>
+              <p className="muted" style={styles.pricingDesc}>
+                Cuando tus créditos se terminen, recarga desde el panel. Sin mensualidad, sin renovación automática. Tus créditos no vencen.
+              </p>
+              <ul style={styles.pricingList}>
+                {[
+                  "Recarga desde el panel en minutos",
+                  "Tarjeta (Stripe), PayPal o transferencia",
+                  "Los créditos no tienen fecha de expiración",
+                  "Descuentos por volumen disponibles",
+                  "Factura disponible a petición",
+                  "Soporte por email incluido",
+                ].map((item) => (
+                  <li key={item} style={styles.pricingListItem}>
+                    <span style={styles.checkIcon}>✓</span>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+              <Link href="/auth" className="btn btn-secondary" style={{ width: "100%", textAlign: "center", padding: "14px 0", fontSize: 15, fontWeight: 700 }}>
+                Ver opciones de recarga →
+              </Link>
+            </div>
+
+            {/* What costs credits */}
+            <div className="card glass" style={{ ...styles.pricingCard, background: "rgba(0,0,0,0.03)" }}>
+              <div style={styles.pricingPill}>¿Qué son los créditos?</div>
+              <h3 style={styles.pricingTitle}>Tu moneda de evento</h3>
+              <p className="muted" style={styles.pricingDesc}>
+                Los créditos son la unidad de uso de la plataforma. Se consumen al crear eventos y al añadir fotos a las galerías.
+              </p>
+              <div style={styles.creditExamples}>
+                {[
+                  { action: "Registro en la plataforma", label: "Gratis + créditos incluidos" },
+                  { action: "Crear un evento nuevo", label: "Pocos créditos" },
+                  { action: "Cada foto en la galería", label: "Mínimo por foto" },
+                  { action: "Los invitados participan", label: "Sin costo adicional" },
+                  { action: "Descargar el QR", label: "Incluido" },
+                  { action: "Pantalla de proyección", label: "Incluido" },
+                ].map((ex) => (
+                  <div key={ex.action} style={styles.creditRow}>
+                    <span style={styles.creditAction}>{ex.action}</span>
+                    <span style={styles.creditLabel}>{ex.label}</span>
+                  </div>
+                ))}
+              </div>
+              <Link href="/auth" className="btn btn-ghost" style={{ width: "100%", textAlign: "center", padding: "14px 0", fontSize: 15, marginTop: 8 }}>
+                Empezar gratis y ver precios →
+              </Link>
+            </div>
+          </div>
+
+          {/* Bottom note */}
+          <p style={styles.pricingNote}>
+            Todos los precios se muestran en USD. Los créditos de bienvenida se acreditan automáticamente al crear la cuenta.
+            Si tienes un evento grande o necesitas un plan personalizado,{" "}
+            <a href="mailto:tech@pasosalexito.com" style={{ color: "inherit", fontWeight: 600 }}>
+              contáctanos
+            </a>
+            .
+          </p>
+        </div>
+      </section>
+
+      {/* ── FAQ ───────────────────────────────────────────────── */}
+      <section className="section">
+        <div className="container">
+          <div style={styles.sectionHead}>
+            <span className="eyebrow">Preguntas frecuentes</span>
+            <h2 className="serif" style={styles.h2}>
+              Todo lo que
+              <br />
+              quieres saber.
+            </h2>
+          </div>
+          <div style={styles.faqGrid}>
+            {faqs.map((item) => (
+              <div key={item.q} className="card glass" style={styles.faqItem}>
+                <h3 style={styles.faqQ}>{item.q}</h3>
+                <p className="muted" style={styles.faqA}>{item.a}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── CTA final ─────────────────────────────────────────── */}
+      <section className="section demo-section" id="demo" style={styles.ctaSection}>
+        <div className="container">
+          <div style={styles.ctaInner}>
+            <div style={styles.ctaLeft}>
+              <span className="eyebrow" style={{ color: "rgba(255,255,255,0.45)" }}>
+                Empieza hoy
+              </span>
+              <h2 className="serif" style={styles.ctaTitle}>
+                Tu próximo evento
+                <br />
+                merece esto.
+              </h2>
+              <p style={styles.ctaText}>
+                Crea tu cuenta gratis, configura tu evento en minutos y comparte el QR.
+                Tus invitados harán el resto.
+              </p>
+              <div style={styles.ctaPills}>
+                {["Sin instalación", "Sin tarjeta", "Listo en 3 min"].map((t) => (
+                  <span key={t} style={styles.ctaPill}>{t}</span>
+                ))}
+              </div>
+            </div>
+            <div style={styles.ctaActions}>
+              <Link className="btn btn-primary" href="/auth" style={styles.ctaBtnPrimary}>
+                Empezar gratis →
+              </Link>
+              <Link className="btn btn-ghost" href="/event/demo-nilo-cam" style={styles.ctaBtnSecondary}>
+                Ver demo en vivo
               </Link>
             </div>
           </div>
@@ -176,18 +395,60 @@ export default function HomePage() {
   );
 }
 
+// ─── Styles ──────────────────────────────────────────────────────────────────
+
 const styles: Record<string, React.CSSProperties> = {
+  /* Section headers */
   sectionHead: {
     display: "grid",
     gap: 14,
     maxWidth: 820,
-    marginBottom: 40,
+    marginBottom: 48,
   },
   h2: {
     fontSize: "clamp(38px, 4.4vw, 70px)",
     lineHeight: 0.94,
     margin: 0,
     letterSpacing: "-0.05em",
+  },
+  sectionLead: {
+    fontSize: 18,
+    lineHeight: 1.65,
+    maxWidth: 560,
+    margin: 0,
+  },
+
+  /* Trust bar */
+  trustBar: {
+    borderBottom: "1px solid rgba(0,0,0,0.06)",
+    borderTop: "1px solid rgba(0,0,0,0.06)",
+    padding: "0",
+    background: "#fff",
+  },
+  trustInner: {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: 0,
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  trustItem: {
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    padding: "16px 20px",
+    flex: "1 1 180px",
+    borderRight: "1px solid rgba(0,0,0,0.05)",
+  },
+  trustIcon: {
+    fontSize: 16,
+    flexShrink: 0,
+  },
+  trustText: {
+    fontSize: 13,
+    fontWeight: 600,
+    color: "#374151",
+    lineHeight: 1.3,
   },
 
   /* Steps */
@@ -226,37 +487,39 @@ const styles: Record<string, React.CSSProperties> = {
     lineHeight: 1.75,
     maxWidth: 560,
   },
+  stepCta: {
+    marginTop: 48,
+    display: "flex",
+    justifyContent: "flex-start",
+  },
 
-  /* Feature alternating */
-  featureList: {
+  /* Features grid */
+  featuresGrid: {
     display: "grid",
+    gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
     gap: 16,
   },
-  featureCard: {
-    borderRadius: 36,
-    overflow: "hidden",
-    minHeight: 480,
-    display: "grid",
-    gridTemplateColumns: "55% 45%",
-  },
-  featureBody: {
-    padding: "52px 48px",
+  featureItem: {
+    borderRadius: 24,
+    padding: "24px 22px",
     display: "flex",
     flexDirection: "column",
-    justifyContent: "center",
-    gap: 18,
+    gap: 10,
+  },
+  featureIcon: {
+    fontSize: 28,
+    lineHeight: 1,
   },
   featureTitle: {
     margin: 0,
-    fontSize: "clamp(32px, 3.5vw, 54px)",
-    lineHeight: 0.94,
-    letterSpacing: "-0.05em",
+    fontSize: 17,
+    fontWeight: 700,
+    letterSpacing: "-0.02em",
   },
   featureDesc: {
     margin: 0,
-    fontSize: 18,
-    lineHeight: 1.75,
-    maxWidth: 400,
+    fontSize: 14,
+    lineHeight: 1.65,
   },
 
   /* Event type cards */
@@ -298,53 +561,220 @@ const styles: Record<string, React.CSSProperties> = {
     lineHeight: 1.6,
   },
 
-  /* Demo CTA section */
-  demoSection: {
-    background: "#0b0b0f",
-    paddingTop: 88,
-    paddingBottom: 88,
+  /* Pricing */
+  pricingGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+    gap: 16,
+    alignItems: "start",
   },
-  demoCta: {
+  pricingCard: {
+    borderRadius: 28,
+    padding: "28px 26px",
+    display: "flex",
+    flexDirection: "column",
+    gap: 16,
+    background: "linear-gradient(180deg, rgba(255,255,255,0.94), rgba(255,255,255,0.78))",
+  },
+  pricingCardFeatured: {
+    border: "2px solid rgba(0,0,0,0.14)",
+    background: "#ffffff",
+    boxShadow: "0 8px 40px rgba(0,0,0,0.07)",
+  },
+  pricingBadge: {
+    display: "inline-block",
+    fontSize: 11,
+    fontWeight: 800,
+    letterSpacing: "0.08em",
+    textTransform: "uppercase" as const,
+    color: "#059669",
+    background: "rgba(5,150,105,0.1)",
+    border: "1px solid rgba(5,150,105,0.2)",
+    borderRadius: 999,
+    padding: "4px 12px",
+    width: "fit-content",
+  },
+  pricingPill: {
+    display: "inline-block",
+    fontSize: 11,
+    fontWeight: 800,
+    letterSpacing: "0.1em",
+    textTransform: "uppercase" as const,
+    color: "var(--muted)",
+    background: "rgba(0,0,0,0.05)",
+    borderRadius: 999,
+    padding: "4px 12px",
+    width: "fit-content",
+  },
+  pricingTitle: {
+    margin: 0,
+    fontSize: "clamp(22px, 2vw, 28px)",
+    lineHeight: 1.1,
+    letterSpacing: "-0.03em",
+  },
+  pricingDesc: {
+    margin: 0,
+    fontSize: 15,
+    lineHeight: 1.65,
+  },
+  pricingList: {
+    listStyle: "none",
+    padding: 0,
+    margin: 0,
+    display: "flex",
+    flexDirection: "column" as const,
+    gap: 10,
+  },
+  pricingListItem: {
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+    fontSize: 14,
+    fontWeight: 500,
+    color: "#374151",
+  },
+  checkIcon: {
+    flexShrink: 0,
+    width: 20,
+    height: 20,
+    borderRadius: "50%",
+    background: "rgba(5,150,105,0.1)",
+    color: "#059669",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: 11,
+    fontWeight: 800,
+    lineHeight: 1,
+  },
+  creditExamples: {
+    display: "flex",
+    flexDirection: "column" as const,
+    gap: 0,
+    borderRadius: 14,
+    border: "1px solid rgba(0,0,0,0.07)",
+    overflow: "hidden",
+    background: "#fff",
+  },
+  creditRow: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: "10px 14px",
+    borderBottom: "1px solid rgba(0,0,0,0.05)",
+    gap: 10,
+  },
+  creditAction: {
+    fontSize: 13,
+    color: "#374151",
+  },
+  creditLabel: {
+    fontSize: 12,
+    fontWeight: 700,
+    color: "#059669",
+    flexShrink: 0,
+  },
+  pricingNote: {
+    marginTop: 32,
+    fontSize: 14,
+    color: "var(--muted)",
+    lineHeight: 1.65,
+    textAlign: "center" as const,
+  },
+
+  /* FAQ */
+  faqGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))",
+    gap: 16,
+  },
+  faqItem: {
+    borderRadius: 24,
+    padding: "24px 22px",
+    display: "flex",
+    flexDirection: "column",
+    gap: 10,
+  },
+  faqQ: {
+    margin: 0,
+    fontSize: 17,
+    fontWeight: 700,
+    letterSpacing: "-0.02em",
+    lineHeight: 1.25,
+  },
+  faqA: {
+    margin: 0,
+    fontSize: 14,
+    lineHeight: 1.7,
+  },
+
+  /* Final CTA section */
+  ctaSection: {
+    background: "#0b0b0f",
+    paddingTop: 96,
+    paddingBottom: 96,
+  },
+  ctaInner: {
     display: "flex",
     alignItems: "flex-start",
     justifyContent: "space-between",
-    gap: 40,
+    gap: 48,
     flexWrap: "wrap",
   },
-  demoLeft: {
+  ctaLeft: {
     display: "grid",
-    gap: 18,
-    maxWidth: 760,
+    gap: 20,
+    maxWidth: 720,
   },
-  demoTitle: {
+  ctaTitle: {
     margin: 0,
-    fontSize: "clamp(36px, 9vw, 104px)",
+    fontSize: "clamp(40px, 9vw, 112px)",
     lineHeight: 0.88,
     letterSpacing: "-0.05em",
     color: "#ffffff",
   },
-  demoText: {
+  ctaText: {
     fontSize: 18,
     lineHeight: 1.75,
     margin: 0,
     color: "rgba(255,255,255,0.55)",
     maxWidth: 520,
   },
-  demoActions: {
+  ctaPills: {
+    display: "flex",
+    gap: 8,
+    flexWrap: "wrap",
+  },
+  ctaPill: {
+    fontSize: 12,
+    fontWeight: 700,
+    letterSpacing: "0.04em",
+    padding: "5px 14px",
+    borderRadius: 999,
+    background: "rgba(255,255,255,0.08)",
+    color: "rgba(255,255,255,0.65)",
+  },
+  ctaActions: {
     display: "flex",
     flexDirection: "column",
     gap: 12,
     flexShrink: 0,
+    minWidth: 220,
   },
-  demoBtnPrimary: {
+  ctaBtnPrimary: {
     background: "#ffffff",
     color: "#0b0b0f",
-    minWidth: 200,
+    textAlign: "center" as const,
+    padding: "16px 32px",
+    fontSize: 16,
+    fontWeight: 700,
   },
-  demoBtnSecondary: {
+  ctaBtnSecondary: {
     background: "transparent",
     border: "1px solid rgba(255,255,255,0.15)",
     color: "rgba(255,255,255,0.7)",
-    minWidth: 200,
+    textAlign: "center" as const,
+    padding: "16px 32px",
+    fontSize: 15,
   },
 };

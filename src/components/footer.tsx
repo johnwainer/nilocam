@@ -12,10 +12,11 @@ const features = [
 
 const links = [
   { label: "Inicio", href: "/" },
-  { label: "Demo", href: "/event/demo-nilo-cam" },
   { label: "Cómo funciona", href: "/#como-funciona" },
   { label: "Tipos de evento", href: "/#tipos" },
-  { label: "Admin", href: "/admin" },
+  { label: "Precios", href: "/#precios" },
+  { label: "Demo", href: "/event/demo-nilo-cam" },
+  { label: "Empezar gratis", href: "/auth" },
 ];
 
 export function Footer() {
@@ -67,9 +68,11 @@ export function Footer() {
             <span className="muted" style={{ fontSize: 13, opacity: 0.4 }}>·</span>
             <Link href="/privacy" style={s.bottomLink}>Privacidad</Link>
             <span className="muted" style={{ fontSize: 13, opacity: 0.4 }}>·</span>
-            <Link href="/admin" style={s.bottomLink}>Panel de administración</Link>
+            <Link href="/#precios" style={s.bottomLink}>Precios</Link>
             <span className="muted" style={{ fontSize: 13, opacity: 0.4 }}>·</span>
             <Link href="/event/demo-nilo-cam" style={s.bottomLink}>Ver demo</Link>
+            <span className="muted" style={{ fontSize: 13, opacity: 0.4 }}>·</span>
+            <Link href="/admin" style={s.bottomLink}>Panel admin</Link>
           </div>
         </div>
       </div>

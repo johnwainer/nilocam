@@ -81,12 +81,15 @@ export function LandingHero() {
           </p>
           <div style={s.actions}>
             <Link href="/auth" className="btn btn-primary">
-              Entrar al panel
+              Empezar gratis
             </Link>
             <Link href="/event/demo-nilo-cam" className="btn btn-secondary">
-              Abrir demo
+              Ver demo en vivo
             </Link>
           </div>
+          <p style={s.freeNote}>
+            Sin tarjeta de crédito · Créditos de bienvenida incluidos
+          </p>
         </div>
 
         {/* Bento showcase */}
@@ -143,6 +146,13 @@ const s: Record<string, React.CSSProperties> = {
     justifyContent: "center",
     flexWrap: "wrap",
     marginTop: 4,
+  },
+  freeNote: {
+    fontSize: 13,
+    color: "var(--muted)",
+    margin: 0,
+    textAlign: "center",
+    opacity: 0.75,
   },
   slideInner: {
     position: "relative",

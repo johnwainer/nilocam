@@ -93,6 +93,9 @@ export function TopNav() {
             <Link href="/#tipos" style={s.navLink} className="nav-link">
               Eventos
             </Link>
+            <Link href="/#precios" style={s.navLink} className="nav-link">
+              Precios
+            </Link>
             <Link href="/event/demo-nilo-cam" style={s.navLink} className="nav-link">
               Demo
             </Link>
@@ -102,11 +105,11 @@ export function TopNav() {
           <div style={s.actions}>
             {loggedIn ? (
               <Link href="/admin" className="btn btn-primary" style={s.cta}>
-                Admin
+                Mi panel
               </Link>
             ) : (
               <Link href="/auth" className="btn btn-primary" style={s.cta}>
-                Empezar
+                Empezar gratis
               </Link>
             )}
           </div>
