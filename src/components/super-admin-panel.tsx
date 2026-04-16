@@ -127,6 +127,7 @@ export function SuperAdminPanel({
   const [emailError, setEmailError] = useState<string | null>(null);
   const [emailTestSending, setEmailTestSending] = useState(false);
   const [creditsSubTab, setCreditsSubTab] = useState<"saldos" | "precios">("saldos");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const flash = useCallback((text: string, ok: boolean) => {
     setNotice({ text, ok });
@@ -504,21 +505,33 @@ export function SuperAdminPanel({
     <div style={p.shell}>
       <div style={p.layout}>
 
+        {/* Overlay — closes sidebar on mobile tap-outside */}
+        {sidebarOpen && (
+          <div className="sa-overlay" onClick={() => setSidebarOpen(false)} />
+        )}
+
         {/* ── Sidebar ── */}
-        <aside style={p.sidebar}>
+        <aside style={p.sidebar} className={`sa-sidebar${sidebarOpen ? " sa-sidebar-open" : ""}`}>
           <div style={p.sidebarBrand}>
             <span style={{ fontSize: 24, lineHeight: 1, color: "#6d28d9" }}>◈</span>
-            <div style={{ minWidth: 0 }}>
+            <div style={{ minWidth: 0, flex: 1 }}>
               <div style={{ fontSize: 14, fontWeight: 800, color: "#111", letterSpacing: "-0.02em" }}>Sistema</div>
               <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{userEmail}</div>
             </div>
+            <button
+              type="button"
+              className="sa-hamburger"
+              onClick={() => setSidebarOpen(false)}
+              style={{ background: "none", border: "none", cursor: "pointer", padding: "4px 6px", borderRadius: 8, color: "var(--muted)", fontSize: 18, lineHeight: 1, flexShrink: 0 }}
+              aria-label="Cerrar menú"
+            >✕</button>
           </div>
           <nav style={{ display: "flex", flexDirection: "column", gap: 2, padding: "12px 10px" }}>
             {NAV_ITEMS.map(({ tab: t, icon, label, sub }) => (
               <button
                 key={t}
                 type="button"
-                onClick={() => setTab(t)}
+                onClick={() => { setTab(t); setSidebarOpen(false); }}
                 style={{
                   display: "flex", alignItems: "center", gap: 10,
                   padding: "9px 10px", borderRadius: 10, border: "none",
@@ -538,6 +551,20 @@ export function SuperAdminPanel({
 
         {/* ── Main ── */}
         <div style={p.main}>
+          {/* Mobile header bar — shows current section + hamburger */}
+          <div className="sa-hamburger" style={p.mobileBar}>
+            <button
+              type="button"
+              onClick={() => setSidebarOpen(true)}
+              style={p.mobileBarBtn}
+              aria-label="Abrir menú"
+            >
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <line x1="2" y1="5" x2="16" y2="5"/><line x1="2" y1="9" x2="16" y2="9"/><line x1="2" y1="13" x2="16" y2="13"/>
+              </svg>
+              <span>{NAV_ITEMS.find((n) => n.tab === tab)?.label ?? "Menú"}</span>
+            </button>
+          </div>
           {notice && (
             <div style={{ ...p.notice, background: notice.ok ? "rgba(16,185,129,0.12)" : "rgba(239,68,68,0.1)", borderColor: notice.ok ? "rgba(16,185,129,0.3)" : "rgba(239,68,68,0.3)", color: notice.ok ? "#065f46" : "#991b1b" }}>
               {notice.text}
@@ -2107,6 +2134,19 @@ const p: Record<string, React.CSSProperties> = {
     display: "flex", alignItems: "center", gap: 10,
     padding: "20px 16px 16px",
     borderBottom: "1px solid rgba(0,0,0,0.06)",
+  },
+
+  // Mobile top bar
+  mobileBar: {
+    padding: "10px 14px",
+    borderBottom: "1px solid rgba(0,0,0,0.07)",
+    background: "#fafafa",
+  },
+  mobileBarBtn: {
+    display: "flex", alignItems: "center", gap: 8,
+    background: "none", border: "none", cursor: "pointer",
+    padding: "6px 10px", borderRadius: 8,
+    fontWeight: 700, fontSize: 14, color: "#374151",
   },
 
   // Main area

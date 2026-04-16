@@ -101,7 +101,7 @@ export default function HomePage() {
       {/* ── Trust bar ─────────────────────────────────────────── */}
       <div style={styles.trustBar}>
         <div className="container">
-          <div style={styles.trustInner}>
+          <div className="home-trust-inner" style={styles.trustInner}>
             {[
               { icon: "⚡", text: "Fotos en pantalla en segundos" },
               { icon: "📱", text: "Sin apps ni cuentas para invitados" },
@@ -237,7 +237,7 @@ export default function HomePage() {
           </div>
 
           {/* Pricing model cards */}
-          <div style={styles.pricingGrid}>
+          <div className="home-pricing-grid" style={styles.pricingGrid}>
             {/* Free to start */}
             <div className="card glass" style={{ ...styles.pricingCard, ...styles.pricingCardFeatured }}>
               <div style={styles.pricingBadge}>Recomendado para empezar</div>
@@ -344,7 +344,7 @@ export default function HomePage() {
               quieres saber.
             </h2>
           </div>
-          <div style={styles.faqGrid}>
+          <div className="home-faq-grid" style={styles.faqGrid}>
             {faqs.map((item) => (
               <div key={item.q} className="card glass" style={styles.faqItem}>
                 <h3 style={styles.faqQ}>{item.q}</h3>
@@ -436,9 +436,8 @@ const styles: Record<string, React.CSSProperties> = {
     display: "flex",
     alignItems: "center",
     gap: 8,
-    padding: "16px 20px",
-    flex: "1 1 180px",
-    borderRight: "1px solid rgba(0,0,0,0.05)",
+    padding: "14px 18px",
+    flex: "1 1 160px",
   },
   trustIcon: {
     fontSize: 16,
@@ -685,7 +684,7 @@ const styles: Record<string, React.CSSProperties> = {
   /* FAQ */
   faqGrid: {
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))",
+    gridTemplateColumns: "repeat(auto-fill, minmax(min(340px, 100%), 1fr))",
     gap: 16,
   },
   faqItem: {
