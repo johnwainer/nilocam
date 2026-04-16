@@ -910,23 +910,24 @@ img {
   display: none !important;
 }
 
+/* Hide header sign-out on desktop — sidebar already has it */
+.admin-header-signout {
+  display: none !important;
+}
+
 @media (max-width: 768px) {
   .admin-hamburger {
     display: flex !important;
   }
 
-  /* Hide email and header sign-out button on mobile */
+  /* Show header sign-out on mobile (no sidebar visible by default) */
+  .admin-header-signout {
+    display: inline-flex !important;
+  }
+
+  /* Hide email on mobile */
   .admin-header-email {
     display: none !important;
-  }
-
-  .admin-header-signout {
-    display: none !important;
-  }
-
-  /* Show sign-out inside sidebar on mobile */
-  .admin-sidebar-signout {
-    display: block !important;
   }
 
   .admin-sidebar {

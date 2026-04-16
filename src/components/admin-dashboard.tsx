@@ -212,6 +212,7 @@ export function AdminDashboard({
   // Feedback
   const [notice, setNotice] = useState<{ text: string; ok: boolean } | null>(null);
   const [copyDone, setCopyDone] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<{ title?: string; slug?: string }>({});
 
   // Mobile sidebar drawer
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -396,10 +397,19 @@ export function AdminDashboard({
   };
 
   const saveEvent = async () => {
-    if (!selected.slug || !selected.title) {
-      setNotice({ text: "Completa el título y el slug antes de guardar.", ok: false });
+    const errs: { title?: string; slug?: string } = {};
+    if (!selected.title.trim()) errs.title = "El nombre del evento es obligatorio.";
+    if (!selected.slug.trim()) errs.slug = "La URL del evento es obligatoria.";
+    if (Object.keys(errs).length > 0) {
+      setFieldErrors(errs);
+      setTab("evento");
+      // Scroll to the section
+      setTimeout(() => {
+        document.querySelector('[data-tour="section-evento"]')?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 50);
       return;
     }
+    setFieldErrors({});
     setSaving(true);
     setNotice(null);
 
@@ -531,6 +541,9 @@ export function AdminDashboard({
   const updateSelected = <K extends keyof EventRecord>(key: K, value: EventRecord[K]) => {
     setEvents((cur) => cur.map((e) => (e.id === selected.id ? { ...e, [key]: value } : e)));
     setIsDirty(true);
+    // Clear field-level errors as the user types
+    if (key === "title") setFieldErrors((prev) => ({ ...prev, title: undefined }));
+    if (key === "slug") setFieldErrors((prev) => ({ ...prev, slug: undefined }));
   };
 
   const updateLanding = <K extends keyof EventRecord["landing_config"]>(
@@ -1100,13 +1113,18 @@ export function AdminDashboard({
 
                     <div className="admin-field-row" style={s.fieldRow}>
                       <label style={s.fieldHalf}>
-                        <span className="label">Título</span>
+                        <span className="label">
+                          Nombre del evento
+                          <span style={s.requiredTag}>obligatorio</span>
+                        </span>
                         <input
                           className="input"
                           placeholder={`Ej. ${eventTypePresetFromKey(selected.event_type_key).sampleTitle}`}
                           value={selected.title}
                           onChange={(e) => updateSelected("title", e.target.value)}
+                          style={fieldErrors.title ? s.inputError : undefined}
                         />
+                        {fieldErrors.title && <span style={s.fieldErrorMsg}>{fieldErrors.title}</span>}
                       </label>
                       <label style={s.fieldHalf}>
                         <span className="label">Subtítulo <span style={s.optionalTag}>opcional</span></span>
@@ -1153,17 +1171,22 @@ export function AdminDashboard({
                     </label>
 
                     <label style={s.field}>
-                      <span className="label">URL del evento</span>
+                      <span className="label">
+                        URL del evento
+                        <span style={s.requiredTag}>obligatorio</span>
+                      </span>
                       <input
                         className="input"
                         placeholder="boda-laura-mateo-2026"
                         value={selected.slug}
                         onChange={(e) => updateSelected("slug", sanitizeSlugInput(e.target.value))}
                         onBlur={(e) => updateSelected("slug", toSlug(e.target.value))}
+                        style={fieldErrors.slug ? s.inputError : undefined}
                       />
                       <span style={s.fieldHint}>
-                        {siteUrl(`/event/${selected.slug || "tu-slug"}`)}
+                        {siteUrl(`/event/${selected.slug || "tu-slug"}`)} — esta es la dirección que verán tus invitados
                       </span>
+                      {fieldErrors.slug && <span style={s.fieldErrorMsg}>{fieldErrors.slug}</span>}
                     </label>
                   </div>
 
@@ -2940,7 +2963,6 @@ const s: Record<string, React.CSSProperties> = {
     fontWeight: 600,
     cursor: "pointer",
     textAlign: "left" as const,
-    display: "none", // shown on mobile via CSS
   },
   eventList: { display: "flex", flexDirection: "column", gap: 2 },
   eventItem: {
@@ -3078,6 +3100,9 @@ const s: Record<string, React.CSSProperties> = {
   sectionEyebrow: { marginBottom: 0 },
   sectionDesc: { margin: 0, fontSize: 13, color: "var(--text-muted)", lineHeight: 1.5, opacity: 0.7 },
   optionalTag: { fontSize: 11, fontWeight: 500, opacity: 0.45, letterSpacing: "0.04em", textTransform: "uppercase" as const },
+  requiredTag: { fontSize: 11, fontWeight: 700, color: "#dc2626", letterSpacing: "0.04em", textTransform: "uppercase" as const, marginLeft: 4 },
+  inputError: { borderColor: "#dc2626", boxShadow: "0 0 0 3px rgba(220,38,38,0.12)" },
+  fieldErrorMsg: { fontSize: 11, color: "#dc2626", fontWeight: 600, lineHeight: 1.4 },
   field: { display: "grid", gap: 8 },
   fieldRow: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 },
   fieldHalf: { display: "grid", gap: 8 },
@@ -3627,50 +3652,50 @@ const TOUR_STEPS_DEF: Array<{
   {
     selector: '[data-tour="section-evento"]',
     tab: "evento",
-    title: "Tu evento",
-    body: "Dale un nombre y un slug único a tu evento. El slug se convierte en la URL que verán tus invitados — por ejemplo nilocam.com/event/boda-ana-y-juan.",
+    title: "1 · Nombre y URL del evento",
+    body: "Aquí defines los datos clave: el nombre del evento (lo que aparece en la galería), la fecha, el lugar y la URL única. La URL es la dirección que compartirás con tus invitados — por ejemplo nilocam.com/event/boda-ana-y-juan. El nombre y la URL son obligatorios para poder guardar.",
   },
   {
     selector: '[data-tour="section-design"]',
     tab: "evento",
-    title: "Diseño visual",
-    body: "Elige una plantilla y listo. Cada plantilla tiene su propia paleta, tipografía y estilo. Puedes ajustar el color de acento, la imagen de fondo y añadir tu marca de agua.",
+    title: "2 · Apariencia y tema visual",
+    body: "Elige una de las plantillas prediseñadas: cada una tiene una combinación única de colores, tipografía y estilo. Puedes afinar el color de acento y subir una foto de portada para que la galería refleje la identidad de tu evento. Este diseño es lo que verán tus invitados al abrir el enlace.",
   },
   {
     selector: '[data-tour="section-gallery"]',
     tab: "evento",
-    title: "Galería de fotos",
-    body: "Decide cómo verán las fotos tus invitados: cuadrícula para ver todo de un vistazo o slider para navegar foto a foto. También puedes activar filtros de color y marcos decorativos.",
+    title: "3 · Vista de la galería",
+    body: "Decide cómo se muestran las fotos en la página del evento: cuadrícula (mosaico de todas las fotos) o slider (una foto a la vez con flechas). También puedes activar filtros de color al subir fotos y marcos decorativos que se aplican automáticamente a cada imagen.",
   },
   {
     selector: '[data-tour="section-upload"]',
     tab: "evento",
-    title: "Subida de fotos",
-    body: "Controla la moderación (manual o automática), el tamaño máximo de archivo y si los invitados pueden subir fotos. Aquí también ves tu capacidad actual y puedes ampliarla.",
+    title: "4 · Reglas de subida de fotos",
+    body: "Aquí controlas quién puede subir y cómo. Moderación manual: cada foto espera tu aprobación antes de aparecer en la galería. Moderación automática: las fotos se aprueban al instante. También puedes limitar el tamaño máximo por foto y habilitar o deshabilitar la subida para los invitados.",
   },
   {
     selector: '[data-tour="section-texts"]',
     tab: "evento",
-    title: "Textos de la landing",
-    body: "Personaliza el título, subtítulo, texto de bienvenida y los botones de tu página de evento. Estos textos son lo primero que leerán tus invitados al llegar con el QR.",
+    title: "5 · Textos de la página del evento",
+    body: "Personaliza todo el contenido que leerán tus invitados: el título grande de la portada, el subtítulo, el mensaje de bienvenida y el texto del botón para subir fotos. Estos textos se pre-rellenan según el tipo de evento, pero puedes cambiarlos a tu gusto.",
   },
   {
     selector: '[data-tour="section-status"]',
     tab: "resumen",
-    title: "Estado del evento",
-    body: "Activa o pausa tu evento con un toque. Cuando está activo, los invitados pueden ver la galería y subir fotos. Pausarlo es útil durante la moderación o al terminar el evento.",
+    title: "6 · Estado del evento (activo / pausado)",
+    body: "Este interruptor controla si tu evento está en vivo. Cuando está activo, los invitados pueden abrir el enlace, ver la galería y subir fotos en tiempo real. Pausarlo bloquea el acceso público sin borrar nada — útil si quieres moderar antes de abrir o al terminar el evento.",
   },
   {
     selector: '[data-tour="section-share"]',
     tab: "resumen",
-    title: "Comparte tu evento",
-    body: "Aquí tienes el link y el QR listos para imprimir o compartir. Descarga el QR como imagen, copia el enlace o comparte directo por WhatsApp. También puedes proyectar la galería en pantalla.",
+    title: "7 · Comparte el evento",
+    body: "Aquí está todo lo que necesitas para difundir el evento: el enlace directo para copiar, el código QR listo para imprimir en mesas o pantallas, y el botón de compartir por WhatsApp. El QR lleva a tus invitados directo a la galería — sin apps, sin registro.",
   },
   {
     selector: '[data-tour="section-filter-bar"]',
     tab: "fotos",
-    title: "Gestión de fotos",
-    body: "Filtra por estado — todas, pendientes, aprobadas o rechazadas. Modera foto a foto o selecciona varias para aprobar, rechazar o eliminar en lote. Exporta el álbum completo como ZIP.",
+    title: "8 · Moderación de fotos",
+    body: "En esta pestaña ves y gestionas todas las fotos de tu evento. Filtra por estado: pendientes de revisión, aprobadas (visibles en la galería) o rechazadas. Puedes moderar una a una o seleccionar varias para aprobar, rechazar o eliminar en bloque. Al final del evento, exporta todo el álbum como ZIP.",
   },
 ];
 
