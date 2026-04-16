@@ -203,6 +203,10 @@ export function AdminDashboard({
   const [creating, setCreating] = useState(false);
   const [deletingEvent, setDeletingEvent] = useState(false);
   const [confirmDeleteEvent, setConfirmDeleteEvent] = useState(false);
+  const [deletedEventInfo, setDeletedEventInfo] = useState<{
+    title: string;
+    nextTitle: string | null;
+  } | null>(null);
 
   // Feedback
   const [notice, setNotice] = useState<{ text: string; ok: boolean } | null>(null);
@@ -456,6 +460,7 @@ export function AdminDashboard({
 
   const deleteEvent = async () => {
     if (!selected?.id) return;
+    const deletedTitle = selected.title || "Evento sin título";
     setDeletingEvent(true);
     const res = await fetch(`/api/events/${selected.id}`, { method: "DELETE" });
     const json = await res.json();
@@ -466,14 +471,16 @@ export function AdminDashboard({
       if (remaining.length > 0) {
         setEvents(remaining);
         setSelectedId(remaining[0].id);
+        setTab("resumen");
+        setDeletedEventInfo({ title: deletedTitle, nextTitle: remaining[0].title || "Evento sin título" });
       } else {
         const draft = createDraftEvent(userEmail);
         setEvents([draft]);
         setSelectedId(draft.id);
+        setTab("evento");
+        setDeletedEventInfo({ title: deletedTitle, nextTitle: null });
       }
       setPhotos([]);
-      setTab("evento");
-      setNotice({ text: "Evento eliminado correctamente.", ok: true });
     } else {
       setNotice({ text: json.message ?? "Error al eliminar evento.", ok: false });
     }
@@ -1984,6 +1991,43 @@ export function AdminDashboard({
       {/* ── Photo metadata modal ── */}
       {metaPhoto && (
         <PhotoMetadataModal photo={metaPhoto} onClose={() => setMetaPhoto(null)} />
+      )}
+
+      {/* ── Deleted event success modal ── */}
+      {deletedEventInfo && (
+        <div style={s.modalOverlay}>
+          <div className="card" style={{ ...s.modal, maxWidth: 400 }}>
+            <div style={{ fontSize: 36, textAlign: "center" as const, marginBottom: 4 }}>✓</div>
+            <h3 className="serif" style={{ ...s.modalTitle, textAlign: "center" as const, fontSize: 22 }}>
+              Evento eliminado
+            </h3>
+            <p className="muted" style={{ ...s.modalBody, textAlign: "center" as const }}>
+              <strong>&ldquo;{deletedEventInfo.title}&rdquo;</strong> y todas sus fotos
+              han sido eliminados permanentemente.
+            </p>
+            <div style={{ ...s.modalActions, justifyContent: "center", marginTop: 20 }}>
+              {deletedEventInfo.nextTitle ? (
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  style={{ fontSize: 14, padding: "12px 22px" }}
+                  onClick={() => setDeletedEventInfo(null)}
+                >
+                  Ir a &ldquo;{deletedEventInfo.nextTitle}&rdquo; →
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  style={{ fontSize: 14, padding: "12px 22px" }}
+                  onClick={() => { setDeletedEventInfo(null); createNew(); }}
+                >
+                  + Crear nuevo evento
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
       )}
 
       {/* ── Confirm delete event modal ── */}
