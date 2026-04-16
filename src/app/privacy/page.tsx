@@ -163,7 +163,7 @@ export default function PrivacyPage() {
               <ul style={s.list}>
                 <li><strong>Acceso:</strong> solicitar una copia de los datos que tenemos sobre ti.</li>
                 <li><strong>Rectificación:</strong> corregir datos inexactos o incompletos.</li>
-                <li><strong>Supresión:</strong> solicitar la eliminación de tus datos ("derecho al olvido").</li>
+                <li><strong>Supresión:</strong> solicitar la eliminación de tus datos (&ldquo;derecho al olvido&rdquo;).</li>
                 <li><strong>Portabilidad:</strong> recibir tus datos en formato legible por máquina.</li>
                 <li><strong>Oposición:</strong> oponerte al tratamiento en determinadas circunstancias.</li>
               </ul>

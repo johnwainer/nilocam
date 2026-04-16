@@ -32,7 +32,7 @@ export default function TermsPage() {
 
             <Section title="1. Aceptación de los términos">
               <p>
-                Al acceder o utilizar {APP_NAME} (en adelante "el Servicio"), aceptas estos Términos de
+                Al acceder o utilizar {APP_NAME} (en adelante &ldquo;el Servicio&rdquo;), aceptas estos Términos de
                 Servicio en su totalidad. Si no estás de acuerdo con alguna parte de estos términos,
                 no debes usar el Servicio.
               </p>
