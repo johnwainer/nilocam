@@ -189,6 +189,9 @@ export function AdminLogin() {
           )}
 
           {/* Form */}
+          {/* suppressHydrationWarning on inputs: browsers (and password managers)
+              may auto-fill fields before React hydrates, causing a text-content
+              mismatch. This is expected behaviour; suppressing is correct here. */}
           <form onSubmit={submit} style={s.form}>
             {mode === "access" && (
               <label style={s.fieldWrap}>
@@ -200,6 +203,7 @@ export function AdminLogin() {
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
                   autoComplete="name"
+                  suppressHydrationWarning
                 />
               </label>
             )}
@@ -214,6 +218,7 @@ export function AdminLogin() {
                 onChange={(e) => setEmail(e.target.value)}
                 autoComplete="email"
                 required
+                suppressHydrationWarning
               />
             </label>
 

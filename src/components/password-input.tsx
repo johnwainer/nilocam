@@ -13,6 +13,7 @@ export function PasswordInput({ style, ...props }: Props) {
         {...props}
         type={show ? "text" : "password"}
         style={{ width: "100%", paddingRight: 40, ...style }}
+        suppressHydrationWarning
       />
       <button
         type="button"
