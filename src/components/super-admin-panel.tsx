@@ -6,6 +6,7 @@ import { formatDate, siteUrl } from "@/lib/utils";
 import type { CreditPricing, CreditPurchase, EmailSettings, EventRecord, PaymentSettings } from "@/types";
 import { SuperCreditsPanel } from "@/components/credits-panel";
 import { PasswordInput } from "@/components/password-input";
+import { HtmlEditor } from "@/components/html-editor";
 
 const supabase = createSupabaseBrowserClient();
 
@@ -1975,8 +1976,8 @@ function EmailTab({
                 <p style={{ margin: "2px 0 6px", fontSize: 12, color: "var(--muted)" }}>
                   Variables disponibles: <code style={{ fontSize: 11, background: "rgba(0,0,0,0.05)", padding: "1px 6px", borderRadius: 4 }}>{TEMPLATE_VARS[`tpl_${key}`]}</code>
                 </p>
-                <div style={p.payFieldRow}>
-                  <div style={{ ...p.payField, flex: "2 1 300px" }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  <div style={p.payField}>
                     <label style={p.formLabel}>Asunto</label>
                     <input
                       className="input"
@@ -1987,15 +1988,14 @@ function EmailTab({
                       style={{ fontSize: 13 }}
                     />
                   </div>
-                  <div style={{ ...p.payField, flex: "3 1 400px" }}>
-                    <label style={p.formLabel}>Cuerpo (HTML) — vacío = usa diseño por defecto</label>
-                    <textarea
-                      className="input"
+                  <div>
+                    <label style={{ ...p.formLabel, display: "block", marginBottom: 6 }}>
+                      Cuerpo HTML
+                    </label>
+                    <HtmlEditor
                       value={draft[bodyKey] as string}
-                      onChange={(e) => set(bodyKey, e.target.value)}
-                      placeholder={`<h2>Hola {{name}}</h2><p>Tu mensaje aquí...</p>`}
-                      rows={4}
-                      style={{ fontSize: 12, fontFamily: "monospace", resize: "vertical" as const }}
+                      onChange={(val) => set(bodyKey, val)}
+                      height={300}
                     />
                   </div>
                 </div>

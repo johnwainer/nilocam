@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@monaco-editor/react": "^4.7.0",
     "@stripe/stripe-js": "^9.2.0",
     "@supabase/ssr": "^0.7.0",
     "@supabase/supabase-js": "^2.49.1",
