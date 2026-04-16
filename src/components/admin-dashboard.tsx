@@ -639,7 +639,7 @@ export function AdminDashboard({
               </div>
             )}
             <span className="admin-header-email" style={s.headerEmail}>{userEmail}</span>
-            <button className="btn btn-ghost" style={s.headerBtn} onClick={signOut} type="button">
+            <button className="btn btn-ghost admin-header-signout" style={s.headerBtn} onClick={signOut} type="button">
               Salir
             </button>
             {/* Hamburger — mobile only */}
@@ -725,6 +725,14 @@ export function AdminDashboard({
                 ⚙ Sistema
               </button>
             )}
+            <button
+              type="button"
+              className="admin-sidebar-signout"
+              style={s.signOutBtn}
+              onClick={signOut}
+            >
+              Salir
+            </button>
           </div>
         </aside>
 
@@ -2367,6 +2375,19 @@ const s: Record<string, React.CSSProperties> = {
     cursor: "pointer",
     textAlign: "left" as const,
     letterSpacing: "-0.01em",
+  },
+  signOutBtn: {
+    width: "100%",
+    fontSize: 13,
+    padding: "9px 16px",
+    borderRadius: 12,
+    background: "transparent",
+    border: "1px solid rgba(0,0,0,0.07)",
+    color: "var(--muted)",
+    fontWeight: 600,
+    cursor: "pointer",
+    textAlign: "left" as const,
+    display: "none", // shown on mobile via CSS
   },
   eventList: { display: "flex", flexDirection: "column", gap: 2 },
   eventItem: {

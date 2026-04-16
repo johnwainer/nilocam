@@ -904,9 +904,18 @@ img {
     display: flex !important;
   }
 
-  /* Hide email on mobile to save space */
+  /* Hide email and header sign-out button on mobile */
   .admin-header-email {
     display: none !important;
+  }
+
+  .admin-header-signout {
+    display: none !important;
+  }
+
+  /* Show sign-out inside sidebar on mobile */
+  .admin-sidebar-signout {
+    display: block !important;
   }
 
   .admin-sidebar {
