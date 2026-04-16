@@ -220,15 +220,15 @@ export function AdminDashboard({
   const [isDirty, setIsDirty] = useState(false);
   const [togglingActive, setTogglingActive] = useState(false);
 
-  // First-time onboarding tour
-  const [showOnboarding, setShowOnboarding] = useState<boolean>(() => {
-    if (initialEvents.length > 0) return false;
-    if (typeof window === "undefined") return false;
-    return !localStorage.getItem("nilo-onboarding-v1");
+  // Interactive spotlight tour (-1 = inactive)
+  const [tourStep, setTourStep] = useState<number>(() => {
+    if (initialEvents.length > 0) return -1;
+    if (typeof window === "undefined") return -1;
+    return localStorage.getItem("nilo-tour-v1") ? -1 : 0;
   });
-  const closeOnboarding = useCallback(() => {
-    localStorage.setItem("nilo-onboarding-v1", "1");
-    setShowOnboarding(false);
+  const closeTour = useCallback(() => {
+    localStorage.setItem("nilo-tour-v1", "1");
+    setTourStep(-1);
   }, []);
 
   // Watermark upload
@@ -326,6 +326,21 @@ export function AdminDashboard({
       loadPhotos(selectedId);
     }
   }, [tab, selectedId, loadPhotos]);
+
+  // Switch tabs when tour step changes
+  useEffect(() => {
+    if (tourStep < 0 || tourStep >= TOUR_STEPS_DEF.length) return;
+    const step = TOUR_STEPS_DEF[tourStep];
+    setMainView("editor");
+    // Only switch to resumen/fotos if this event is saved
+    if ((step.tab === "resumen" || step.tab === "fotos") && !savedIds.has(selectedId)) {
+      // skip to next available step
+      const next = TOUR_STEPS_DEF.findIndex((s, i) => i > tourStep && s.tab === "evento");
+      setTourStep(next >= 0 ? next : -1);
+      return;
+    }
+    setTab(step.tab);
+  }, [tourStep]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const moderatePhoto = async (photoId: string, status: "approved" | "rejected" | "pending") => {
     const res = await fetch(`/api/photos/${photoId}`, {
@@ -907,7 +922,7 @@ export function AdminDashboard({
               <div style={sr.panel}>
 
                 {/* Status card */}
-                <div className="card" style={sr.statusCard}>
+                <div data-tour="section-status" className="card" style={sr.statusCard}>
                   <div style={sr.statusRow}>
                     <div>
                       <span className="eyebrow" style={{ marginBottom: 4 }}>Estado del evento</span>
@@ -974,7 +989,7 @@ export function AdminDashboard({
                 <div className="admin-resumen-grid" style={sr.grid2}>
 
                   {/* Share card */}
-                  <div className="card" style={sr.shareCard}>
+                  <div data-tour="section-share" className="card" style={sr.shareCard}>
                     <span className="eyebrow" style={{ marginBottom: 8 }}>Comparte tu evento</span>
                     <div style={s.urlBox}>
                       <span style={{ ...s.urlText, flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
@@ -1056,7 +1071,7 @@ export function AdminDashboard({
                 <div style={s.form}>
 
                   {/* ── 1. TU EVENTO ───────────────────────────────────────── */}
-                  <div style={s.formSection}>
+                  <div data-tour="section-evento" style={s.formSection}>
                     <div style={s.sectionHead}>
                       <span className="eyebrow" style={s.sectionEyebrow}>Tu evento</span>
                       <p style={s.sectionDesc}>Los datos básicos que identifican el evento.</p>
@@ -1153,7 +1168,7 @@ export function AdminDashboard({
                   </div>
 
                   {/* ── 2. DISEÑO ──────────────────────────────────────────── */}
-                  <div style={s.formSection}>
+                  <div data-tour="section-design" style={s.formSection}>
                     <div style={s.sectionHead}>
                       <span className="eyebrow" style={s.sectionEyebrow}>Diseño visual</span>
                       <p style={s.sectionDesc}>Elige una plantilla y listo. Puedes ajustar los colores después.</p>
@@ -1212,7 +1227,7 @@ export function AdminDashboard({
                   </div>
 
                   {/* ── 3. GALERÍA ─────────────────────────────────────────── */}
-                  <div style={s.formSection}>
+                  <div data-tour="section-gallery" style={s.formSection}>
                     <div style={s.sectionHead}>
                       <span className="eyebrow" style={s.sectionEyebrow}>Galería de fotos</span>
                       <p style={s.sectionDesc}>Cómo se muestran las fotos del evento en la landing.</p>
@@ -1274,7 +1289,7 @@ export function AdminDashboard({
                   </div>
 
                   {/* ── 4. FOTOS Y SUBIDA ──────────────────────────────────── */}
-                  <div style={s.formSection}>
+                  <div data-tour="section-upload" style={s.formSection}>
                     <div style={s.sectionHead}>
                       <span className="eyebrow" style={s.sectionEyebrow}>Subida de fotos</span>
                       <p style={s.sectionDesc}>Controla cómo y qué pueden subir tus invitados.</p>
@@ -1392,7 +1407,7 @@ export function AdminDashboard({
                   </div>
 
                   {/* ── 5. TEXTOS DE LA LANDING ────────────────────────────── */}
-                  <div style={s.formSection}>
+                  <div data-tour="section-texts" style={s.formSection}>
                     <div style={s.sectionHead}>
                       <span className="eyebrow" style={s.sectionEyebrow}>Textos de la landing</span>
                       <p style={s.sectionDesc}>Lo que leerán tus invitados. Se pre-rellenan al elegir el tipo de evento.</p>
@@ -1709,7 +1724,7 @@ export function AdminDashboard({
             {tab === "fotos" && (
               <div style={s.photosPanel}>
                 {/* Filter bar */}
-                <div style={s.filterBar}>
+                <div data-tour="section-filter-bar" style={s.filterBar}>
                   {(
                     [
                       { key: "all", label: "Todas" },
@@ -2088,15 +2103,23 @@ export function AdminDashboard({
       <button
         type="button"
         style={s.helpBtn}
-        onClick={() => setShowOnboarding(true)}
+        onClick={() => setTourStep(0)}
         aria-label="Ayuda — ver tour de funcionalidades"
         title="Ayuda"
       >
         ?
       </button>
 
-      {/* ── Onboarding tour ── */}
-      {showOnboarding && <OnboardingModal onClose={closeOnboarding} />}
+      {/* ── Interactive spotlight tour ── */}
+      {tourStep >= 0 && (
+        <TourSpotlight
+          steps={TOUR_STEPS_DEF}
+          step={tourStep}
+          onNext={() => setTourStep((s) => s + 1)}
+          onPrev={() => setTourStep((s) => s - 1)}
+          onClose={closeTour}
+        />
+      )}
 
     </div>
   );
@@ -3593,275 +3616,262 @@ const s: Record<string, React.CSSProperties> = {
   },
 };
 
-// ─── OnboardingModal ─────────────────────────────────────────────────────────
+// ─── TourSpotlight ────────────────────────────────────────────────────────────
 
-const ONBOARDING_STEPS = [
+const TOUR_STEPS_DEF: Array<{
+  selector: string;
+  tab: "evento" | "resumen" | "fotos";
+  title: string;
+  body: string;
+}> = [
   {
-    accent: "#6366f1",
-    icon: (
-      <svg width="52" height="52" viewBox="0 0 52 52" fill="none" aria-hidden="true">
-        <rect x="10" y="14" width="32" height="28" rx="5" stroke="white" strokeWidth="2" opacity="0.3"/>
-        <rect x="10" y="14" width="32" height="11" rx="5" fill="white" opacity="0.12"/>
-        <line x1="18" y1="10" x2="18" y2="18" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
-        <line x1="34" y1="10" x2="34" y2="18" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
-        <line x1="16" y1="30" x2="36" y2="30" stroke="white" strokeWidth="1.5" strokeLinecap="round" opacity="0.55"/>
-        <line x1="16" y1="36" x2="30" y2="36" stroke="white" strokeWidth="1.5" strokeLinecap="round" opacity="0.55"/>
-        <circle cx="16" cy="30" r="2.5" fill="#6366f1"/>
-        <circle cx="16" cy="36" r="2.5" fill="white" opacity="0.3"/>
-      </svg>
-    ),
-    title: "Crea tu evento en minutos",
-    body: "Dale un nombre, elige el tipo de evento y asigna un slug único. Tu galería queda lista para compartir al instante — sin código, sin complicaciones.",
-    tags: ["Título y fecha", "10 tipos de evento", "URL personalizada"],
+    selector: '[data-tour="section-evento"]',
+    tab: "evento",
+    title: "Tu evento",
+    body: "Dale un nombre y un slug único a tu evento. El slug se convierte en la URL que verán tus invitados — por ejemplo nilocam.com/event/boda-ana-y-juan.",
   },
   {
-    accent: "#ec4899",
-    icon: (
-      <svg width="52" height="52" viewBox="0 0 52 52" fill="none" aria-hidden="true">
-        <circle cx="26" cy="26" r="18" stroke="white" strokeWidth="2" opacity="0.25"/>
-        <circle cx="18" cy="20" r="4" fill="#ec4899"/>
-        <circle cx="34" cy="20" r="4" fill="#6366f1"/>
-        <circle cx="18" cy="34" r="4" fill="#10b981"/>
-        <circle cx="34" cy="34" r="4" fill="#f59e0b"/>
-        <circle cx="26" cy="27" r="5" fill="white" opacity="0.92"/>
-      </svg>
-    ),
-    title: "20+ temas visuales, todo editable",
-    body: "Elige un tema, ajusta colores, sube una foto de portada y personaliza los textos que leerán tus invitados. Se ve profesional desde el primer segundo.",
-    tags: ["Temas prediseñados", "Colores y fondo", "Foto de portada", "Marca de agua"],
+    selector: '[data-tour="section-design"]',
+    tab: "evento",
+    title: "Diseño visual",
+    body: "Elige una plantilla y listo. Cada plantilla tiene su propia paleta, tipografía y estilo. Puedes ajustar el color de acento, la imagen de fondo y añadir tu marca de agua.",
   },
   {
-    accent: "#10b981",
-    icon: (
-      <svg width="52" height="52" viewBox="0 0 52 52" fill="none" aria-hidden="true">
-        <rect x="10" y="10" width="14" height="14" rx="3" stroke="white" strokeWidth="1.8" opacity="0.75"/>
-        <rect x="12" y="12" width="10" height="10" rx="2" fill="white" opacity="0.2"/>
-        <rect x="28" y="10" width="14" height="14" rx="3" stroke="white" strokeWidth="1.8" opacity="0.75"/>
-        <rect x="30" y="12" width="10" height="10" rx="2" fill="white" opacity="0.2"/>
-        <rect x="10" y="28" width="14" height="14" rx="3" stroke="white" strokeWidth="1.8" opacity="0.75"/>
-        <rect x="12" y="30" width="10" height="10" rx="2" fill="white" opacity="0.2"/>
-        <rect x="28" y="28" width="5" height="5" rx="1" fill="white" opacity="0.5"/>
-        <rect x="35" y="28" width="5" height="5" rx="1" fill="white" opacity="0.5"/>
-        <rect x="28" y="35" width="5" height="5" rx="1" fill="white" opacity="0.5"/>
-        <rect x="35" y="35" width="5" height="5" rx="1" fill="#10b981"/>
-      </svg>
-    ),
-    title: "Sin apps para tus invitados",
-    body: "Comparte el link o el QR. Los invitados suben desde cualquier móvil en segundos, sin instalar nada. Las fotos aparecen en la galería en tiempo real.",
-    tags: ["QR descargable", "Cualquier móvil", "Filtros de color", "Marcos decorativos"],
+    selector: '[data-tour="section-gallery"]',
+    tab: "evento",
+    title: "Galería de fotos",
+    body: "Decide cómo verán las fotos tus invitados: cuadrícula para ver todo de un vistazo o slider para navegar foto a foto. También puedes activar filtros de color y marcos decorativos.",
   },
   {
-    accent: "#f59e0b",
-    icon: (
-      <svg width="52" height="52" viewBox="0 0 52 52" fill="none" aria-hidden="true">
-        <rect x="10" y="14" width="32" height="7" rx="3.5" fill="white" opacity="0.12"/>
-        <rect x="10" y="24" width="32" height="7" rx="3.5" fill="white" opacity="0.12"/>
-        <rect x="10" y="34" width="32" height="7" rx="3.5" fill="white" opacity="0.12"/>
-        <polyline points="13,17.5 15.5,20 20,15" stroke="#10b981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-        <polyline points="13,27.5 15.5,30 20,25" stroke="#10b981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-        <polyline points="13,37.5 15.5,40 20,35" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" opacity="0.35"/>
-        <path d="M38 26 L38 34 M35 31 L38 34 L41 31" stroke="#f59e0b" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-      </svg>
-    ),
-    title: "Modera, proyecta y exporta",
-    body: "Aprueba fotos en tiempo real o en modo automático. Proyéctalas en pantalla grande durante el evento. Al final, exporta el álbum completo en un ZIP.",
-    tags: ["Moderación manual o auto", "Vista pantalla grande", "Exportar ZIP", "Estadísticas en vivo"],
+    selector: '[data-tour="section-upload"]',
+    tab: "evento",
+    title: "Subida de fotos",
+    body: "Controla la moderación (manual o automática), el tamaño máximo de archivo y si los invitados pueden subir fotos. Aquí también ves tu capacidad actual y puedes ampliarla.",
   },
-] as const;
+  {
+    selector: '[data-tour="section-texts"]',
+    tab: "evento",
+    title: "Textos de la landing",
+    body: "Personaliza el título, subtítulo, texto de bienvenida y los botones de tu página de evento. Estos textos son lo primero que leerán tus invitados al llegar con el QR.",
+  },
+  {
+    selector: '[data-tour="section-status"]',
+    tab: "resumen",
+    title: "Estado del evento",
+    body: "Activa o pausa tu evento con un toque. Cuando está activo, los invitados pueden ver la galería y subir fotos. Pausarlo es útil durante la moderación o al terminar el evento.",
+  },
+  {
+    selector: '[data-tour="section-share"]',
+    tab: "resumen",
+    title: "Comparte tu evento",
+    body: "Aquí tienes el link y el QR listos para imprimir o compartir. Descarga el QR como imagen, copia el enlace o comparte directo por WhatsApp. También puedes proyectar la galería en pantalla.",
+  },
+  {
+    selector: '[data-tour="section-filter-bar"]',
+    tab: "fotos",
+    title: "Gestión de fotos",
+    body: "Filtra por estado — todas, pendientes, aprobadas o rechazadas. Modera foto a foto o selecciona varias para aprobar, rechazar o eliminar en lote. Exporta el álbum completo como ZIP.",
+  },
+];
 
-function OnboardingModal({ onClose }: { onClose: () => void }) {
-  const [step, setStep] = useState(0);
-  const current = ONBOARDING_STEPS[step];
-  const isLast = step === ONBOARDING_STEPS.length - 1;
+type TourStep = (typeof TOUR_STEPS_DEF)[number];
+
+function TourSpotlight({
+  steps,
+  step,
+  onNext,
+  onPrev,
+  onClose,
+}: {
+  steps: TourStep[];
+  step: number;
+  onNext: () => void;
+  onPrev: () => void;
+  onClose: () => void;
+}) {
+  const [rect, setRect] = useState<DOMRect | null>(null);
+  const [vpW, setVpW] = useState(0);
+  const [vpH, setVpH] = useState(0);
+  const current = steps[step];
+  const isLast = step === steps.length - 1;
+
+  useEffect(() => {
+    if (!current) return;
+    setRect(null); // clear while switching
+
+    const locate = () => {
+      const el = document.querySelector<HTMLElement>(current.selector);
+      if (!el) return;
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      setTimeout(() => {
+        const r = el.getBoundingClientRect();
+        setRect(r);
+        setVpW(window.innerWidth);
+        setVpH(window.innerHeight);
+      }, 350);
+    };
+
+    const t = setTimeout(locate, 60);
+    return () => clearTimeout(t);
+  }, [current]);
+
+  if (!current) return null;
+
+  // ── Tooltip placement ────────────────────────────────────────────
+  let tipStyle: React.CSSProperties = {};
+  const TIP_W = 320;
+  const TIP_H = 210; // approximate
+  const PAD = 16;
+
+  if (rect && vpW && vpH) {
+    const spaceBelow = vpH - rect.bottom;
+    const spaceAbove = rect.top;
+    const cx = rect.left + rect.width / 2;
+
+    let left = Math.max(PAD, Math.min(cx - TIP_W / 2, vpW - TIP_W - PAD));
+    let top: number;
+    let placement: "below" | "above" = spaceBelow >= TIP_H + 20 ? "below" : "above";
+    if (placement === "below") {
+      top = rect.bottom + 14;
+    } else {
+      top = rect.top - TIP_H - 14;
+      if (top < PAD) { top = PAD; }
+    }
+
+    tipStyle = { position: "fixed", top, left, width: TIP_W };
+  } else {
+    // fallback: centered at bottom of screen
+    tipStyle = {
+      position: "fixed",
+      bottom: 32,
+      left: "50%",
+      transform: "translateX(-50%)",
+      width: TIP_W,
+    };
+  }
 
   return (
-    <div style={ob.overlay}>
-      <div style={ob.card}>
-
-        {/* Visual header */}
-        <div style={{ ...ob.visual, background: "linear-gradient(145deg, #0b0b0f 0%, #1a1a2e 100%)" }}>
-          <div style={{ ...ob.accentBar, background: current.accent }} />
-          {current.icon}
-          {/* Decorative blobs */}
-          <div style={{ ...ob.blob, background: current.accent, top: -30, right: -30 }} />
-          <div style={{ ...ob.blob, background: current.accent, bottom: -40, left: -20, opacity: 0.15, width: 120, height: 120 }} />
+    <>
+      {/* Dark overlay with spotlight cutout via box-shadow on target */}
+      <div
+        style={ts.overlay}
+        onClick={onClose}
+        aria-label="Cerrar tour"
+      />
+      {/* Spotlight ring on the target element */}
+      {rect && (
+        <div
+          style={{
+            position: "fixed",
+            top: rect.top - 6,
+            left: rect.left - 6,
+            width: rect.width + 12,
+            height: rect.height + 12,
+            borderRadius: 14,
+            boxShadow: "0 0 0 9999px rgba(0,0,0,0.62)",
+            pointerEvents: "none",
+            zIndex: 310,
+            transition: "all 260ms ease",
+          }}
+        />
+      )}
+      {/* Tooltip card */}
+      <div style={{ ...ts.tip, ...tipStyle }} onClick={(e) => e.stopPropagation()}>
+        {/* Progress bar */}
+        <div style={ts.progressBar}>
+          <div
+            style={{
+              ...ts.progressFill,
+              width: `${((step + 1) / steps.length) * 100}%`,
+            }}
+          />
         </div>
 
-        {/* Content */}
-        <div style={ob.content}>
+        <div style={ts.tipInner}>
+          {/* Step counter */}
+          <span style={ts.counter}>{step + 1} / {steps.length}</span>
 
-          {/* Step dots */}
-          <div style={ob.dotsRow}>
-            {ONBOARDING_STEPS.map((step_item, i) => (
-              <button
-                key={i}
-                type="button"
-                style={{
-                  ...ob.dot,
-                  ...(i === step ? { ...ob.dotActive, background: current.accent } : {}),
-                }}
-                onClick={() => setStep(i)}
-                aria-label={`Paso ${i + 1}`}
-              />
-            ))}
-          </div>
+          <h3 style={ts.tipTitle}>{current.title}</h3>
+          <p style={ts.tipBody}>{current.body}</p>
 
-          <h2 style={ob.title}>{current.title}</h2>
-          <p style={ob.body}>{current.body}</p>
-
-          {/* Feature tags */}
-          <div style={ob.tagsRow}>
-            {current.tags.map((tag) => (
-              <span
-                key={tag}
-                style={{
-                  ...ob.tag,
-                  borderColor: current.accent + "55",
-                  color: current.accent,
-                  background: current.accent + "0d",
-                }}
-              >
-                {tag}
-              </span>
-            ))}
-          </div>
-
-          {/* Navigation */}
-          <div style={ob.nav}>
-            <button type="button" style={ob.skipBtn} onClick={onClose}>
-              {isLast ? "" : "Saltar"}
+          <div style={ts.tipNav}>
+            <button type="button" style={ts.skipBtn} onClick={onClose}>
+              Saltar tour
             </button>
             <div style={{ display: "flex", gap: 8 }}>
               {step > 0 && (
-                <button
-                  type="button"
-                  className="btn btn-ghost"
-                  style={ob.navBtn}
-                  onClick={() => setStep((s) => s - 1)}
-                >
+                <button type="button" className="btn btn-ghost" style={ts.navBtn} onClick={onPrev}>
                   ← Atrás
                 </button>
               )}
               <button
                 type="button"
                 className="btn btn-primary"
-                style={{
-                  ...ob.navBtn,
-                  background: isLast ? current.accent : undefined,
-                  borderColor: isLast ? current.accent : undefined,
-                }}
-                onClick={isLast ? onClose : () => setStep((s) => s + 1)}
+                style={ts.navBtn}
+                onClick={isLast ? onClose : onNext}
               >
-                {isLast ? "¡Empezar!" : "Siguiente →"}
+                {isLast ? "¡Listo!" : "Siguiente →"}
               </button>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
 
-const ob: Record<string, React.CSSProperties> = {
+const ts: Record<string, React.CSSProperties> = {
   overlay: {
     position: "fixed",
     inset: 0,
-    zIndex: 200,
-    background: "rgba(0,0,0,0.7)",
-    backdropFilter: "blur(6px)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 20,
+    zIndex: 308,
+    cursor: "pointer",
   },
-  card: {
+  tip: {
+    zIndex: 320,
     background: "#ffffff",
-    borderRadius: 24,
-    overflow: "hidden",
-    width: "100%",
-    maxWidth: 460,
-    boxShadow: "0 48px 140px rgba(0,0,0,0.45)",
-  },
-  visual: {
-    height: 176,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    position: "relative" as const,
+    borderRadius: 18,
+    boxShadow: "0 24px 80px rgba(0,0,0,0.28), 0 4px 20px rgba(0,0,0,0.12)",
     overflow: "hidden",
   },
-  accentBar: {
-    position: "absolute" as const,
-    bottom: 0,
-    left: 0,
-    right: 0,
+  progressBar: {
     height: 3,
-    zIndex: 2,
+    background: "rgba(0,0,0,0.07)",
   },
-  blob: {
-    position: "absolute" as const,
-    width: 160,
-    height: 160,
-    borderRadius: "50%",
-    opacity: 0.12,
-    filter: "blur(40px)",
-    pointerEvents: "none" as const,
+  progressFill: {
+    height: "100%",
+    background: "linear-gradient(90deg, #6366f1, #ec4899)",
+    transition: "width 300ms ease",
+    borderRadius: "0 2px 2px 0",
   },
-  content: {
-    padding: "22px 26px 26px",
+  tipInner: {
+    padding: "16px 18px 18px",
     display: "flex",
     flexDirection: "column" as const,
-    gap: 12,
+    gap: 8,
   },
-  dotsRow: {
-    display: "flex",
-    gap: 6,
-    justifyContent: "center",
-  },
-  dot: {
-    width: 7,
-    height: 7,
-    borderRadius: "50%",
-    background: "rgba(0,0,0,0.12)",
-    border: "none",
-    cursor: "pointer",
-    padding: 0,
-    transition: "all 220ms ease",
-    flexShrink: 0,
-  },
-  dotActive: {
-    width: 22,
-    height: 7,
-    borderRadius: 4,
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: 800,
-    lineHeight: 1.15,
-    letterSpacing: "-0.03em",
-    margin: 0,
-    color: "#0b0b0f",
-  },
-  body: {
-    fontSize: 14,
-    lineHeight: 1.7,
-    color: "var(--muted)",
-    margin: 0,
-  },
-  tagsRow: {
-    display: "flex",
-    flexWrap: "wrap" as const,
-    gap: 7,
-  },
-  tag: {
+  counter: {
     fontSize: 11,
     fontWeight: 700,
-    letterSpacing: "0.02em",
-    padding: "4px 10px",
-    borderRadius: 999,
-    border: "1px solid",
+    letterSpacing: "0.08em",
+    color: "rgba(0,0,0,0.3)",
+    textTransform: "uppercase" as const,
   },
-  nav: {
+  tipTitle: {
+    margin: 0,
+    fontSize: 16,
+    fontWeight: 800,
+    letterSpacing: "-0.02em",
+    lineHeight: 1.2,
+    color: "#0b0b0f",
+  },
+  tipBody: {
+    margin: 0,
+    fontSize: 13,
+    lineHeight: 1.65,
+    color: "var(--muted)",
+  },
+  tipNav: {
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
@@ -3871,13 +3881,12 @@ const ob: Record<string, React.CSSProperties> = {
     background: "none",
     border: "none",
     cursor: "pointer",
-    fontSize: 13,
+    fontSize: 12,
     color: "var(--muted)",
     padding: "4px 0",
-    minWidth: 40,
   },
   navBtn: {
-    fontSize: 14,
-    padding: "10px 20px",
+    fontSize: 13,
+    padding: "9px 16px",
   },
 };
