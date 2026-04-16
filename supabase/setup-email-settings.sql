@@ -98,10 +98,8 @@ security definer
 set search_path = public
 as $$
 begin
-  if not public.is_super_admin() then
-    raise exception 'Solo el super admin puede modificar la configuración de email.';
-  end if;
-
+  -- Authorization is enforced at the API route layer (service role caller).
+  -- is_super_admin() always returns false when called with service role key.
   update public.email_settings set
     provider                       = p_provider,
     resend_api_key                 = p_resend_api_key,
