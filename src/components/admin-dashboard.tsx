@@ -387,10 +387,8 @@ export function AdminDashboard({
       setEvents((cur) => [draft, ...cur]);
       setSelectedId(draft.id);
       setTab("evento");
-      setNotice({
-        text: "Borrador creado con plantilla inicial. Personaliza el título, el slug y guarda.",
-        ok: true,
-      });
+      // Always start the tour when creating a new event
+      setTourStep(0);
     } finally {
       setCreating(false);
     }
@@ -3715,15 +3713,20 @@ function TourSpotlight({
   onClose: () => void;
 }) {
   const [rect, setRect] = useState<DOMRect | null>(null);
-  const [vpW, setVpW] = useState(0);
-  const [vpH, setVpH] = useState(0);
+  // initialise from window so tooltip renders correctly on first paint
+  const [vpW, setVpW] = useState<number>(() =>
+    typeof window !== "undefined" ? window.innerWidth : 0
+  );
+  const [vpH, setVpH] = useState<number>(() =>
+    typeof window !== "undefined" ? window.innerHeight : 0
+  );
   const current = steps[step];
   const isLast = step === steps.length - 1;
+  const isMobile = vpW > 0 && vpW < 600;
 
   useEffect(() => {
     if (!current) return;
 
-    // Defer both the clear and the locate so they don't run synchronously
     const t1 = setTimeout(() => setRect(null), 0);
     const t2 = setTimeout(() => {
       const el = document.querySelector<HTMLElement>(current.selector);
@@ -3735,7 +3738,7 @@ function TourSpotlight({
         setVpW(window.innerWidth);
         setVpH(window.innerHeight);
       }, 350);
-    }, 60);
+    }, 80);
 
     return () => { clearTimeout(t1); clearTimeout(t2); };
   }, [current]);
@@ -3743,60 +3746,74 @@ function TourSpotlight({
   if (!current) return null;
 
   // ── Tooltip placement ────────────────────────────────────────────
-  let tipStyle: React.CSSProperties = {};
-  const TIP_W = 320;
-  const TIP_H = 210; // approximate
+  // Mobile: pin to bottom as a sheet — always visible, full-width
+  // Desktop: position near the highlighted element
+  const TIP_W = 360;
+  const TIP_H = 230;
   const PAD = 16;
 
-  if (rect && vpW && vpH) {
+  let tipStyle: React.CSSProperties;
+  let tipRadius: React.CSSProperties = {};
+
+  if (isMobile) {
+    tipStyle = {
+      position: "fixed",
+      bottom: 0,
+      left: 0,
+      right: 0,
+      zIndex: 320,
+    };
+    tipRadius = { borderBottomLeftRadius: 0, borderBottomRightRadius: 0 };
+  } else if (rect && vpW && vpH) {
     const spaceBelow = vpH - rect.bottom;
     const cx = rect.left + rect.width / 2;
-
     const left = Math.max(PAD, Math.min(cx - TIP_W / 2, vpW - TIP_W - PAD));
     const placement: "below" | "above" = spaceBelow >= TIP_H + 20 ? "below" : "above";
     const rawTop = placement === "below" ? rect.bottom + 14 : rect.top - TIP_H - 14;
     const top = Math.max(PAD, rawTop);
-
-    tipStyle = { position: "fixed", top, left, width: TIP_W };
+    tipStyle = { position: "fixed", top, left, width: TIP_W, zIndex: 320 };
   } else {
-    // fallback: centered at bottom of screen
     tipStyle = {
       position: "fixed",
       bottom: 32,
       left: "50%",
       transform: "translateX(-50%)",
       width: TIP_W,
+      zIndex: 320,
     };
   }
 
   return (
     <>
-      {/* Dark overlay with spotlight cutout via box-shadow on target */}
-      <div
-        style={ts.overlay}
-        onClick={onClose}
-        aria-label="Cerrar tour"
-      />
-      {/* Spotlight ring on the target element */}
+      {/* Dark scrim — clicking it closes the tour */}
+      <div style={ts.overlay} onClick={onClose} aria-label="Cerrar tour" />
+
+      {/* Spotlight ring — sits on top of scrim, frames the target element */}
       {rect && (
         <div
           style={{
             position: "fixed",
-            top: rect.top - 6,
-            left: rect.left - 6,
-            width: rect.width + 12,
-            height: rect.height + 12,
-            borderRadius: 14,
-            boxShadow: "0 0 0 9999px rgba(0,0,0,0.62)",
+            top: rect.top - 7,
+            left: rect.left - 7,
+            width: rect.width + 14,
+            height: rect.height + 14,
+            borderRadius: 16,
+            // The huge spread shadow creates the dark overlay effect everywhere *outside* this box
+            boxShadow: "0 0 0 9999px rgba(0,0,0,0.58)",
+            outline: "2px solid rgba(255,255,255,0.18)",
             pointerEvents: "none",
-            zIndex: 310,
-            transition: "all 260ms ease",
+            zIndex: 312,
+            transition: "top 280ms ease, left 280ms ease, width 280ms ease, height 280ms ease",
           }}
         />
       )}
+
       {/* Tooltip card */}
-      <div style={{ ...ts.tip, ...tipStyle }} onClick={(e) => e.stopPropagation()}>
-        {/* Progress bar */}
+      <div
+        style={{ ...ts.tip, ...tipStyle, ...tipRadius }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Gradient progress bar */}
         <div style={ts.progressBar}>
           <div
             style={{
@@ -3807,31 +3824,32 @@ function TourSpotlight({
         </div>
 
         <div style={ts.tipInner}>
-          {/* Step counter */}
-          <span style={ts.counter}>{step + 1} / {steps.length}</span>
+          <div style={ts.tipHeader}>
+            <span style={ts.counter}>{step + 1} de {steps.length}</span>
+            <button type="button" style={ts.closeX} onClick={onClose} aria-label="Cerrar tour">✕</button>
+          </div>
 
           <h3 style={ts.tipTitle}>{current.title}</h3>
           <p style={ts.tipBody}>{current.body}</p>
 
           <div style={ts.tipNav}>
-            <button type="button" style={ts.skipBtn} onClick={onClose}>
-              Saltar tour
-            </button>
-            <div style={{ display: "flex", gap: 8 }}>
-              {step > 0 && (
-                <button type="button" className="btn btn-ghost" style={ts.navBtn} onClick={onPrev}>
-                  ← Atrás
-                </button>
-              )}
-              <button
-                type="button"
-                className="btn btn-primary"
-                style={ts.navBtn}
-                onClick={isLast ? onClose : onNext}
-              >
-                {isLast ? "¡Listo!" : "Siguiente →"}
+            {step > 0 ? (
+              <button type="button" className="btn btn-ghost" style={ts.navBtn} onClick={onPrev}>
+                ← Atrás
               </button>
-            </div>
+            ) : (
+              <button type="button" style={ts.skipBtn} onClick={onClose}>
+                Saltar tour
+              </button>
+            )}
+            <button
+              type="button"
+              className="btn btn-primary"
+              style={ts.navBtnPrimary}
+              onClick={isLast ? onClose : onNext}
+            >
+              {isLast ? "¡Listo!" : "Siguiente →"}
+            </button>
           </div>
         </div>
       </div>
@@ -3843,58 +3861,74 @@ const ts: Record<string, React.CSSProperties> = {
   overlay: {
     position: "fixed",
     inset: 0,
-    zIndex: 308,
+    zIndex: 310,
     cursor: "pointer",
+    // Subtle fallback bg while rect is being measured; ring box-shadow takes over after
+    background: "rgba(0,0,0,0.18)",
   },
   tip: {
-    zIndex: 320,
     background: "#ffffff",
-    borderRadius: 18,
-    boxShadow: "0 24px 80px rgba(0,0,0,0.28), 0 4px 20px rgba(0,0,0,0.12)",
+    borderRadius: 20,
+    boxShadow: "0 32px 96px rgba(0,0,0,0.32), 0 4px 24px rgba(0,0,0,0.14)",
     overflow: "hidden",
   },
   progressBar: {
-    height: 3,
+    height: 4,
     background: "rgba(0,0,0,0.07)",
   },
   progressFill: {
     height: "100%",
     background: "linear-gradient(90deg, #6366f1, #ec4899)",
-    transition: "width 300ms ease",
-    borderRadius: "0 2px 2px 0",
+    transition: "width 320ms ease",
+    borderRadius: "0 3px 3px 0",
   },
   tipInner: {
-    padding: "16px 18px 18px",
+    padding: "16px 20px 20px",
     display: "flex",
     flexDirection: "column" as const,
-    gap: 8,
+    gap: 10,
+  },
+  tipHeader: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
   counter: {
     fontSize: 11,
     fontWeight: 700,
     letterSpacing: "0.08em",
-    color: "rgba(0,0,0,0.3)",
+    color: "rgba(0,0,0,0.28)",
     textTransform: "uppercase" as const,
+  },
+  closeX: {
+    background: "none",
+    border: "none",
+    cursor: "pointer",
+    fontSize: 13,
+    color: "rgba(0,0,0,0.32)",
+    padding: "2px 4px",
+    lineHeight: 1,
   },
   tipTitle: {
     margin: 0,
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: 800,
-    letterSpacing: "-0.02em",
+    letterSpacing: "-0.025em",
     lineHeight: 1.2,
     color: "#0b0b0f",
   },
   tipBody: {
     margin: 0,
     fontSize: 13,
-    lineHeight: 1.65,
+    lineHeight: 1.7,
     color: "var(--muted)",
   },
   tipNav: {
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
-    marginTop: 4,
+    gap: 8,
+    marginTop: 2,
   },
   skipBtn: {
     background: "none",
@@ -3903,9 +3937,17 @@ const ts: Record<string, React.CSSProperties> = {
     fontSize: 12,
     color: "var(--muted)",
     padding: "4px 0",
+    flexShrink: 0,
   },
   navBtn: {
     fontSize: 13,
-    padding: "9px 16px",
+    padding: "9px 18px",
+    flexShrink: 0,
+  },
+  navBtnPrimary: {
+    fontSize: 13,
+    padding: "9px 18px",
+    flexShrink: 0,
+    marginLeft: "auto",
   },
 };
