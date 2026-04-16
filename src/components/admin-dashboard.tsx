@@ -2019,6 +2019,17 @@ export function AdminDashboard({
         </div>
       )}
 
+      {/* ── Floating help button ── */}
+      <button
+        type="button"
+        style={s.helpBtn}
+        onClick={() => setShowOnboarding(true)}
+        aria-label="Ayuda — ver tour de funcionalidades"
+        title="Ayuda"
+      >
+        ?
+      </button>
+
       {/* ── Onboarding tour ── */}
       {showOnboarding && <OnboardingModal onClose={closeOnboarding} />}
 
@@ -3307,6 +3318,27 @@ const s: Record<string, React.CSSProperties> = {
     fontSize: 14,
     fontWeight: 700,
     cursor: "pointer",
+  },
+
+  helpBtn: {
+    position: "fixed" as const,
+    bottom: 24,
+    right: 24,
+    zIndex: 50,
+    width: 44,
+    height: 44,
+    borderRadius: "50%",
+    background: "#111111",
+    color: "#ffffff",
+    border: "none",
+    cursor: "pointer",
+    fontSize: 18,
+    fontWeight: 800,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    boxShadow: "0 4px 20px rgba(0,0,0,0.22)",
+    lineHeight: 1,
   },
 
   // Template picker
