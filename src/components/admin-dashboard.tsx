@@ -326,7 +326,7 @@ export function AdminDashboard({
     if ((tab === "fotos" || tab === "resumen") && selectedId && savedIds.has(selectedId)) {
       loadPhotos(selectedId);
     }
-  }, [tab, selectedId, loadPhotos]);
+  }, [tab, selectedId, loadPhotos, savedIds]);
 
   // Switch tabs when tour step changes
   useEffect(() => {
@@ -3722,9 +3722,10 @@ function TourSpotlight({
 
   useEffect(() => {
     if (!current) return;
-    setRect(null); // clear while switching
 
-    const locate = () => {
+    // Defer both the clear and the locate so they don't run synchronously
+    const t1 = setTimeout(() => setRect(null), 0);
+    const t2 = setTimeout(() => {
       const el = document.querySelector<HTMLElement>(current.selector);
       if (!el) return;
       el.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -3734,10 +3735,9 @@ function TourSpotlight({
         setVpW(window.innerWidth);
         setVpH(window.innerHeight);
       }, 350);
-    };
+    }, 60);
 
-    const t = setTimeout(locate, 60);
-    return () => clearTimeout(t);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
   }, [current]);
 
   if (!current) return null;
@@ -3750,18 +3750,12 @@ function TourSpotlight({
 
   if (rect && vpW && vpH) {
     const spaceBelow = vpH - rect.bottom;
-    const spaceAbove = rect.top;
     const cx = rect.left + rect.width / 2;
 
-    let left = Math.max(PAD, Math.min(cx - TIP_W / 2, vpW - TIP_W - PAD));
-    let top: number;
-    let placement: "below" | "above" = spaceBelow >= TIP_H + 20 ? "below" : "above";
-    if (placement === "below") {
-      top = rect.bottom + 14;
-    } else {
-      top = rect.top - TIP_H - 14;
-      if (top < PAD) { top = PAD; }
-    }
+    const left = Math.max(PAD, Math.min(cx - TIP_W / 2, vpW - TIP_W - PAD));
+    const placement: "below" | "above" = spaceBelow >= TIP_H + 20 ? "below" : "above";
+    const rawTop = placement === "below" ? rect.bottom + 14 : rect.top - TIP_H - 14;
+    const top = Math.max(PAD, rawTop);
 
     tipStyle = { position: "fixed", top, left, width: TIP_W };
   } else {
