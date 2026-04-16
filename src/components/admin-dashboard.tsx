@@ -197,6 +197,7 @@ export function AdminDashboard({
   const [exportState, setExportState] = useState<{ done: number; total: number } | null>(null);
   const [deletingPhotoId, setDeletingPhotoId] = useState<string | null>(null);
   const [metaPhoto, setMetaPhoto] = useState<PhotoRecord | null>(null);
+  const [lightboxPhoto, setLightboxPhoto] = useState<PhotoRecord | null>(null);
 
   // Saving / deleting
   const [saving, setSaving] = useState(false);
@@ -1962,8 +1963,15 @@ export function AdminDashboard({
                                     </button>
                                   )}
                                 </div>
-                                {/* ── Secondary row: info + delete ── */}
+                                {/* ── Secondary row: ver + info + delete ── */}
                                 <div style={s.actionRow}>
+                                  <button
+                                    type="button"
+                                    style={{ ...s.actionSecondary, flex: 1 }}
+                                    onClick={() => setLightboxPhoto(photo)}
+                                  >
+                                    Ver
+                                  </button>
                                   <button
                                     type="button"
                                     style={{ ...s.actionSecondary, flex: 1 }}
@@ -1992,6 +2000,14 @@ export function AdminDashboard({
           </div>}
         </div>
       </div>
+
+      {/* ── Photo lightbox ── */}
+      {lightboxPhoto && (
+        <PhotoLightbox
+          photo={lightboxPhoto}
+          onClose={() => setLightboxPhoto(null)}
+        />
+      )}
 
       {/* ── Photo metadata modal ── */}
       {metaPhoto && (
@@ -2477,6 +2493,136 @@ function CoverImageUpload({
     </div>
   );
 }
+
+// ─── PhotoLightbox ───────────────────────────────────────────────────────────
+
+function PhotoLightbox({ photo, onClose }: { photo: PhotoRecord; onClose: () => void }) {
+  const src = publicStorageUrl(photo.storage_path);
+  const author = photo.is_anonymous ? "Anónimo" : (photo.uploaded_by_name || "Invitado");
+
+  return (
+    <div
+      style={lb.overlay}
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+    >
+      {/* Stop click propagation so clicks on the image/footer don't close */}
+      <div style={lb.inner} onClick={(e) => e.stopPropagation()}>
+        {/* Close button */}
+        <button type="button" style={lb.closeBtn} onClick={onClose} aria-label="Cerrar">
+          ✕
+        </button>
+
+        {/* Photo */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={src} alt={`Foto de ${author}`} style={lb.img} />
+
+        {/* Footer bar */}
+        <div style={lb.footer}>
+          <span style={lb.footerAuthor}>{author}</span>
+          <span style={lb.footerTime}>
+            {new Date(photo.created_at).toLocaleString("es-CO", {
+              day: "2-digit", month: "short",
+              hour: "2-digit", minute: "2-digit",
+            })}
+          </span>
+          <a
+            href={src}
+            download
+            target="_blank"
+            rel="noopener noreferrer"
+            style={lb.downloadBtn}
+            onClick={(e) => e.stopPropagation()}
+          >
+            ↓ Descargar
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const lb: Record<string, React.CSSProperties> = {
+  overlay: {
+    position: "fixed",
+    inset: 0,
+    zIndex: 300,
+    background: "rgba(0,0,0,0.88)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 16,
+    cursor: "zoom-out",
+  },
+  inner: {
+    position: "relative" as const,
+    display: "flex",
+    flexDirection: "column" as const,
+    alignItems: "center",
+    maxWidth: "min(90vw, 1000px)",
+    maxHeight: "92dvh",
+    cursor: "default",
+  },
+  closeBtn: {
+    position: "absolute" as const,
+    top: -14,
+    right: -14,
+    zIndex: 10,
+    width: 36,
+    height: 36,
+    borderRadius: "50%",
+    background: "rgba(255,255,255,0.15)",
+    border: "1px solid rgba(255,255,255,0.2)",
+    color: "#ffffff",
+    fontSize: 14,
+    fontWeight: 700,
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    backdropFilter: "blur(4px)",
+  },
+  img: {
+    maxWidth: "100%",
+    maxHeight: "80dvh",
+    objectFit: "contain" as const,
+    borderRadius: 12,
+    display: "block",
+  },
+  footer: {
+    display: "flex",
+    alignItems: "center",
+    gap: 12,
+    marginTop: 12,
+    padding: "10px 16px",
+    background: "rgba(255,255,255,0.08)",
+    borderRadius: 12,
+    backdropFilter: "blur(8px)",
+    width: "100%",
+  },
+  footerAuthor: {
+    fontSize: 13,
+    fontWeight: 700,
+    color: "#ffffff",
+    flex: 1,
+  },
+  footerTime: {
+    fontSize: 12,
+    color: "rgba(255,255,255,0.55)",
+  },
+  downloadBtn: {
+    fontSize: 12,
+    fontWeight: 700,
+    color: "#ffffff",
+    padding: "5px 12px",
+    borderRadius: 8,
+    border: "1px solid rgba(255,255,255,0.25)",
+    background: "rgba(255,255,255,0.1)",
+    textDecoration: "none",
+    flexShrink: 0,
+  },
+};
 
 // ─── PhotoMetadataModal ───────────────────────────────────────────────────────
 
