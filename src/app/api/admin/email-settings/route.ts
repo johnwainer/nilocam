@@ -2,6 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import type { EmailSettings } from "@/types";
+import { DEFAULT_TEMPLATE_BODIES } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
 
@@ -32,7 +33,19 @@ export async function GET() {
 
   if (error) return NextResponse.json({ ok: false, message: error.message }, { status: 500 });
 
-  return NextResponse.json({ ok: true, settings: data?.[0] ?? null });
+  const settings = data?.[0] ?? null;
+
+  // Fill empty body fields with default template content so the admin
+  // sees actual content in the editor instead of a blank textarea.
+  if (settings) {
+    for (const key of Object.keys(DEFAULT_TEMPLATE_BODIES) as (keyof EmailSettings)[]) {
+      if (!settings[key]) {
+        (settings as Record<string, unknown>)[key as string] = DEFAULT_TEMPLATE_BODIES[key as string];
+      }
+    }
+  }
+
+  return NextResponse.json({ ok: true, settings });
 }
 
 // POST /api/admin/email-settings
@@ -59,8 +72,12 @@ export async function POST(request: Request) {
     p_tpl_payment_confirmed_body:     body.tpl_payment_confirmed_body     ?? "",
     p_tpl_bank_approved_subject:      body.tpl_bank_approved_subject      ?? "Transferencia aprobada — {{credits}} créditos acreditados",
     p_tpl_bank_approved_body:         body.tpl_bank_approved_body         ?? "",
-    p_tpl_bank_rejected_subject:      body.tpl_bank_rejected_subject      ?? "Transferencia bancaria — revisión requerida",
-    p_tpl_bank_rejected_body:         body.tpl_bank_rejected_body         ?? "",
+    p_tpl_bank_rejected_subject:                body.tpl_bank_rejected_subject                ?? "Transferencia bancaria — revisión requerida",
+    p_tpl_bank_rejected_body:                   body.tpl_bank_rejected_body                   ?? "",
+    p_tpl_credits_adjusted_subject:             body.tpl_credits_adjusted_subject             ?? "Ajuste de créditos en tu cuenta",
+    p_tpl_credits_adjusted_body:                body.tpl_credits_adjusted_body                ?? "",
+    p_tpl_bank_transfer_received_subject:       body.tpl_bank_transfer_received_subject       ?? "Comprobante recibido — {{credits}} créditos en revisión",
+    p_tpl_bank_transfer_received_body:          body.tpl_bank_transfer_received_body          ?? "",
   });
 
   if (error) return NextResponse.json({ ok: false, message: error.message }, { status: 500 });

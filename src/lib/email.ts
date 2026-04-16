@@ -93,7 +93,7 @@ export function emailLayout(body: string, fromName = APP_NAME) {
 }
 
 // ---------------------------------------------------------------------------
-// Default template bodies (used when DB body is empty)
+// HTML helpers
 // ---------------------------------------------------------------------------
 
 function h1(t: string) {
@@ -115,47 +115,74 @@ function btn(label: string, href: string) {
   return `<a href="${href}" style="display:inline-block;margin-top:20px;padding:12px 26px;background:#0b0b0f;color:#fff;font-size:15px;font-weight:600;text-decoration:none;border-radius:999px;">${label}</a>`;
 }
 
-const DEFAULT_BODIES: Record<string, (vars: Record<string, string | number>) => string> = {
-  welcome: (v) =>
-    h1(`Bienvenido a ${v.app_name}, ${v.name}.`) +
+// ---------------------------------------------------------------------------
+// Default template bodies
+// Defined as {{variable}} strings so they can be displayed and edited in the
+// admin panel, and rendered at send time via render().
+// ---------------------------------------------------------------------------
+
+export const DEFAULT_TEMPLATE_BODIES: Record<string, string> = {
+  tpl_welcome_body:
+    h1("Bienvenido a {{app_name}}, {{name}}.") +
     para("Tu cuenta está lista. Puedes empezar a crear eventos ahora mismo.") +
-    infoTable(row("Créditos de bienvenida", `${v.credits} créditos`) + row("Correo", String(v.email))) +
+    infoTable(row("Créditos de bienvenida", "{{credits}} créditos") + row("Correo", "{{email}}")) +
     para("Con tus créditos de bienvenida puedes crear tu primer evento y dar acceso a la galería en vivo.") +
     btn("Ir al panel", "https://nilocam.vercel.app/admin"),
 
-  payment_confirmed: (v) =>
+  tpl_payment_confirmed_body:
     h1("Pago confirmado.") +
     para("Tu compra de créditos ha sido procesada exitosamente.") +
     infoTable(
-      row("Créditos comprados", `+${v.credits} créditos`) +
-      row("Monto", `$${Number(v.amount).toFixed(2)} USD`) +
-      row("Método de pago", String(v.method)) +
-      row("Nuevo saldo", `${v.balance} créditos`)
+      row("Créditos comprados", "+{{credits}} créditos") +
+      row("Monto", "${{amount}} USD") +
+      row("Método de pago", "{{method}}") +
+      row("Nuevo saldo", "{{balance}} créditos")
     ) +
     para("Los créditos ya están disponibles en tu cuenta.") +
     btn("Ver mi saldo", "https://nilocam.vercel.app/admin"),
 
-  bank_approved: (v) =>
+  tpl_bank_approved_body:
     h1("Transferencia aprobada.") +
     para("El administrador ha revisado y aprobado tu comprobante de pago.") +
     infoTable(
-      row("Créditos acreditados", `+${v.credits} créditos`) +
-      row("Monto", `$${Number(v.amount).toFixed(2)} USD`) +
-      row("Nuevo saldo", `${v.balance} créditos`)
+      row("Créditos acreditados", "+{{credits}} créditos") +
+      row("Monto", "${{amount}} USD") +
+      row("Nuevo saldo", "{{balance}} créditos")
     ) +
     para("Los créditos ya están disponibles en tu cuenta. ¡Gracias por tu compra!") +
     btn("Ver mi saldo", "https://nilocam.vercel.app/admin"),
 
-  bank_rejected: (v) => {
-    const notesRow = v.notes ? row("Motivo", String(v.notes)) : "";
-    return (
-      h1("Transferencia no aprobada.") +
-      para("Hemos revisado tu comprobante de pago y no pudimos validarlo.") +
-      infoTable(row("Créditos solicitados", `${v.credits} créditos`) + row("Monto", `$${Number(v.amount).toFixed(2)} USD`) + notesRow) +
-      para(`Si crees que es un error, escríbenos a <a href="mailto:tech@pasosalexito.com" style="color:#0b0b0f;">tech@pasosalexito.com</a> con el comprobante y lo revisaremos.`) +
-      btn("Contactar soporte", "mailto:tech@pasosalexito.com")
-    );
-  },
+  tpl_bank_rejected_body:
+    h1("Transferencia no aprobada.") +
+    para("Hemos revisado tu comprobante de pago y no pudimos validarlo.") +
+    infoTable(
+      row("Créditos solicitados", "{{credits}} créditos") +
+      row("Monto", "${{amount}} USD") +
+      row("Motivo", "{{notes}}")
+    ) +
+    para(`Si crees que es un error, escríbenos con el comprobante y lo revisaremos.`) +
+    btn("Contactar soporte", "mailto:tech@pasosalexito.com"),
+
+  tpl_credits_adjusted_body:
+    h1("Ajuste de créditos en tu cuenta.") +
+    para("El administrador ha realizado un ajuste en tu saldo de créditos.") +
+    infoTable(
+      row("Ajuste", "{{amount}} créditos") +
+      row("Nuevo saldo", "{{balance}} créditos") +
+      row("Concepto", "{{description}}")
+    ) +
+    para("Si tienes preguntas sobre este ajuste, contáctanos.") +
+    btn("Ver mi saldo", "https://nilocam.vercel.app/admin"),
+
+  tpl_bank_transfer_received_body:
+    h1("Comprobante recibido.") +
+    para("Hemos recibido tu comprobante de transferencia bancaria. Lo revisaremos en breve y, una vez aprobado, acreditaremos los créditos a tu cuenta.") +
+    infoTable(
+      row("Créditos solicitados", "{{credits}} créditos") +
+      row("Monto", "${{amount}} USD")
+    ) +
+    para("Te notificaremos por correo cuando tu solicitud sea procesada.") +
+    btn("Ver mi cuenta", "https://nilocam.vercel.app/admin"),
 };
 
 // ---------------------------------------------------------------------------
@@ -259,7 +286,6 @@ async function sendViaSmtp(
 async function dispatch(
   subjectKey: keyof EmailSettings,
   bodyKey: keyof EmailSettings,
-  defaultBodyKey: keyof typeof DEFAULT_BODIES,
   to: string,
   vars: Record<string, string | number>
 ) {
@@ -276,12 +302,10 @@ async function dispatch(
   const allVars = { app_name: APP_NAME, ...vars };
 
   const rawSubject = (settings[subjectKey] as string) || "";
-  const rawBody    = (settings[bodyKey]    as string) || "";
+  const rawBody    = (settings[bodyKey]    as string) || DEFAULT_TEMPLATE_BODIES[bodyKey as string] || "";
 
-  const subject = render(rawSubject || `{{app_name}}`, allVars);
-  const body    = rawBody
-    ? render(rawBody, allVars)
-    : DEFAULT_BODIES[defaultBodyKey](allVars);
+  const subject = render(rawSubject || APP_NAME, allVars);
+  const body    = render(rawBody, allVars);
 
   return sendEmail(settings, to, subject, body);
 }
@@ -291,57 +315,48 @@ async function dispatch(
 // ---------------------------------------------------------------------------
 
 export async function sendWelcomeEmail(to: string, displayName: string, initialCredits: number) {
-  return dispatch(
-    "tpl_welcome_subject",
-    "tpl_welcome_body",
-    "welcome",
-    to,
+  return dispatch("tpl_welcome_subject", "tpl_welcome_body", to,
     { name: displayName || to.split("@")[0], email: to, credits: initialCredits }
   ).catch(() => ({ ok: false }));
 }
 
 export async function sendPaymentConfirmedEmail(
-  to: string,
-  credits: number,
-  amountUsd: number,
-  method: "Stripe" | "PayPal",
-  newBalance: number
+  to: string, credits: number, amountUsd: number, method: "Stripe" | "PayPal", newBalance: number
 ) {
-  return dispatch(
-    "tpl_payment_confirmed_subject",
-    "tpl_payment_confirmed_body",
-    "payment_confirmed",
-    to,
+  return dispatch("tpl_payment_confirmed_subject", "tpl_payment_confirmed_body", to,
     { email: to, credits, amount: amountUsd, method, balance: newBalance }
   ).catch(() => ({ ok: false }));
 }
 
 export async function sendBankTransferApprovedEmail(
-  to: string,
-  credits: number,
-  amountUsd: number,
-  newBalance: number
+  to: string, credits: number, amountUsd: number, newBalance: number
 ) {
-  return dispatch(
-    "tpl_bank_approved_subject",
-    "tpl_bank_approved_body",
-    "bank_approved",
-    to,
+  return dispatch("tpl_bank_approved_subject", "tpl_bank_approved_body", to,
     { email: to, credits, amount: amountUsd, balance: newBalance }
   ).catch(() => ({ ok: false }));
 }
 
 export async function sendBankTransferRejectedEmail(
-  to: string,
-  credits: number,
-  amountUsd: number,
-  adminNotes?: string | null
+  to: string, credits: number, amountUsd: number, adminNotes?: string | null
 ) {
-  return dispatch(
-    "tpl_bank_rejected_subject",
-    "tpl_bank_rejected_body",
-    "bank_rejected",
-    to,
+  return dispatch("tpl_bank_rejected_subject", "tpl_bank_rejected_body", to,
     { email: to, credits, amount: amountUsd, notes: adminNotes ?? "" }
+  ).catch(() => ({ ok: false }));
+}
+
+export async function sendCreditsAdjustedEmail(
+  to: string, amount: number, newBalance: number, description: string
+) {
+  const sign = amount >= 0 ? `+${amount}` : String(amount);
+  return dispatch("tpl_credits_adjusted_subject", "tpl_credits_adjusted_body", to,
+    { email: to, amount: sign, balance: newBalance, description: description || "Ajuste de créditos" }
+  ).catch(() => ({ ok: false }));
+}
+
+export async function sendBankTransferReceivedEmail(
+  to: string, credits: number, amountUsd: number
+) {
+  return dispatch("tpl_bank_transfer_received_subject", "tpl_bank_transfer_received_body", to,
+    { email: to, credits, amount: amountUsd }
   ).catch(() => ({ ok: false }));
 }

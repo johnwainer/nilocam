@@ -1800,17 +1800,21 @@ function fmtDate(iso: string) {
 // ─── EmailTab ────────────────────────────────────────────────────────────────
 
 const DEFAULT_SUBJECTS: Record<string, string> = {
-  tpl_welcome_subject:           "Bienvenido a {{app_name}}, {{name}}",
-  tpl_payment_confirmed_subject: "Pago confirmado — {{credits}} créditos",
-  tpl_bank_approved_subject:     "Transferencia aprobada — {{credits}} créditos acreditados",
-  tpl_bank_rejected_subject:     "Transferencia bancaria — revisión requerida",
+  tpl_welcome_subject:                   "Bienvenido a {{app_name}}, {{name}}",
+  tpl_payment_confirmed_subject:         "Pago confirmado — {{credits}} créditos",
+  tpl_bank_approved_subject:             "Transferencia aprobada — {{credits}} créditos acreditados",
+  tpl_bank_rejected_subject:             "Transferencia bancaria — revisión requerida",
+  tpl_credits_adjusted_subject:          "Ajuste de créditos en tu cuenta",
+  tpl_bank_transfer_received_subject:    "Comprobante recibido — {{credits}} créditos en revisión",
 };
 
 const TEMPLATE_VARS: Record<string, string> = {
-  tpl_welcome:           "{{name}}, {{email}}, {{credits}}, {{app_name}}",
-  tpl_payment_confirmed: "{{email}}, {{credits}}, {{amount}}, {{method}}, {{balance}}",
-  tpl_bank_approved:     "{{email}}, {{credits}}, {{amount}}, {{balance}}",
-  tpl_bank_rejected:     "{{email}}, {{credits}}, {{amount}}, {{notes}}",
+  tpl_welcome:                 "{{name}}, {{email}}, {{credits}}, {{app_name}}",
+  tpl_payment_confirmed:       "{{email}}, {{credits}}, {{amount}}, {{method}}, {{balance}}",
+  tpl_bank_approved:           "{{email}}, {{credits}}, {{amount}}, {{balance}}",
+  tpl_bank_rejected:           "{{email}}, {{credits}}, {{amount}}, {{notes}}",
+  tpl_credits_adjusted:        "{{email}}, {{amount}}, {{balance}}, {{description}}",
+  tpl_bank_transfer_received:  "{{email}}, {{credits}}, {{amount}}",
 };
 
 function EmailTab({
@@ -1831,10 +1835,12 @@ function EmailTab({
     setDraft((prev) => ({ ...prev, [key]: value }));
 
   const templates: Array<{ key: string; label: string }> = [
-    { key: "welcome",           label: "Bienvenida (registro nuevo)" },
-    { key: "payment_confirmed", label: "Pago confirmado (Stripe / PayPal)" },
-    { key: "bank_approved",     label: "Transferencia bancaria aprobada" },
-    { key: "bank_rejected",     label: "Transferencia bancaria rechazada" },
+    { key: "welcome",                 label: "Bienvenida (registro nuevo)" },
+    { key: "payment_confirmed",       label: "Pago confirmado (Stripe / PayPal)" },
+    { key: "credits_adjusted",        label: "Ajuste manual de créditos (admin)" },
+    { key: "bank_transfer_received",  label: "Transferencia bancaria recibida (confirmación al usuario)" },
+    { key: "bank_approved",           label: "Transferencia bancaria aprobada" },
+    { key: "bank_rejected",           label: "Transferencia bancaria rechazada" },
   ];
 
   return (

@@ -233,6 +233,10 @@ export type EmailSettings = {
   tpl_bank_approved_body: string;
   tpl_bank_rejected_subject: string;
   tpl_bank_rejected_body: string;
+  tpl_credits_adjusted_subject: string;
+  tpl_credits_adjusted_body: string;
+  tpl_bank_transfer_received_subject: string;
+  tpl_bank_transfer_received_body: string;
 };
 
 export type LandingTemplatePreset = {

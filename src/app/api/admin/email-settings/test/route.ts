@@ -54,6 +54,10 @@ export async function POST(request: Request) {
       tpl_bank_approved_body: "",
       tpl_bank_rejected_subject: "Transferencia bancaria — revisión requerida",
       tpl_bank_rejected_body: "",
+      tpl_credits_adjusted_subject: "Ajuste de créditos en tu cuenta",
+      tpl_credits_adjusted_body: "",
+      tpl_bank_transfer_received_subject: "Comprobante recibido — {{credits}} créditos en revisión",
+      tpl_bank_transfer_received_body: "",
       ...body.settings,
     };
   } else {

@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import { sendCreditsAdjustedEmail } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
 
@@ -106,6 +107,8 @@ export async function PATCH(request: Request) {
     type: amount >= 0 ? "manual_grant" : "manual_deduct",
     description: description || (amount >= 0 ? "Créditos otorgados por admin" : "Créditos descontados por admin"),
   });
+
+  sendCreditsAdjustedEmail(resolvedEmail, amount, newBalance, description).catch(() => null);
 
   return NextResponse.json({ ok: true, credits: newBalance, scope: "single" });
 }

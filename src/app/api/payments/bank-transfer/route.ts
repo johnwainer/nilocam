@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import { sendBankTransferReceivedEmail } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
 
@@ -46,6 +47,8 @@ export async function POST(request: Request) {
   });
 
   if (error) return NextResponse.json({ ok: false, message: error.message }, { status: 500 });
+
+  sendBankTransferReceivedEmail(user.email, credits, amountUsd).catch(() => null);
 
   return NextResponse.json({ ok: true, message: "Comprobante enviado. Tu solicitud será revisada en breve." });
 }
