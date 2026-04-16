@@ -820,9 +820,10 @@ img {
     grid-template-columns: 1fr !important;
   }
 
-  /* Photo grid: tighter columns on mobile */
+  /* Photo grid: 2 columns on mobile */
   .admin-photo-grid {
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)) !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px !important;
   }
 
   /* Danger zone: stack vertically */

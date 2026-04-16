@@ -1910,70 +1910,75 @@ export function AdminDashboard({
 
                           <div style={s.photoActions}>
                             {confirming ? (
+                              /* ── Delete confirmation ── */
                               <>
-                                <span style={s.confirmText}>¿Eliminar esta foto?</span>
-                                <button
-                                  type="button"
-                                  style={s.actionDanger}
-                                  onClick={() => deletePhoto(photo.id)}
-                                >
-                                  Eliminar
-                                </button>
-                                <button
-                                  type="button"
-                                  style={s.actionNeutral}
-                                  onClick={() => setDeletingPhotoId(null)}
-                                >
-                                  Cancelar
-                                </button>
+                                <p style={s.confirmText}>¿Eliminar esta foto?</p>
+                                <div style={s.actionRow}>
+                                  <button
+                                    type="button"
+                                    style={{ ...s.actionDanger, flex: 1 }}
+                                    onClick={() => deletePhoto(photo.id)}
+                                  >
+                                    Sí, eliminar
+                                  </button>
+                                  <button
+                                    type="button"
+                                    style={{ ...s.actionNeutral, flex: 1 }}
+                                    onClick={() => setDeletingPhotoId(null)}
+                                  >
+                                    Cancelar
+                                  </button>
+                                </div>
                               </>
                             ) : (
                               <>
-                                {photo.moderation_status !== "approved" && (
+                                {/* ── Primary moderation row ── */}
+                                <div style={s.actionRow}>
+                                  {photo.moderation_status !== "approved" && (
+                                    <button
+                                      type="button"
+                                      style={{ ...s.actionApprove, flex: 1 }}
+                                      onClick={() => moderatePhoto(photo.id, "approved")}
+                                    >
+                                      ✓ Aprobar
+                                    </button>
+                                  )}
+                                  {photo.moderation_status !== "rejected" && (
+                                    <button
+                                      type="button"
+                                      style={{ ...s.actionReject, flex: 1 }}
+                                      onClick={() => moderatePhoto(photo.id, "rejected")}
+                                    >
+                                      ✕ Rechazar
+                                    </button>
+                                  )}
+                                  {photo.moderation_status === "approved" && (
+                                    <button
+                                      type="button"
+                                      style={{ ...s.actionNeutral, flex: 1 }}
+                                      onClick={() => moderatePhoto(photo.id, "pending")}
+                                    >
+                                      Despublicar
+                                    </button>
+                                  )}
+                                </div>
+                                {/* ── Secondary row: info + delete ── */}
+                                <div style={s.actionRow}>
                                   <button
                                     type="button"
-                                    style={s.actionApprove}
-                                    onClick={() => moderatePhoto(photo.id, "approved")}
+                                    style={{ ...s.actionSecondary, flex: 1 }}
+                                    onClick={() => setMetaPhoto(photo)}
                                   >
-                                    Aprobar
+                                    Info
                                   </button>
-                                )}
-                                {photo.moderation_status !== "rejected" && (
                                   <button
                                     type="button"
-                                    style={s.actionReject}
-                                    onClick={() => moderatePhoto(photo.id, "rejected")}
+                                    style={{ ...s.actionSecondaryDanger, flex: 1 }}
+                                    onClick={() => setDeletingPhotoId(photo.id)}
                                   >
-                                    Rechazar
+                                    Eliminar
                                   </button>
-                                )}
-                                {photo.moderation_status === "approved" && (
-                                  <button
-                                    type="button"
-                                    style={s.actionNeutral}
-                                    onClick={() => moderatePhoto(photo.id, "pending")}
-                                  >
-                                    Despublicar
-                                  </button>
-                                )}
-                                <button
-                                  type="button"
-                                  style={s.actionMeta}
-                                  onClick={() => setMetaPhoto(photo)}
-                                >
-                                  Info
-                                </button>
-                                <button
-                                  type="button"
-                                  style={{
-                                    ...s.actionNeutral,
-                                    marginLeft: "auto",
-                                    color: "#dc2626",
-                                  }}
-                                  onClick={() => setDeletingPhotoId(photo.id)}
-                                >
-                                  Eliminar
-                                </button>
+                                </div>
                               </>
                             )}
                           </div>
@@ -3278,47 +3283,74 @@ const s: Record<string, React.CSSProperties> = {
   photoAuthor: { fontSize: 13, lineHeight: 1.2 },
   photoTime: { fontSize: 11 },
   filterPill: { fontSize: 10, padding: "2px 8px", marginTop: 2, width: "fit-content" },
-  photoActions: { padding: "9px 12px", display: "flex", gap: 5, flexWrap: "wrap", alignItems: "center" },
-  confirmText: { fontSize: 12, color: "#7f1d1d", fontWeight: 600, flex: 1 },
+  photoActions: { padding: "10px 12px 12px", display: "flex", flexDirection: "column" as const, gap: 7 },
+  actionRow: { display: "flex", gap: 6 },
+  confirmText: { fontSize: 12, color: "#7f1d1d", fontWeight: 600, margin: 0 },
   actionApprove: {
-    padding: "5px 11px",
-    borderRadius: 999,
+    padding: "8px 10px",
+    borderRadius: 10,
     border: "1px solid rgba(16,185,129,0.3)",
     background: "rgba(16,185,129,0.1)",
     color: "#065f46",
     fontSize: 12,
     fontWeight: 700,
     cursor: "pointer",
+    textAlign: "center" as const,
   },
   actionReject: {
-    padding: "5px 11px",
-    borderRadius: 999,
-    border: "1px solid rgba(239,68,68,0.28)",
+    padding: "8px 10px",
+    borderRadius: 10,
+    border: "1px solid rgba(239,68,68,0.25)",
     background: "rgba(239,68,68,0.07)",
-    color: "#dc2626",
+    color: "#991b1b",
     fontSize: 12,
     fontWeight: 700,
     cursor: "pointer",
+    textAlign: "center" as const,
   },
   actionDanger: {
-    padding: "5px 11px",
-    borderRadius: 999,
-    border: "1px solid rgba(239,68,68,0.4)",
-    background: "rgba(239,68,68,0.08)",
-    color: "#dc2626",
+    padding: "8px 10px",
+    borderRadius: 10,
+    border: "1px solid rgba(239,68,68,0.35)",
+    background: "rgba(239,68,68,0.07)",
+    color: "#991b1b",
     fontSize: 12,
     fontWeight: 700,
     cursor: "pointer",
+    textAlign: "center" as const,
   },
   actionNeutral: {
-    padding: "5px 11px",
-    borderRadius: 999,
+    padding: "8px 10px",
+    borderRadius: 10,
     border: "1px solid rgba(0,0,0,0.1)",
     background: "rgba(0,0,0,0.03)",
     color: "var(--muted)",
     fontSize: 12,
     fontWeight: 600,
     cursor: "pointer",
+    textAlign: "center" as const,
+  },
+  actionSecondary: {
+    padding: "6px 10px",
+    borderRadius: 8,
+    border: "1px solid rgba(0,0,0,0.08)",
+    background: "transparent",
+    color: "var(--muted)",
+    fontSize: 11,
+    fontWeight: 600,
+    cursor: "pointer",
+    textAlign: "center" as const,
+  },
+  actionSecondaryDanger: {
+    padding: "6px 10px",
+    borderRadius: 8,
+    border: "1px solid rgba(220,38,38,0.15)",
+    background: "transparent",
+    color: "#dc2626",
+    fontSize: 11,
+    fontWeight: 600,
+    cursor: "pointer",
+    textAlign: "center" as const,
   },
   actionMeta: {
     padding: "5px 11px",
