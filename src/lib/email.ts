@@ -34,9 +34,17 @@ async function fetchSettings(): Promise<EmailSettings | null> {
   try {
     const admin = serviceClient();
     const { data, error } = await admin.rpc("get_email_settings");
-    if (error || !data?.[0]) return null;
+    if (error) {
+      console.error("[email] fetchSettings RPC error:", error.message, error.code);
+      return null;
+    }
+    if (!data?.[0]) {
+      console.warn("[email] fetchSettings: no rows returned from email_settings");
+      return null;
+    }
     return data[0] as EmailSettings;
-  } catch {
+  } catch (err) {
+    console.error("[email] fetchSettings unexpected error:", err);
     return null;
   }
 }
@@ -256,7 +264,14 @@ async function dispatch(
   vars: Record<string, string | number>
 ) {
   const settings = await fetchSettings();
-  if (!settings || settings.provider === "disabled") return { ok: false };
+  if (!settings) {
+    console.warn("[email] dispatch: no settings found, skipping email to", to);
+    return { ok: false };
+  }
+  if (settings.provider === "disabled") {
+    console.info("[email] dispatch: provider is disabled, skipping email to", to);
+    return { ok: false };
+  }
 
   const allVars = { app_name: APP_NAME, ...vars };
 
