@@ -926,6 +926,25 @@ img {
   }
 }
 
+/* ─── Auth page split layout ─────────────────────────────────────────────── */
+
+/* Hide left branding panel on mobile, show mobile header instead */
+@media (max-width: 720px) {
+  .auth-left {
+    display: none !important;
+  }
+
+  .auth-mobile-header {
+    display: flex !important;
+  }
+
+  .auth-form-area {
+    padding: 32px 24px !important;
+    justify-content: flex-start !important;
+    padding-top: 40px !important;
+  }
+}
+
 /* ─── Super admin panel sidebar ──────────────────────────────────────────── */
 
 .sa-sidebar {

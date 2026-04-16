@@ -1,9 +1,12 @@
 "use client";
 
+import Link from "next/link";
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { PasswordInput } from "@/components/password-input";
+import { APP_NAME } from "@/lib/constants";
+import { SpyCatIcon } from "@/components/top-nav";
 
 const supabase = createSupabaseBrowserClient();
 
@@ -43,77 +46,201 @@ export function PasswordResetForm() {
   };
 
   return (
-    <main className="container section">
-      <div className="card glass" style={styles.card}>
-        <span className="eyebrow">Recuperación</span>
-        <h1 className="serif" style={styles.title}>
-          Crea una nueva contraseña
-        </h1>
-        <p className="muted" style={styles.text}>
-          Si abriste el enlace de recuperación enviado por correo, define aquí una nueva clave para volver al panel.
-        </p>
+    <div style={s.root}>
 
-        <form onSubmit={submit} style={styles.form}>
-          <label>
-            <span className="label">Nueva contraseña</span>
-            <PasswordInput
-              className="input"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              autoComplete="new-password"
-              minLength={8}
-              required
-            />
-          </label>
-          <label>
-            <span className="label">Confirmar contraseña</span>
-            <PasswordInput
-              className="input"
-              value={confirmPassword}
-              onChange={(event) => setConfirmPassword(event.target.value)}
-              autoComplete="new-password"
-              minLength={8}
-              required
-            />
-          </label>
-          <button className="btn btn-primary" type="submit" disabled={isSaving}>
-            {isSaving ? "Guardando..." : "Actualizar contraseña"}
-          </button>
-        </form>
-
-        {message ? <div style={styles.message}>{message}</div> : null}
+      {/* Left panel */}
+      <div style={s.left} className="auth-left">
+        <Link href="/" style={s.leftBrand}>
+          <SpyCatIcon size={28} />
+          <strong style={s.leftBrandName}>{APP_NAME}</strong>
+        </Link>
+        <div style={s.leftBody}>
+          <h2 style={s.leftTitle}>Nueva<br />contraseña.</h2>
+          <p style={s.leftSub}>Define una clave segura para proteger tu cuenta y tus eventos.</p>
+        </div>
       </div>
-    </main>
+
+      {/* Right panel */}
+      <div style={s.right}>
+        <div style={s.mobileHeader} className="auth-mobile-header">
+          <Link href="/" style={s.mobileHeaderBrand}>
+            <SpyCatIcon size={26} />
+            <strong style={{ fontSize: 15, letterSpacing: "-0.02em" }}>{APP_NAME}</strong>
+          </Link>
+        </div>
+
+        <div style={s.formArea} className="auth-form-area">
+          <div style={s.heading}>
+            <h1 style={s.title}>Crea una nueva contraseña.</h1>
+            <p style={s.subtitle}>
+              Abriste el enlace de recuperación. Define aquí tu nueva clave para volver al panel.
+            </p>
+          </div>
+
+          <form onSubmit={submit} style={s.form}>
+            <label style={s.fieldWrap}>
+              <span className="label">Nueva contraseña</span>
+              <PasswordInput
+                className="input"
+                placeholder="Mínimo 8 caracteres"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete="new-password"
+                minLength={8}
+                required
+              />
+            </label>
+            <label style={s.fieldWrap}>
+              <span className="label">Confirmar contraseña</span>
+              <PasswordInput
+                className="input"
+                placeholder="Repite la contraseña"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                autoComplete="new-password"
+                minLength={8}
+                required
+              />
+            </label>
+            <button
+              className="btn btn-primary"
+              type="submit"
+              disabled={isSaving}
+              style={s.submitBtn}
+            >
+              {isSaving ? "Guardando…" : "Actualizar contraseña"}
+            </button>
+          </form>
+
+          {message && (
+            <div style={s.message}>{message}</div>
+          )}
+        </div>
+      </div>
+
+    </div>
   );
 }
 
-const styles: Record<string, React.CSSProperties> = {
-  card: {
-    padding: 30,
-    borderRadius: 30,
-    maxWidth: 680,
+const s: Record<string, React.CSSProperties> = {
+  root: {
+    display: "flex",
+    minHeight: "100dvh",
+  },
+  left: {
+    width: 420,
+    flexShrink: 0,
+    background: "#0b0b0f",
+    display: "flex",
+    flexDirection: "column",
+    padding: "32px 40px 40px",
+    position: "sticky" as const,
+    top: 0,
+    height: "100dvh",
+    overflowY: "auto",
+  },
+  leftBrand: {
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+    textDecoration: "none",
+    flexShrink: 0,
+  },
+  leftBrandName: {
+    fontSize: 15,
+    color: "#ffffff",
+    letterSpacing: "-0.02em",
+  },
+  leftBody: {
+    flex: 1,
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "center",
+    gap: 20,
+  },
+  leftTitle: {
+    margin: 0,
+    fontSize: "clamp(36px, 3.2vw, 52px)",
+    fontWeight: 800,
+    lineHeight: 1,
+    letterSpacing: "-0.05em",
+    color: "#ffffff",
+  },
+  leftSub: {
+    margin: 0,
+    fontSize: 15,
+    lineHeight: 1.65,
+    color: "rgba(255,255,255,0.45)",
+  },
+  right: {
+    flex: 1,
+    display: "flex",
+    flexDirection: "column",
+    minWidth: 0,
+    background: "#f5f5f7",
+  },
+  mobileHeader: {
+    display: "none",
+    padding: "16px 24px",
+    borderBottom: "1px solid rgba(0,0,0,0.07)",
+    background: "#ffffff",
+  },
+  mobileHeaderBrand: {
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    textDecoration: "none",
+    color: "inherit",
+  },
+  formArea: {
+    flex: 1,
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "center",
+    padding: "48px 32px",
+    maxWidth: 460,
     margin: "0 auto",
+    width: "100%",
+    gap: 20,
+  },
+  heading: {
     display: "grid",
-    gap: 14,
+    gap: 8,
+    marginBottom: 4,
   },
   title: {
-    fontSize: "clamp(38px, 4vw, 60px)",
+    fontSize: "clamp(28px, 4vw, 40px)",
+    lineHeight: 1,
     margin: 0,
-    lineHeight: 0.94,
+    letterSpacing: "-0.04em",
+    fontWeight: 800,
   },
-  text: {
-    fontSize: 18,
-    lineHeight: 1.7,
+  subtitle: {
+    fontSize: 15,
+    lineHeight: 1.65,
     margin: 0,
+    color: "var(--muted)",
   },
   form: {
     display: "grid",
-    gap: 12,
-    marginTop: 6,
+    gap: 14,
+  },
+  fieldWrap: {
+    display: "grid",
+    gap: 6,
+  },
+  submitBtn: {
+    width: "100%",
+    marginTop: 4,
+    padding: "15px 20px",
+    fontSize: 15,
+    fontWeight: 800,
   },
   message: {
-    borderRadius: 18,
-    padding: 14,
+    borderRadius: 16,
+    padding: "12px 16px",
+    fontSize: 14,
+    lineHeight: 1.55,
     background: "rgba(0,0,0,0.04)",
     border: "1px solid rgba(0,0,0,0.08)",
     color: "var(--text)",
