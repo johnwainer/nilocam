@@ -124,7 +124,7 @@ const emptyEvent: EventRecord = {
   updated_at: new Date().toISOString(),
 };
 
-/** Create a fully pre-filled draft based on the selected event type */
+/** Create a blank draft with theme defaults for the given event type */
 function createDraftEvent(ownerEmail: string, typeKey: EventTypeKey = "matrimonio"): EventRecord {
   const preset = eventTypePresetFromKey(typeKey);
   const year = new Date().getFullYear();
@@ -133,14 +133,14 @@ function createDraftEvent(ownerEmail: string, typeKey: EventTypeKey = "matrimoni
     id: crypto.randomUUID(),
     slug: "", // filled when createNew() resolves the available slug
     event_type_key: preset.key,
-    title: preset.sampleTitle,
-    subtitle: preset.sampleSubtitle,
+    title: "",      // user fills in their own names
+    subtitle: null, // user fills in
     owner_email: ownerEmail,
     landing_config: {
       ...DEFAULT_LANDING_CONFIG,
       heroEyebrow: `${preset.name} · ${year}`,
-      heroTitle: preset.sampleTitle,
-      heroSubtitle: preset.sampleSubtitle,
+      heroTitle: "",  // user fills in
+      heroSubtitle: "",
       introCopy: DEFAULT_LANDING_CONFIG.introCopy,
       theme: {
         ...DEFAULT_LANDING_CONFIG.theme,
@@ -214,6 +214,17 @@ export function AdminDashboard({
   // Unsaved changes + active toggle
   const [isDirty, setIsDirty] = useState(false);
   const [togglingActive, setTogglingActive] = useState(false);
+
+  // First-time onboarding tour
+  const [showOnboarding, setShowOnboarding] = useState<boolean>(() => {
+    if (initialEvents.length > 0) return false;
+    if (typeof window === "undefined") return false;
+    return !localStorage.getItem("nilo-onboarding-v1");
+  });
+  const closeOnboarding = useCallback(() => {
+    localStorage.setItem("nilo-onboarding-v1", "1");
+    setShowOnboarding(false);
+  }, []);
 
   // Watermark upload
   const [watermarkUploading, setWatermarkUploading] = useState(false);
@@ -522,13 +533,10 @@ export function AdminDashboard({
           ? {
               ...e,
               event_type_key: key,
-              title: preset.sampleTitle,
-              subtitle: preset.sampleSubtitle,
+              // Never overwrite the user's title/subtitle — only update visual theme
               landing_config: {
                 ...e.landing_config,
                 heroEyebrow: `${preset.name} · ${year}`,
-                heroTitle: preset.sampleTitle,
-                heroSubtitle: preset.sampleSubtitle,
                 theme: {
                   ...e.landing_config.theme,
                   accent: preset.accent,
@@ -540,6 +548,7 @@ export function AdminDashboard({
           : e
       )
     );
+    setIsDirty(true);
   };
 
   const applyTemplate = (t: LandingTemplatePreset) => {
@@ -1071,7 +1080,7 @@ export function AdminDashboard({
                         <span className="label">Título</span>
                         <input
                           className="input"
-                          placeholder="Boda de Laura &amp; Mateo"
+                          placeholder={`Ej. ${eventTypePresetFromKey(selected.event_type_key).sampleTitle}`}
                           value={selected.title}
                           onChange={(e) => updateSelected("title", e.target.value)}
                         />
@@ -1386,7 +1395,7 @@ export function AdminDashboard({
                         <span className="label">Título principal</span>
                         <input
                           className="input"
-                          placeholder="Boda de Laura &amp; Mateo"
+                          placeholder={`Ej. ${eventTypePresetFromKey(selected.event_type_key).sampleTitle}`}
                           value={selected.landing_config.heroTitle}
                           onChange={(e) => updateLanding("heroTitle", e.target.value)}
                         />
@@ -2009,6 +2018,9 @@ export function AdminDashboard({
           </div>
         </div>
       )}
+
+      {/* ── Onboarding tour ── */}
+      {showOnboarding && <OnboardingModal onClose={closeOnboarding} />}
 
     </div>
   );
@@ -3324,5 +3336,294 @@ const s: Record<string, React.CSSProperties> = {
     whiteSpace: "nowrap" as const,
     overflow: "hidden",
     textOverflow: "ellipsis",
+  },
+};
+
+// ─── OnboardingModal ─────────────────────────────────────────────────────────
+
+const ONBOARDING_STEPS = [
+  {
+    accent: "#6366f1",
+    icon: (
+      <svg width="52" height="52" viewBox="0 0 52 52" fill="none" aria-hidden="true">
+        <rect x="10" y="14" width="32" height="28" rx="5" stroke="white" strokeWidth="2" opacity="0.3"/>
+        <rect x="10" y="14" width="32" height="11" rx="5" fill="white" opacity="0.12"/>
+        <line x1="18" y1="10" x2="18" y2="18" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
+        <line x1="34" y1="10" x2="34" y2="18" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
+        <line x1="16" y1="30" x2="36" y2="30" stroke="white" strokeWidth="1.5" strokeLinecap="round" opacity="0.55"/>
+        <line x1="16" y1="36" x2="30" y2="36" stroke="white" strokeWidth="1.5" strokeLinecap="round" opacity="0.55"/>
+        <circle cx="16" cy="30" r="2.5" fill="#6366f1"/>
+        <circle cx="16" cy="36" r="2.5" fill="white" opacity="0.3"/>
+      </svg>
+    ),
+    title: "Crea tu evento en minutos",
+    body: "Dale un nombre, elige el tipo de evento y asigna un slug único. Tu galería queda lista para compartir al instante — sin código, sin complicaciones.",
+    tags: ["Título y fecha", "10 tipos de evento", "URL personalizada"],
+  },
+  {
+    accent: "#ec4899",
+    icon: (
+      <svg width="52" height="52" viewBox="0 0 52 52" fill="none" aria-hidden="true">
+        <circle cx="26" cy="26" r="18" stroke="white" strokeWidth="2" opacity="0.25"/>
+        <circle cx="18" cy="20" r="4" fill="#ec4899"/>
+        <circle cx="34" cy="20" r="4" fill="#6366f1"/>
+        <circle cx="18" cy="34" r="4" fill="#10b981"/>
+        <circle cx="34" cy="34" r="4" fill="#f59e0b"/>
+        <circle cx="26" cy="27" r="5" fill="white" opacity="0.92"/>
+      </svg>
+    ),
+    title: "20+ temas visuales, todo editable",
+    body: "Elige un tema, ajusta colores, sube una foto de portada y personaliza los textos que leerán tus invitados. Se ve profesional desde el primer segundo.",
+    tags: ["Temas prediseñados", "Colores y fondo", "Foto de portada", "Marca de agua"],
+  },
+  {
+    accent: "#10b981",
+    icon: (
+      <svg width="52" height="52" viewBox="0 0 52 52" fill="none" aria-hidden="true">
+        <rect x="10" y="10" width="14" height="14" rx="3" stroke="white" strokeWidth="1.8" opacity="0.75"/>
+        <rect x="12" y="12" width="10" height="10" rx="2" fill="white" opacity="0.2"/>
+        <rect x="28" y="10" width="14" height="14" rx="3" stroke="white" strokeWidth="1.8" opacity="0.75"/>
+        <rect x="30" y="12" width="10" height="10" rx="2" fill="white" opacity="0.2"/>
+        <rect x="10" y="28" width="14" height="14" rx="3" stroke="white" strokeWidth="1.8" opacity="0.75"/>
+        <rect x="12" y="30" width="10" height="10" rx="2" fill="white" opacity="0.2"/>
+        <rect x="28" y="28" width="5" height="5" rx="1" fill="white" opacity="0.5"/>
+        <rect x="35" y="28" width="5" height="5" rx="1" fill="white" opacity="0.5"/>
+        <rect x="28" y="35" width="5" height="5" rx="1" fill="white" opacity="0.5"/>
+        <rect x="35" y="35" width="5" height="5" rx="1" fill="#10b981"/>
+      </svg>
+    ),
+    title: "Sin apps para tus invitados",
+    body: "Comparte el link o el QR. Los invitados suben desde cualquier móvil en segundos, sin instalar nada. Las fotos aparecen en la galería en tiempo real.",
+    tags: ["QR descargable", "Cualquier móvil", "Filtros de color", "Marcos decorativos"],
+  },
+  {
+    accent: "#f59e0b",
+    icon: (
+      <svg width="52" height="52" viewBox="0 0 52 52" fill="none" aria-hidden="true">
+        <rect x="10" y="14" width="32" height="7" rx="3.5" fill="white" opacity="0.12"/>
+        <rect x="10" y="24" width="32" height="7" rx="3.5" fill="white" opacity="0.12"/>
+        <rect x="10" y="34" width="32" height="7" rx="3.5" fill="white" opacity="0.12"/>
+        <polyline points="13,17.5 15.5,20 20,15" stroke="#10b981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+        <polyline points="13,27.5 15.5,30 20,25" stroke="#10b981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+        <polyline points="13,37.5 15.5,40 20,35" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" opacity="0.35"/>
+        <path d="M38 26 L38 34 M35 31 L38 34 L41 31" stroke="#f59e0b" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+      </svg>
+    ),
+    title: "Modera, proyecta y exporta",
+    body: "Aprueba fotos en tiempo real o en modo automático. Proyéctalas en pantalla grande durante el evento. Al final, exporta el álbum completo en un ZIP.",
+    tags: ["Moderación manual o auto", "Vista pantalla grande", "Exportar ZIP", "Estadísticas en vivo"],
+  },
+] as const;
+
+function OnboardingModal({ onClose }: { onClose: () => void }) {
+  const [step, setStep] = useState(0);
+  const current = ONBOARDING_STEPS[step];
+  const isLast = step === ONBOARDING_STEPS.length - 1;
+
+  return (
+    <div style={ob.overlay}>
+      <div style={ob.card}>
+
+        {/* Visual header */}
+        <div style={{ ...ob.visual, background: "linear-gradient(145deg, #0b0b0f 0%, #1a1a2e 100%)" }}>
+          <div style={{ ...ob.accentBar, background: current.accent }} />
+          {current.icon}
+          {/* Decorative blobs */}
+          <div style={{ ...ob.blob, background: current.accent, top: -30, right: -30 }} />
+          <div style={{ ...ob.blob, background: current.accent, bottom: -40, left: -20, opacity: 0.15, width: 120, height: 120 }} />
+        </div>
+
+        {/* Content */}
+        <div style={ob.content}>
+
+          {/* Step dots */}
+          <div style={ob.dotsRow}>
+            {ONBOARDING_STEPS.map((step_item, i) => (
+              <button
+                key={i}
+                type="button"
+                style={{
+                  ...ob.dot,
+                  ...(i === step ? { ...ob.dotActive, background: current.accent } : {}),
+                }}
+                onClick={() => setStep(i)}
+                aria-label={`Paso ${i + 1}`}
+              />
+            ))}
+          </div>
+
+          <h2 style={ob.title}>{current.title}</h2>
+          <p style={ob.body}>{current.body}</p>
+
+          {/* Feature tags */}
+          <div style={ob.tagsRow}>
+            {current.tags.map((tag) => (
+              <span
+                key={tag}
+                style={{
+                  ...ob.tag,
+                  borderColor: current.accent + "55",
+                  color: current.accent,
+                  background: current.accent + "0d",
+                }}
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+
+          {/* Navigation */}
+          <div style={ob.nav}>
+            <button type="button" style={ob.skipBtn} onClick={onClose}>
+              {isLast ? "" : "Saltar"}
+            </button>
+            <div style={{ display: "flex", gap: 8 }}>
+              {step > 0 && (
+                <button
+                  type="button"
+                  className="btn btn-ghost"
+                  style={ob.navBtn}
+                  onClick={() => setStep((s) => s - 1)}
+                >
+                  ← Atrás
+                </button>
+              )}
+              <button
+                type="button"
+                className="btn btn-primary"
+                style={{
+                  ...ob.navBtn,
+                  background: isLast ? current.accent : undefined,
+                  borderColor: isLast ? current.accent : undefined,
+                }}
+                onClick={isLast ? onClose : () => setStep((s) => s + 1)}
+              >
+                {isLast ? "¡Empezar!" : "Siguiente →"}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const ob: Record<string, React.CSSProperties> = {
+  overlay: {
+    position: "fixed",
+    inset: 0,
+    zIndex: 200,
+    background: "rgba(0,0,0,0.7)",
+    backdropFilter: "blur(6px)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 20,
+  },
+  card: {
+    background: "#ffffff",
+    borderRadius: 24,
+    overflow: "hidden",
+    width: "100%",
+    maxWidth: 460,
+    boxShadow: "0 48px 140px rgba(0,0,0,0.45)",
+  },
+  visual: {
+    height: 176,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    position: "relative" as const,
+    overflow: "hidden",
+  },
+  accentBar: {
+    position: "absolute" as const,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 3,
+    zIndex: 2,
+  },
+  blob: {
+    position: "absolute" as const,
+    width: 160,
+    height: 160,
+    borderRadius: "50%",
+    opacity: 0.12,
+    filter: "blur(40px)",
+    pointerEvents: "none" as const,
+  },
+  content: {
+    padding: "22px 26px 26px",
+    display: "flex",
+    flexDirection: "column" as const,
+    gap: 12,
+  },
+  dotsRow: {
+    display: "flex",
+    gap: 6,
+    justifyContent: "center",
+  },
+  dot: {
+    width: 7,
+    height: 7,
+    borderRadius: "50%",
+    background: "rgba(0,0,0,0.12)",
+    border: "none",
+    cursor: "pointer",
+    padding: 0,
+    transition: "all 220ms ease",
+    flexShrink: 0,
+  },
+  dotActive: {
+    width: 22,
+    height: 7,
+    borderRadius: 4,
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: 800,
+    lineHeight: 1.15,
+    letterSpacing: "-0.03em",
+    margin: 0,
+    color: "#0b0b0f",
+  },
+  body: {
+    fontSize: 14,
+    lineHeight: 1.7,
+    color: "var(--muted)",
+    margin: 0,
+  },
+  tagsRow: {
+    display: "flex",
+    flexWrap: "wrap" as const,
+    gap: 7,
+  },
+  tag: {
+    fontSize: 11,
+    fontWeight: 700,
+    letterSpacing: "0.02em",
+    padding: "4px 10px",
+    borderRadius: 999,
+    border: "1px solid",
+  },
+  nav: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: 4,
+  },
+  skipBtn: {
+    background: "none",
+    border: "none",
+    cursor: "pointer",
+    fontSize: 13,
+    color: "var(--muted)",
+    padding: "4px 0",
+    minWidth: 40,
+  },
+  navBtn: {
+    fontSize: 14,
+    padding: "10px 20px",
   },
 };
