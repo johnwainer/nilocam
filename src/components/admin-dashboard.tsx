@@ -170,7 +170,9 @@ export function AdminDashboard({
     initialEvents.length > 0 ? initialEvents : [initialDraft]
   );
   const [selectedId, setSelectedId] = useState<string>(initialDraft.id);
-  const [tab, setTab] = useState<"evento" | "fotos">("evento");
+  const [tab, setTab] = useState<"resumen" | "evento" | "fotos">(() =>
+    initialEvents.length > 0 ? "resumen" : "evento"
+  );
   const [mainView, setMainView] = useState<"editor" | "system" | "credits">("editor");
 
   // Credits
@@ -208,6 +210,10 @@ export function AdminDashboard({
 
   // Mobile sidebar drawer
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Unsaved changes + active toggle
+  const [isDirty, setIsDirty] = useState(false);
+  const [togglingActive, setTogglingActive] = useState(false);
 
   // Watermark upload
   const [watermarkUploading, setWatermarkUploading] = useState(false);
@@ -300,7 +306,7 @@ export function AdminDashboard({
   }, []);
 
   useEffect(() => {
-    if (tab === "fotos" && selectedId) {
+    if ((tab === "fotos" || tab === "resumen") && selectedId && savedIds.has(selectedId)) {
       loadPhotos(selectedId);
     }
   }, [tab, selectedId, loadPhotos]);
@@ -386,6 +392,7 @@ export function AdminDashboard({
         landing_config: selected.landing_config,
         cover_image_url: selected.cover_image_url,
         allow_guest_upload: selected.allow_guest_upload,
+        is_active: selected.is_active,
       };
       const res = await fetch("/api/credits/event", {
         method: "POST",
@@ -405,6 +412,8 @@ export function AdminDashboard({
         return [json.event as EventRecord, ...rest];
       });
       setSelectedId(json.event.id);
+      setIsDirty(false);
+      setTab("resumen");
       setNotice({ text: `Evento creado. ${json.cost} crédito${json.cost !== 1 ? "s" : ""} descontado${json.cost !== 1 ? "s" : ""}. Compra un pack de fotos para activar las subidas.`, ok: true });
     } else {
       // Existing event — direct update
@@ -423,11 +432,13 @@ export function AdminDashboard({
         landing_config: selected.landing_config,
         cover_image_url: selected.cover_image_url,
         allow_guest_upload: selected.allow_guest_upload,
+        is_active: selected.is_active,
       };
       const { data, error } = await supabase.from("events").update(payload).eq("id", selected.id).select("*").single();
       setSaving(false);
       if (error) { setNotice({ text: error.message, ok: false }); return; }
       setEvents((cur) => cur.map((e) => e.id === data.id ? data as EventRecord : e));
+      setIsDirty(false);
       setNotice({ text: "Cambios guardados.", ok: true });
     }
   };
@@ -463,10 +474,29 @@ export function AdminDashboard({
     router.refresh();
   };
 
+  const toggleActive = async () => {
+    if (!savedIds.has(selected.id)) return;
+    const newValue = !selected.is_active;
+    setTogglingActive(true);
+    // Optimistic update (immediate, without marking form dirty)
+    setEvents((cur) => cur.map((e) => (e.id === selected.id ? { ...e, is_active: newValue } : e)));
+    try {
+      const { error } = await supabase.from("events").update({ is_active: newValue }).eq("id", selected.id);
+      if (error) throw error;
+    } catch {
+      // Revert on failure
+      setEvents((cur) => cur.map((e) => (e.id === selected.id ? { ...e, is_active: !newValue } : e)));
+      setNotice({ text: "Error al actualizar el estado del evento.", ok: false });
+    } finally {
+      setTogglingActive(false);
+    }
+  };
+
   // ── field helpers ──────────────────────────────────────────────────────────
 
   const updateSelected = <K extends keyof EventRecord>(key: K, value: EventRecord[K]) => {
     setEvents((cur) => cur.map((e) => (e.id === selected.id ? { ...e, [key]: value } : e)));
+    setIsDirty(true);
   };
 
   const updateLanding = <K extends keyof EventRecord["landing_config"]>(
@@ -480,6 +510,7 @@ export function AdminDashboard({
           : e
       )
     );
+    setIsDirty(true);
   };
 
   const applyPreset = (key: EventTypeKey) => {
@@ -562,7 +593,10 @@ export function AdminDashboard({
   };
 
   const downloadQR = () => {
-    const canvas = document.getElementById("admin-qr-canvas") as HTMLCanvasElement | null;
+    const canvas = (
+      document.getElementById("admin-qr-canvas") ??
+      document.getElementById("admin-qr-canvas-preview")
+    ) as HTMLCanvasElement | null;
     if (!canvas) return;
     const link = document.createElement("a");
     link.download = `qr-${selected.slug}.png`;
@@ -632,11 +666,16 @@ export function AdminDashboard({
           {/* Right actions */}
           <div style={s.headerRight}>
             {credits !== null && (
-              <div style={s.creditsChip} title="Saldo actual">
+              <button
+                type="button"
+                style={{ ...s.creditsChip, cursor: "pointer" }}
+                title="Ver créditos y comprar"
+                onClick={() => setMainView((v) => v === "credits" ? "editor" : "credits")}
+              >
                 <span style={s.creditsIcon}>◈</span>
                 <span style={{ fontWeight: 800 }}>{credits}</span>
                 <span style={{ opacity: 0.65, fontSize: 11 }}>créditos</span>
-              </div>
+              </button>
             )}
             <span className="admin-header-email" style={s.headerEmail}>{userEmail}</span>
             <button className="btn btn-ghost admin-header-signout" style={s.headerBtn} onClick={signOut} type="button">
@@ -685,7 +724,7 @@ export function AdminDashboard({
                 type="button"
                 onClick={() => {
                   setSelectedId(event.id);
-                  setTab("evento");
+                  setTab(savedIds.has(event.id) ? "resumen" : "evento");
                   setMainView("editor");
                   setSidebarOpen(false);
                 }}
@@ -802,10 +841,10 @@ export function AdminDashboard({
                   className="btn btn-primary"
                   onClick={saveEvent}
                   disabled={saving}
-                  style={s.headerActionBtn}
+                  style={{ ...s.headerActionBtn, ...(isDirty ? {} : { opacity: 0.55 }) }}
                   type="button"
                 >
-                  {saving ? "Guardando..." : "Guardar cambios"}
+                  {saving ? "Guardando..." : isDirty ? "Guardar cambios" : "Guardado ✓"}
                 </button>
               </div>
             </div>
@@ -819,12 +858,22 @@ export function AdminDashboard({
 
             {/* Tab bar */}
             <div style={s.tabBar}>
+              {savedIds.has(selected.id) && (
+                <button
+                  type="button"
+                  style={tab === "resumen" ? s.tabActive : s.tabInactive}
+                  onClick={() => setTab("resumen")}
+                >
+                  Resumen
+                </button>
+              )}
               <button
                 type="button"
                 style={tab === "evento" ? s.tabActive : s.tabInactive}
                 onClick={() => setTab("evento")}
               >
                 Evento
+                {isDirty && <span style={s.dirtyDot} />}
               </button>
               <button
                 type="button"
@@ -835,6 +884,153 @@ export function AdminDashboard({
                 {pendingCount > 0 && <span style={s.tabBadge}>{pendingCount} pendientes</span>}
               </button>
             </div>
+
+            {/* ── RESUMEN TAB ── */}
+            {tab === "resumen" && savedIds.has(selected.id) && (
+              <div style={sr.panel}>
+
+                {/* Status card */}
+                <div className="card" style={sr.statusCard}>
+                  <div style={sr.statusRow}>
+                    <div>
+                      <span className="eyebrow" style={{ marginBottom: 4 }}>Estado del evento</span>
+                      <p style={sr.statusText}>
+                        {selected.is_active
+                          ? "Activo — los invitados pueden ver y subir fotos."
+                          : "Pausado — el evento no es visible para los invitados."}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      style={{ ...sr.toggle, background: selected.is_active ? "#111111" : "rgba(0,0,0,0.18)" }}
+                      onClick={toggleActive}
+                      disabled={togglingActive}
+                      aria-label={selected.is_active ? "Pausar evento" : "Activar evento"}
+                    >
+                      <span style={{ ...sr.toggleThumb, transform: selected.is_active ? "translateX(22px)" : "translateX(2px)" }} />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Photo stats row */}
+                <div className="admin-resumen-stats" style={sr.statsRow}>
+                  <button
+                    type="button"
+                    style={sr.statBox}
+                    onClick={() => { setTab("fotos"); setPhotoFilter("approved"); }}
+                  >
+                    <span style={sr.statNum}>{photoCounts.approved}</span>
+                    <span style={sr.statLab}>aprobadas</span>
+                  </button>
+                  <button
+                    type="button"
+                    style={{ ...sr.statBox, ...(photoCounts.pending > 0 ? sr.statBoxWarn : {}) }}
+                    onClick={() => { setTab("fotos"); setPhotoFilter("pending"); }}
+                  >
+                    <span style={{ ...sr.statNum, ...(photoCounts.pending > 0 ? { color: "#92400e" } : {}) }}>
+                      {photoCounts.pending}
+                    </span>
+                    <span style={sr.statLab}>{photoCounts.pending > 0 ? "pendientes →" : "pendientes"}</span>
+                  </button>
+                  <button
+                    type="button"
+                    style={sr.statBox}
+                    onClick={() => { setTab("fotos"); setPhotoFilter("rejected"); }}
+                  >
+                    <span style={sr.statNum}>{photoCounts.rejected}</span>
+                    <span style={sr.statLab}>rechazadas</span>
+                  </button>
+                  <div style={{ ...sr.statBox, cursor: "default" }}>
+                    <span style={{
+                      ...sr.statNum,
+                      ...(selected.photo_limit > 0 && photoCounts.approved >= selected.photo_limit ? { color: "#dc2626" } : {}),
+                    }}>
+                      {selected.photo_limit > 0
+                        ? `${photoCounts.approved}/${selected.photo_limit}`
+                        : "—"}
+                    </span>
+                    <span style={sr.statLab}>capacidad</span>
+                  </div>
+                </div>
+
+                {/* Two-column: share + capacity */}
+                <div className="admin-resumen-grid" style={sr.grid2}>
+
+                  {/* Share card */}
+                  <div className="card" style={sr.shareCard}>
+                    <span className="eyebrow" style={{ marginBottom: 8 }}>Comparte tu evento</span>
+                    <div style={s.urlBox}>
+                      <span style={{ ...s.urlText, flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {siteUrl(`/event/${selected.slug}`)}
+                      </span>
+                      <button type="button" style={s.copyBtn} onClick={copyUrl}>
+                        {copyDone ? "¡Copiada!" : "Copiar"}
+                      </button>
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "center", padding: "12px 0" }}>
+                      <QRCodeCanvas
+                        id="admin-qr-canvas"
+                        value={siteUrl(`/event/${selected.slug}`)}
+                        size={160}
+                        fgColor="#111111"
+                        bgColor="#ffffff"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      style={{ width: "100%", fontSize: 13, padding: "10px" }}
+                      onClick={downloadQR}
+                    >
+                      Descargar QR
+                    </button>
+                    <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
+                      <a
+                        className="btn btn-secondary"
+                        href={siteUrl(`/event/${selected.slug}`)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ flex: 1, textAlign: "center" as const, fontSize: 13, padding: "10px" }}
+                      >
+                        Abrir landing ↗
+                      </a>
+                      <a
+                        className="btn btn-secondary"
+                        href={siteUrl(`/event/${selected.slug}/display`)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ flex: 1, textAlign: "center" as const, fontSize: 13, padding: "10px", gap: 6, display: "flex", alignItems: "center", justifyContent: "center" }}
+                      >
+                        <DisplayIcon /> Pantalla
+                      </a>
+                    </div>
+                  </div>
+
+                  {/* Capacity card */}
+                  <div className="card" style={sr.capacityCard}>
+                    <PhotoCapacityCard
+                      photoLimit={selected.photo_limit ?? 0}
+                      photoCount={photoCounts.approved}
+                      pricing={pricing}
+                      credits={credits}
+                      purchasing={purchasingPack}
+                      onBuy={buyPhotoPack}
+                    />
+                    {credits !== null && credits < 10 && (
+                      <button
+                        type="button"
+                        className="btn btn-primary"
+                        style={{ width: "100%", marginTop: 10, fontSize: 13, padding: "10px" }}
+                        onClick={() => setMainView("credits")}
+                      >
+                        ◈ Comprar créditos
+                      </button>
+                    )}
+                  </div>
+
+                </div>
+              </div>
+            )}
 
             {/* ── EVENTO TAB ── */}
             {tab === "evento" && (
@@ -1388,7 +1584,7 @@ export function AdminDashboard({
                       <>
                         <div style={s.qrWrap}>
                           <QRCodeCanvas
-                            id="admin-qr-canvas"
+                            id="admin-qr-canvas-preview"
                             value={siteUrl(`/event/${selected.slug}`)}
                             size={196}
                             fgColor="#111111"
@@ -1460,16 +1656,32 @@ export function AdminDashboard({
                       )}
                     </div>
 
-                    {/* ── Capacidad de fotos ── */}
-                    {savedIds.has(selected.id) && (
-                      <PhotoCapacityCard
-                        photoLimit={selected.photo_limit ?? 0}
-                        photoCount={photoCounts.approved}
-                        pricing={pricing}
-                        credits={credits}
-                        purchasing={purchasingPack}
-                        onBuy={buyPhotoPack}
-                      />
+                    {/* Capacity summary — buy packs from the Resumen tab */}
+                    {savedIds.has(selected.id) && selected.photo_limit > 0 && (
+                      <div style={{ marginTop: 14, paddingTop: 14, borderTop: "1px solid rgba(0,0,0,0.07)" }}>
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+                          <span className="eyebrow" style={{ fontSize: 10, marginBottom: 0 }}>Capacidad de fotos</span>
+                          <span style={{ fontSize: 13, fontWeight: 800, color: photoCounts.approved >= selected.photo_limit ? "#dc2626" : "#111" }}>
+                            {photoCounts.approved} / {selected.photo_limit}
+                          </span>
+                        </div>
+                        <div style={{ height: 5, borderRadius: 999, background: "rgba(0,0,0,0.07)", overflow: "hidden" }}>
+                          <div style={{
+                            height: "100%", borderRadius: 999,
+                            width: `${Math.min(100, (photoCounts.approved / selected.photo_limit) * 100)}%`,
+                            background: photoCounts.approved >= selected.photo_limit ? "#dc2626" : photoCounts.approved / selected.photo_limit > 0.8 ? "#f59e0b" : "#111",
+                            transition: "width 0.3s ease",
+                          }} />
+                        </div>
+                        <button
+                          type="button"
+                          className="btn btn-secondary"
+                          style={{ width: "100%", fontSize: 12, padding: "8px", marginTop: 8 }}
+                          onClick={() => setTab("resumen")}
+                        >
+                          + Ampliar capacidad
+                        </button>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -1885,9 +2097,6 @@ function PhotoCapacityCard({
 
 const cc: Record<string, React.CSSProperties> = {
   card: {
-    marginTop: 14,
-    paddingTop: 14,
-    borderTop: "1px solid rgba(0,0,0,0.07)",
     display: "flex",
     flexDirection: "column",
     gap: 10,
@@ -1912,6 +2121,109 @@ const cc: Record<string, React.CSSProperties> = {
   packLabel: { fontSize: 10, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.06em" },
   packCost: { fontSize: 11, fontWeight: 700, color: "var(--muted)", marginTop: 2 },
   balance: { margin: 0, fontSize: 11, color: "var(--muted)", textAlign: "right" as const },
+};
+
+// ─── Resumen tab styles ───────────────────────────────────────────────────────
+
+const sr: Record<string, React.CSSProperties> = {
+  panel: {
+    display: "flex",
+    flexDirection: "column",
+    gap: 14,
+    paddingBottom: 32,
+  },
+  statusCard: {
+    padding: "18px 20px",
+  },
+  statusRow: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 16,
+  },
+  statusText: {
+    margin: "4px 0 0",
+    fontSize: 14,
+    color: "var(--muted)",
+    lineHeight: 1.5,
+  },
+  toggle: {
+    width: 48,
+    height: 28,
+    borderRadius: 999,
+    border: "none",
+    cursor: "pointer",
+    position: "relative" as const,
+    flexShrink: 0,
+    transition: "background 200ms ease",
+    padding: 0,
+  },
+  toggleThumb: {
+    position: "absolute" as const,
+    top: 4,
+    left: 0,
+    width: 20,
+    height: 20,
+    borderRadius: "50%",
+    background: "#ffffff",
+    boxShadow: "0 1px 4px rgba(0,0,0,0.25)",
+    transition: "transform 200ms ease",
+    display: "block",
+  },
+  statsRow: {
+    display: "grid",
+    gridTemplateColumns: "repeat(4, 1fr)",
+    gap: 10,
+  },
+  statBox: {
+    background: "#ffffff",
+    border: "1px solid rgba(0,0,0,0.07)",
+    borderRadius: 16,
+    padding: "16px 12px",
+    display: "flex",
+    flexDirection: "column" as const,
+    alignItems: "center",
+    gap: 5,
+    cursor: "pointer",
+    textDecoration: "none",
+  },
+  statBoxWarn: {
+    background: "rgba(245,158,11,0.06)",
+    border: "1px solid rgba(245,158,11,0.28)",
+  },
+  statNum: {
+    fontSize: 28,
+    fontWeight: 800,
+    letterSpacing: "-0.04em",
+    color: "#111",
+    lineHeight: 1,
+  },
+  statLab: {
+    fontSize: 11,
+    color: "var(--muted)",
+    fontWeight: 600,
+    textTransform: "uppercase" as const,
+    letterSpacing: "0.04em",
+    lineHeight: 1,
+  },
+  grid2: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr",
+    gap: 14,
+    alignItems: "start",
+  },
+  shareCard: {
+    padding: "18px 20px",
+    display: "flex",
+    flexDirection: "column" as const,
+    gap: 8,
+  },
+  capacityCard: {
+    padding: "18px 20px",
+    display: "flex",
+    flexDirection: "column" as const,
+    gap: 0,
+  },
 };
 
 // ─── DisplayIcon ─────────────────────────────────────────────────────────────
@@ -2498,6 +2810,16 @@ const s: Record<string, React.CSSProperties> = {
     padding: "2px 8px",
     fontSize: 11,
     fontWeight: 700,
+  },
+  dirtyDot: {
+    display: "inline-block",
+    width: 6,
+    height: 6,
+    borderRadius: "50%",
+    background: "#f59e0b",
+    marginLeft: 6,
+    verticalAlign: "middle",
+    flexShrink: 0,
   },
 
   editorGrid: { display: "grid", gridTemplateColumns: "1fr 300px", gap: 20, alignItems: "start" },

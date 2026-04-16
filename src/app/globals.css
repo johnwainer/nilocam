@@ -853,6 +853,16 @@ img {
     text-align: center !important;
     min-width: 0 !important;
   }
+
+  /* Resumen tab: stack two-column grid to single column */
+  .admin-resumen-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Resumen stats: 2×2 on mobile instead of 1×4 */
+  .admin-resumen-stats {
+    grid-template-columns: 1fr 1fr !important;
+  }
 }
 
 /* ─── Gallery Display — responsive for 9:16 and 16:9 ────────────────────── */
