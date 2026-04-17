@@ -152,7 +152,7 @@ export function EventLanding({
           </div>
 
           {/* ── CTAs — upload buttons ── */}
-          {showCtas && event.allow_guest_upload && (
+          {showCtas && event.allow_guest_upload && event.is_active && (
             <div style={s.heroActions}>
               <p style={s.uploadPrompt}>Comparte tu foto y aparecerá aquí en segundos</p>
               <PhotoComposer

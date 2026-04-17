@@ -227,6 +227,14 @@ export function PhotoComposer({ event, onUploaded, compact, accentColor }: Compo
 
   const submit = async () => {
     if (files.length === 0) return;
+    if (!event.is_active) {
+      setError("Este evento está pausado. No se pueden subir fotos en este momento.");
+      return;
+    }
+    if (!event.allow_guest_upload) {
+      setError("La subida de fotos está desactivada para este evento.");
+      return;
+    }
     if (event.landing_config.showTerms && !acceptedTerms) {
       setError("Debes aceptar los términos para continuar.");
       return;
