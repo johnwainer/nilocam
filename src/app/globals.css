@@ -945,6 +945,30 @@ img {
     transform: translateX(0);
     box-shadow: 4px 0 40px rgba(0, 0, 0, 0.18);
   }
+
+  /* ── Filter bar: single scrollable row, no wrapping ── */
+  .admin-filter-bar {
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    /* hide scrollbar visually */
+    scrollbar-width: none;
+  }
+  .admin-filter-bar::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* ── Export bar: stack into two rows cleanly ── */
+  .admin-export-bar {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+  }
+  /* "Cancelar selección" and "Seleccionar todas" each take one cell */
+  .admin-export-bar > button:last-child {
+    grid-column: 1 / -1; /* export/primary button always full-width */
+    margin-left: 0 !important;
+  }
 }
 
 /* ─── Auth page split layout ─────────────────────────────────────────────── */

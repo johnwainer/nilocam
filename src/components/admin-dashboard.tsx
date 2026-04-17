@@ -1745,7 +1745,7 @@ export function AdminDashboard({
             {tab === "fotos" && (
               <div style={s.photosPanel}>
                 {/* Filter bar */}
-                <div data-tour="section-filter-bar" style={s.filterBar}>
+                <div data-tour="section-filter-bar" className="admin-filter-bar" style={s.filterBar}>
                   {(
                     [
                       { key: "all", label: "Todas" },
@@ -1786,7 +1786,7 @@ export function AdminDashboard({
 
                 {/* Export toolbar */}
                 {filteredPhotos.length > 0 && (
-                  <div style={s.exportBar}>
+                  <div className="admin-export-bar" style={s.exportBar}>
                     {/* Select mode toggle */}
                     <button
                       type="button"
@@ -3422,6 +3422,8 @@ const s: Record<string, React.CSSProperties> = {
     fontSize: 13,
     fontWeight: 600,
     cursor: "pointer",
+    flexShrink: 0,
+    whiteSpace: "nowrap" as const,
   },
   filterActive: {
     display: "flex",
@@ -3435,12 +3437,15 @@ const s: Record<string, React.CSSProperties> = {
     fontSize: 13,
     fontWeight: 700,
     cursor: "pointer",
+    flexShrink: 0,
+    whiteSpace: "nowrap" as const,
   },
   filterCount: { background: "rgba(0,0,0,0.06)", borderRadius: 999, padding: "1px 7px", fontSize: 11, fontWeight: 700 },
   filterCountActive: { background: "rgba(0,0,0,0.12)" },
   filterCountPending: { background: "rgba(245,158,11,0.15)", color: "#78350f" },
   refreshBtn: {
     marginLeft: "auto",
+    flexShrink: 0,
     padding: "7px 13px",
     borderRadius: 999,
     border: "1px solid rgba(0,0,0,0.08)",
