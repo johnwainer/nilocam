@@ -163,6 +163,10 @@ export function EventLanding({
                   if (photo.moderation_status === "approved") {
                     setLivePhotos((prev) => [photo, ...prev]);
                   }
+                  // Give React one frame to render the gallery section (first photo case)
+                  setTimeout(() => {
+                    document.getElementById("gallery")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                  }, 350);
                 }}
               />
               {showGallery && hasPhotos && (
