@@ -910,7 +910,7 @@ img {
   display: none !important;
 }
 
-/* Hide header sign-out on desktop — sidebar already has it */
+/* Header sign-out hidden everywhere — sidebar has it on desktop, sidebar drawer has it on mobile */
 .admin-header-signout {
   display: none !important;
 }
@@ -920,14 +920,14 @@ img {
     display: flex !important;
   }
 
-  /* Show header sign-out on mobile (no sidebar visible by default) */
-  .admin-header-signout {
-    display: inline-flex !important;
-  }
-
   /* Hide email on mobile */
   .admin-header-email {
     display: none !important;
+  }
+
+  /* Move help (?) button up so it clears the browser bottom chrome */
+  .admin-help-btn {
+    bottom: 72px !important;
   }
 
   .admin-sidebar {

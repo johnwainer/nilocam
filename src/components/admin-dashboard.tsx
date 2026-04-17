@@ -2123,6 +2123,7 @@ export function AdminDashboard({
       {/* ── Floating help button ── */}
       <button
         type="button"
+        className="admin-help-btn"
         style={s.helpBtn}
         onClick={() => setTourStep(0)}
         aria-label="Ayuda — ver tour de funcionalidades"
@@ -3753,17 +3754,17 @@ function TourSpotlight({
   const PAD = 16;
 
   let tipStyle: React.CSSProperties;
-  let tipRadius: React.CSSProperties = {};
 
   if (isMobile) {
+    // Centered card on mobile — easy to read, doesn't matter where element is
     tipStyle = {
       position: "fixed",
-      bottom: 0,
-      left: 0,
-      right: 0,
+      top: "50%",
+      left: PAD,
+      right: PAD,
+      transform: "translateY(-50%)",
       zIndex: 320,
     };
-    tipRadius = { borderBottomLeftRadius: 0, borderBottomRightRadius: 0 };
   } else if (rect && vpW && vpH) {
     const spaceBelow = vpH - rect.bottom;
     const cx = rect.left + rect.width / 2;
@@ -3810,7 +3811,7 @@ function TourSpotlight({
 
       {/* Tooltip card */}
       <div
-        style={{ ...ts.tip, ...tipStyle, ...tipRadius }}
+        style={{ ...ts.tip, ...tipStyle }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Gradient progress bar */}
