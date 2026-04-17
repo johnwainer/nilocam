@@ -1889,7 +1889,10 @@ export function AdminDashboard({
                             });
                           } : undefined}
                         >
-                          <div style={s.photoImgWrap}>
+                          <div
+                            style={{ ...s.photoImgWrap, cursor: selectMode ? "pointer" : "zoom-in" }}
+                            onClick={!selectMode ? () => setLightboxPhoto(photo) : undefined}
+                          >
                             <Image
                               src={publicStorageUrl(photo.storage_path)}
                               alt="Foto del evento"
@@ -1999,15 +2002,8 @@ export function AdminDashboard({
                                     </button>
                                   )}
                                 </div>
-                                {/* ── Secondary row: ver + info + delete ── */}
+                                {/* ── Secondary row: info + delete ── */}
                                 <div style={s.actionRow}>
-                                  <button
-                                    type="button"
-                                    style={{ ...s.actionSecondary, flex: 1 }}
-                                    onClick={() => setLightboxPhoto(photo)}
-                                  >
-                                    Ver
-                                  </button>
                                   <button
                                     type="button"
                                     style={{ ...s.actionSecondary, flex: 1 }}
