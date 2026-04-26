@@ -160,6 +160,7 @@ export type PhotoRecord = {
   exif_data?: PhotoExif | null;
   device_data?: PhotoDeviceData | null;
   upload_ip?: string | null;
+  likes_count?: number;
   created_at: string;
 };
 

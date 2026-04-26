@@ -64,6 +64,7 @@ create table if not exists public.photos (
   exif_data           jsonb,
   device_data         jsonb,
   upload_ip           text,
+  likes_count         integer     not null default 0,
   created_at          timestamptz not null default now(),
   updated_at          timestamptz not null default now()
 );

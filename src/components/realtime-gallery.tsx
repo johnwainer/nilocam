@@ -22,17 +22,24 @@ export function RealtimeGallery({
   const [photos, setPhotos] = useState<PhotoRecord[]>(initialPhotos);
   const [freshIds, setFreshIds] = useState<Set<string>>(new Set());
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
+
+  // Load liked IDs from localStorage on mount
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(`memorica-liked-${event.id}`);
+      setLikedIds(new Set(raw ? JSON.parse(raw) as string[] : []));
+    } catch { /* ignore */ }
+  }, [event.id]);
 
   useEffect(() => {
     setPhotos(initialPhotos);
   }, [initialPhotos]);
 
   useEffect(() => {
-    const handleRow = (row: PhotoRecord) => {
+    const handleInsert = (row: PhotoRecord) => {
       if (row.moderation_status !== "approved") return;
-      const withUrl: PhotoRecord = row.public_url
-        ? row
-        : { ...row, public_url: publicStorageUrl(row.storage_path) };
+      const withUrl: PhotoRecord = { ...row, public_url: publicStorageUrl(row.storage_path) };
       setPhotos((cur) => {
         if (cur.some((p) => p.id === withUrl.id)) return cur;
         return [withUrl, ...cur].slice(0, 60);
@@ -40,17 +47,34 @@ export function RealtimeGallery({
       setFreshIds((cur) => new Set([...cur, withUrl.id]));
     };
 
+    const handleUpdate = (row: PhotoRecord) => {
+      setPhotos((cur) => {
+        const exists = cur.some((p) => p.id === row.id);
+        if (exists) {
+          if (row.moderation_status !== "approved") {
+            // Photo was unpublished — remove from gallery
+            return cur.filter((p) => p.id !== row.id);
+          }
+          // Update in place (likes_count, moderation, etc.)
+          return cur.map((p) => p.id === row.id ? { ...p, likes_count: row.likes_count } : p);
+        }
+        // Newly approved photo
+        if (row.moderation_status !== "approved") return cur;
+        const withUrl: PhotoRecord = { ...row, public_url: publicStorageUrl(row.storage_path) };
+        setFreshIds((s) => new Set([...s, withUrl.id]));
+        return [withUrl, ...cur].slice(0, 60);
+      });
+    };
+
     const channel = supabase
       .channel(`gallery-${event.id}`)
-      // Auto-moderation: photo inserted directly as "approved"
       .on("postgres_changes",
         { event: "INSERT", schema: "public", table: "photos", filter: `event_id=eq.${event.id}` },
-        (payload) => handleRow(payload.new as PhotoRecord)
+        (payload) => handleInsert(payload.new as PhotoRecord)
       )
-      // Manual moderation: admin approves → status UPDATE → "approved"
       .on("postgres_changes",
         { event: "UPDATE", schema: "public", table: "photos", filter: `event_id=eq.${event.id}` },
-        (payload) => handleRow(payload.new as PhotoRecord)
+        (payload) => handleUpdate(payload.new as PhotoRecord)
       )
       .subscribe();
 
@@ -81,6 +105,31 @@ export function RealtimeGallery({
 
   const openLightbox = useCallback((index: number) => setLightboxIndex(index), []);
   const closeLightbox = useCallback(() => setLightboxIndex(null), []);
+
+  const toggleLike = useCallback(async (photoId: string) => {
+    const alreadyLiked = likedIds.has(photoId);
+    const action = alreadyLiked ? "unlike" : "like";
+
+    // Optimistic update
+    setPhotos((cur) => cur.map((p) =>
+      p.id === photoId
+        ? { ...p, likes_count: Math.max(0, (p.likes_count ?? 0) + (alreadyLiked ? -1 : 1)) }
+        : p
+    ));
+    const newLiked = new Set(likedIds);
+    if (alreadyLiked) { newLiked.delete(photoId); } else { newLiked.add(photoId); }
+    setLikedIds(newLiked);
+    try { localStorage.setItem(`memorica-liked-${event.id}`, JSON.stringify([...newLiked])); } catch { /* ignore */ }
+
+    // Persist to server
+    try {
+      await fetch(`/api/photos/${photoId}/like`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action }),
+      });
+    } catch { /* ignore — optimistic update already applied */ }
+  }, [likedIds, event.id]);
 
   return (
     <section id="gallery" style={s.section}>
@@ -114,6 +163,8 @@ export function RealtimeGallery({
                 index={i}
                 priority={i < 6}
                 isFresh={freshIds.has(photo.id)}
+                isLiked={likedIds.has(photo.id)}
+                onLike={toggleLike}
                 onClick={() => openLightbox(i)}
               />
             ))}
@@ -126,6 +177,8 @@ export function RealtimeGallery({
         <Lightbox
           photos={allPhotos}
           startIndex={lightboxIndex}
+          likedIds={likedIds}
+          onLike={toggleLike}
           onClose={closeLightbox}
         />
       )}
@@ -352,17 +405,22 @@ function GalleryTile({
   index,
   priority,
   isFresh,
+  isLiked,
+  onLike,
   onClick,
 }: {
   photo: PhotoRecord;
   index: number;
   priority?: boolean;
   isFresh?: boolean;
+  isLiked?: boolean;
+  onLike: (id: string) => void;
   onClick: () => void;
 }) {
   const url = photo.public_url ?? publicStorageUrl(photo.storage_path);
   const uploader = photo.is_anonymous ? null : photo.uploaded_by_name;
   const delay = isFresh ? 0 : Math.min(index, 16) * 55;
+  const likes = photo.likes_count ?? 0;
 
   return (
     <div
@@ -386,6 +444,17 @@ function GalleryTile({
         <div className="rg-zoom-hint" style={s.tileZoomHint}>
           <ZoomIcon />
         </div>
+        {/* Like button */}
+        <button
+          className="rg-like-btn"
+          style={{ ...s.tileLikeBtn, ...(isLiked ? s.tileLikeBtnActive : {}) }}
+          onClick={(e) => { e.stopPropagation(); onLike(photo.id); }}
+          aria-label={isLiked ? "Quitar corazón" : "Dar corazón"}
+          type="button"
+        >
+          <HeartIcon filled={!!isLiked} />
+          {likes > 0 && <span style={s.tileLikeCount}>{likes}</span>}
+        </button>
       </div>
     </div>
   );
@@ -396,10 +465,14 @@ function GalleryTile({
 function Lightbox({
   photos,
   startIndex,
+  likedIds,
+  onLike,
   onClose,
 }: {
   photos: PhotoRecord[];
   startIndex: number;
+  likedIds: Set<string>;
+  onLike: (id: string) => void;
   onClose: () => void;
 }) {
   const [index, setIndex] = useState(startIndex);
@@ -434,6 +507,8 @@ function Lightbox({
   const photo = photos[index];
   const url = photo.public_url ?? publicStorageUrl(photo.storage_path);
   const uploader = photo.is_anonymous ? null : photo.uploaded_by_name;
+  const isLiked = likedIds.has(photo.id);
+  const likes = photo.likes_count ?? 0;
 
   return (
     <div
@@ -483,6 +558,16 @@ function Lightbox({
           alt={uploader ? `Foto de ${uploader}` : "Foto del evento"}
           style={s.lbImg}
         />
+        {/* Like button in lightbox */}
+        <button
+          style={{ ...s.lbLikeBtn, ...(isLiked ? s.lbLikeBtnActive : {}) }}
+          onClick={(e) => { e.stopPropagation(); onLike(photo.id); }}
+          aria-label={isLiked ? "Quitar corazón" : "Dar corazón"}
+          type="button"
+        >
+          <HeartIcon filled={isLiked} />
+          <span>{likes > 0 ? likes : ""}</span>
+        </button>
         {uploader && (
           <div style={s.lbCaption}>{uploader}</div>
         )}
@@ -544,6 +629,14 @@ function ZoomIcon() {
       <line x1="16.5" y1="16.5" x2="22" y2="22" />
       <line x1="8" y1="11" x2="14" y2="11" />
       <line x1="11" y1="8" x2="11" y2="14" />
+    </svg>
+  );
+}
+
+function HeartIcon({ filled }: { filled: boolean }) {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill={filled ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
     </svg>
   );
 }
@@ -635,6 +728,33 @@ const s: Record<string, React.CSSProperties> = {
     transition: "opacity 200ms ease",
     pointerEvents: "none",
   },
+  tileLikeBtn: {
+    position: "absolute",
+    bottom: 8,
+    right: 8,
+    display: "flex",
+    alignItems: "center",
+    gap: 4,
+    padding: "5px 9px",
+    borderRadius: 999,
+    background: "rgba(0,0,0,0.5)",
+    backdropFilter: "blur(8px)",
+    border: "none",
+    color: "rgba(255,255,255,0.7)",
+    fontSize: 12,
+    fontWeight: 700,
+    cursor: "pointer",
+    transition: "transform 150ms ease, color 150ms ease",
+    WebkitTapHighlightColor: "transparent",
+  },
+  tileLikeBtnActive: {
+    color: "#fb7185",
+  },
+  tileLikeCount: {
+    fontSize: 11,
+    fontWeight: 700,
+    lineHeight: 1,
+  },
   // Lightbox
   lbClose: {
     position: "fixed",
@@ -707,6 +827,28 @@ const s: Record<string, React.CSSProperties> = {
     fontWeight: 600,
     color: "rgba(255,255,255,0.55)",
     letterSpacing: "0.03em",
+  },
+  lbLikeBtn: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 7,
+    marginTop: 14,
+    padding: "10px 22px",
+    borderRadius: 999,
+    background: "rgba(255,255,255,0.1)",
+    border: "1px solid rgba(255,255,255,0.15)",
+    color: "rgba(255,255,255,0.7)",
+    fontSize: 15,
+    fontWeight: 700,
+    cursor: "pointer",
+    backdropFilter: "blur(8px)",
+    transition: "transform 150ms ease, color 150ms ease, background 150ms ease",
+    WebkitTapHighlightColor: "transparent",
+  },
+  lbLikeBtnActive: {
+    color: "#fb7185",
+    background: "rgba(251,113,133,0.15)",
+    border: "1px solid rgba(251,113,133,0.3)",
   },
 };
 

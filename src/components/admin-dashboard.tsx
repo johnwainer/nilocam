@@ -2051,6 +2051,11 @@ export function AdminDashboard({
                                 {photo.filter_name}
                               </span>
                             )}
+                            {(photo.likes_count ?? 0) > 0 && (
+                              <span style={s.likesChip}>
+                                ♥ {photo.likes_count}
+                              </span>
+                            )}
                           </div>
 
                           <div style={s.photoActions}>
@@ -3602,6 +3607,7 @@ const s: Record<string, React.CSSProperties> = {
   photoAuthor: { fontSize: 13, lineHeight: 1.2 },
   photoTime: { fontSize: 11 },
   filterPill: { fontSize: 10, padding: "2px 8px", marginTop: 2, width: "fit-content" },
+  likesChip: { fontSize: 10, color: "#e05", marginTop: 2, width: "fit-content" },
   photoActions: { padding: "10px 12px 12px", display: "flex", flexDirection: "column" as const, gap: 7 },
   actionRow: { display: "flex", gap: 6 },
   confirmText: { fontSize: 12, color: "#7f1d1d", fontWeight: 600, margin: 0 },
