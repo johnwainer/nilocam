@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { EventRecord, PhotoRecord } from "@/types";
 import { formatDate, publicStorageUrl } from "@/lib/utils";
@@ -336,7 +337,7 @@ export function EventLanding({
 
       {/* ── POWERED BY (siempre visible) ──────────────────────────────── */}
       <div style={{ padding: "20px 0 max(20px, env(safe-area-inset-bottom, 20px))", borderTop: `1px solid ${borderColor}`, textAlign: "center" }}>
-        <a
+        <Link
           href="/"
           style={{
             display: "inline-flex",
@@ -357,7 +358,7 @@ export function EventLanding({
             <circle cx="12" cy="13.5" r="2" fill="currentColor" stroke="none" />
           </svg>
           Crea tu evento con Memorica
-        </a>
+        </Link>
       </div>
     </main>
   );
