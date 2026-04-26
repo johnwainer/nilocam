@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { APP_NAME } from "@/lib/constants";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 
-export function SpyCatIcon({ size = 32 }: { size?: number }) {
+export function AppIcon({ size = 32 }: { size?: number }) {
   return (
     <svg
       viewBox="0 0 32 32"
@@ -17,44 +17,25 @@ export function SpyCatIcon({ size = 32 }: { size?: number }) {
     >
       {/* background */}
       <rect width="32" height="32" rx="7" fill="#F5F2ED" />
-
-      {/* left ear */}
-      <path d="M 9 13.5 L 10.8 6.5 L 13.5 11.5" stroke="#0d0f15" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-      {/* right ear */}
-      <path d="M 18.5 11.5 L 21.2 6.5 L 23 13.5" stroke="#0d0f15" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-
-      {/* face oval */}
-      <ellipse cx="16" cy="18.5" rx="9.5" ry="8.8" stroke="#0d0f15" strokeWidth="1.4" />
-
-      {/* left eye — almond */}
-      <path d="M 10.2 17.2 C 10.8 15.4 12.4 14.8 13.6 15.2 C 14.8 15.6 15.2 16.7 14.9 17.4 C 14.4 18.3 11.4 18.3 10.2 17.2 Z"
-            stroke="#0d0f15" strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round" />
-      {/* left pupil */}
-      <ellipse cx="12.5" cy="16.8" rx="0.9" ry="1.3" fill="#0d0f15" />
-
-      {/* right eye — almond */}
-      <path d="M 17.1 17.4 C 16.8 16.7 17.2 15.6 18.4 15.2 C 19.6 14.8 21.2 15.4 21.8 17.2 C 20.6 18.3 17.6 18.3 17.1 17.4 Z"
-            stroke="#0d0f15" strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round" />
-      {/* right pupil */}
-      <ellipse cx="19.5" cy="16.8" rx="0.9" ry="1.3" fill="#0d0f15" />
-
-      {/* nose — tiny inverted triangle */}
-      <path d="M 15.1 20.4 L 16 19.3 L 16.9 20.4 Z" fill="#0d0f15" />
-
-      {/* mouth */}
-      <path d="M 15.1 20.4 Q 14.1 21.6 13.2 21.4" stroke="#0d0f15" strokeWidth="1.1" strokeLinecap="round" />
-      <path d="M 16.9 20.4 Q 17.9 21.6 18.8 21.4" stroke="#0d0f15" strokeWidth="1.1" strokeLinecap="round" />
-
-      {/* whiskers left */}
-      <line x1="4.5" y1="19" x2="13.5" y2="19.4" stroke="#0d0f15" strokeWidth="0.75" strokeLinecap="round" opacity="0.6" />
-      <line x1="4.8" y1="21" x2="13.5" y2="21.2" stroke="#0d0f15" strokeWidth="0.65" strokeLinecap="round" opacity="0.4" />
-
-      {/* whiskers right */}
-      <line x1="18.5" y1="19.4" x2="27.5" y2="19" stroke="#0d0f15" strokeWidth="0.75" strokeLinecap="round" opacity="0.6" />
-      <line x1="18.5" y1="21.2" x2="27.2" y2="21" stroke="#0d0f15" strokeWidth="0.65" strokeLinecap="round" opacity="0.4" />
+      {/* camera body */}
+      <rect x="4" y="12" width="24" height="15" rx="3.5" stroke="#0d0f15" strokeWidth="1.5" />
+      {/* viewfinder bump */}
+      <path d="M11 12 L11 8.5 Q11 7 12.5 7 L19.5 7 Q21 7 21 8.5 L21 12" stroke="#0d0f15" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      {/* shutter button */}
+      <circle cx="7" cy="9.5" r="2.2" stroke="#0d0f15" strokeWidth="1.2" />
+      <circle cx="7" cy="9.5" r="1" fill="#0d0f15" />
+      {/* lens outer */}
+      <circle cx="16" cy="19.5" r="5" stroke="#0d0f15" strokeWidth="1.5" />
+      {/* lens inner */}
+      <circle cx="16" cy="19.5" r="2.4" fill="#0d0f15" />
+      {/* lens highlight */}
+      <circle cx="14.6" cy="18.2" r="0.8" fill="#F5F2ED" opacity="0.7" />
     </svg>
   );
 }
+
+/** @deprecated Use AppIcon */
+export const SpyCatIcon = AppIcon;
 
 const supabase = createSupabaseBrowserClient();
 
@@ -81,7 +62,7 @@ export function TopNav() {
         <nav style={s.nav}>
           {/* Brand */}
           <Link href="/" style={s.brand}>
-            <SpyCatIcon size={32} />
+            <AppIcon size={32} />
             <strong style={s.brandName}>{APP_NAME}</strong>
           </Link>
 
