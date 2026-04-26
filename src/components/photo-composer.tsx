@@ -145,6 +145,7 @@ export function PhotoComposer({ event, onUploaded, compact, accentColor }: Compo
   const [uploadProgress, setUploadProgress] = useState<{ done: number; total: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [acceptedTerms, setAcceptedTerms] = useState(true);
+  const [uploadedPending, setUploadedPending] = useState(false);
   const uploadRef = useRef<HTMLInputElement | null>(null);
   const cameraRef = useRef<HTMLInputElement | null>(null);
 
@@ -223,6 +224,7 @@ export function PhotoComposer({ event, onUploaded, compact, accentColor }: Compo
     setUploadProgress(null);
     setError(null);
     setAcceptedTerms(true);
+    setUploadedPending(false);
   };
 
   const submit = async () => {
@@ -363,6 +365,10 @@ export function PhotoComposer({ event, onUploaded, compact, accentColor }: Compo
       );
       setIsSaving(false);
       setUploadProgress(null);
+    } else if (event.moderation_mode === "manual") {
+      setUploadedPending(true);
+      setIsSaving(false);
+      setUploadProgress(null);
     } else {
       reset();
     }
@@ -388,9 +394,10 @@ export function PhotoComposer({ event, onUploaded, compact, accentColor }: Compo
 
   const publishLabel = (() => {
     if (!isSaving) {
+      const verb = event.moderation_mode === "manual" ? "Enviar" : "Publicar";
       return files.length > 1
-        ? `Publicar ${files.length} fotos →`
-        : "Publicar foto →";
+        ? `${verb} ${files.length} fotos →`
+        : `${verb} foto →`;
     }
     if (uploadProgress) {
       return (
@@ -453,8 +460,57 @@ export function PhotoComposer({ event, onUploaded, compact, accentColor }: Compo
         className="sr-only"
       />
 
+      {/* ── Pending success screen ──────────────────────────────────────── */}
+      {isOpen && uploadedPending && (
+        <div className="pc-backdrop">
+          <div className="card glass pc-modal" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 20, padding: 32, textAlign: "center" }}>
+            <div style={{ width: 64, height: 64, borderRadius: "50%", background: "rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28 }}>
+              ✓
+            </div>
+            <div style={{ display: "grid", gap: 8 }}>
+              <h3 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: "#fff", letterSpacing: "-0.02em" }}>
+                ¡Foto enviada!
+              </h3>
+              <p style={{ margin: 0, fontSize: 15, color: "rgba(255,255,255,0.6)", lineHeight: 1.65, maxWidth: 320 }}>
+                Tu foto está esperando aprobación. El organizador la revisará pronto y aparecerá en la galería.
+              </p>
+              <p style={{ margin: 0, fontSize: 14, color: "rgba(255,255,255,0.45)", lineHeight: 1.5 }}>
+                Mientras tanto, ¡puedes seguir subiendo fotos del evento!
+              </p>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10, width: "100%", maxWidth: 280 }}>
+              <button
+                type="button"
+                style={styles.btnPublish}
+                onClick={() => {
+                  previewUrls.forEach((u) => URL.revokeObjectURL(u));
+                  setFiles([]);
+                  setPreviewUrls([]);
+                  setActiveIndex(0);
+                  setFilter("none");
+                  setTemplate("clean");
+                  setError(null);
+                  setAcceptedTerms(true);
+                  setUploadedPending(false);
+                  setIsOpen(false);
+                }}
+              >
+                Subir otra foto
+              </button>
+              <button
+                type="button"
+                style={{ background: "none", border: "none", color: "rgba(255,255,255,0.4)", fontSize: 14, cursor: "pointer", padding: "8px 0" }}
+                onClick={reset}
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── Editor modal ────────────────────────────────────────────────── */}
-      {isOpen && files.length > 0 && activeUrl ? (
+      {isOpen && !uploadedPending && files.length > 0 && activeUrl ? (
         <div className="pc-backdrop">
           <div className="card glass pc-modal">
             {/* Header */}
@@ -909,7 +965,7 @@ const styles: Record<string, React.CSSProperties> = {
     position: "relative",
     width: "100%",
     flex: 1,
-    minHeight: 280,
+    minHeight: 200,
   },
   filterNameBadge: {
     position: "absolute",
@@ -927,11 +983,11 @@ const styles: Record<string, React.CSSProperties> = {
   },
   filterScrollOuter: {
     background: "rgba(0,0,0,0.6)",
-    padding: "10px 10px 8px",
+    padding: "8px 8px 6px",
   },
   filterScroll: {
     display: "flex",
-    gap: 8,
+    gap: 6,
     overflowX: "auto",
     scrollbarWidth: "none" as const,
     paddingBottom: 2,
@@ -940,7 +996,7 @@ const styles: Record<string, React.CSSProperties> = {
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
-    gap: 5,
+    gap: 4,
     background: "none",
     border: "none",
     cursor: "pointer",
@@ -949,28 +1005,28 @@ const styles: Record<string, React.CSSProperties> = {
   },
   filterThumbImg: {
     position: "relative",
-    width: 58,
-    height: 74,
-    borderRadius: 10,
+    width: 46,
+    height: 56,
+    borderRadius: 8,
     overflow: "hidden",
     transition: "outline 150ms ease",
   },
   filterThumbLabel: {
-    fontSize: 10,
+    fontSize: 9,
     letterSpacing: "0.03em",
     whiteSpace: "nowrap" as const,
     transition: "color 150ms ease",
   },
   formPane: {
     display: "grid",
-    gap: 16,
+    gap: 10,
     alignContent: "start",
   },
   formLabel: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: 700,
     color: "rgba(255,255,255,0.5)",
-    marginBottom: 8,
+    marginBottom: 5,
     textTransform: "uppercase" as const,
     letterSpacing: "0.1em",
   },
@@ -991,43 +1047,43 @@ const styles: Record<string, React.CSSProperties> = {
     gap: 8,
   },
   chip: {
-    padding: "10px 16px",
+    padding: "7px 12px",
     borderRadius: 999,
     border: "1px solid rgba(255,255,255,0.1)",
     background: "rgba(255,255,255,0.05)",
     color: "rgba(255,255,255,0.75)",
     cursor: "pointer",
-    fontSize: 14,
+    fontSize: 13,
   },
   chipActive: {
-    padding: "10px 16px",
+    padding: "7px 12px",
     borderRadius: 999,
     border: "1px solid rgba(212,163,115,0.6)",
     background: "rgba(212,163,115,0.15)",
     color: "#fff",
     cursor: "pointer",
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: 700,
   },
   btnPublish: {
-    minHeight: 54,
+    minHeight: 48,
     borderRadius: 999,
     background: "#ffffff",
     color: "#060a18",
     fontWeight: 700,
-    fontSize: 17,
+    fontSize: 16,
     border: "none",
     cursor: "pointer",
     WebkitTapHighlightColor: "transparent",
     letterSpacing: "-0.01em",
   },
   btnPublishDisabled: {
-    minHeight: 54,
+    minHeight: 48,
     borderRadius: 999,
     background: "rgba(255,255,255,0.25)",
     color: "rgba(0,0,0,0.45)",
     fontWeight: 700,
-    fontSize: 17,
+    fontSize: 16,
     border: "none",
     cursor: "not-allowed",
   },
