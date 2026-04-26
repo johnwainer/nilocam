@@ -1193,7 +1193,7 @@ export function AdminDashboard({
                           type="date"
                           value={selected.event_date ? selected.event_date.slice(0, 10) : ""}
                           onChange={(e) =>
-                            updateSelected("event_date", e.target.value ? new Date(e.target.value).toISOString() : null)
+                            updateSelected("event_date", e.target.value || null)
                           }
                         />
                       </label>

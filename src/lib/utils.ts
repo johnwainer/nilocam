@@ -27,6 +27,7 @@ export function formatDate(value: string | null | undefined) {
   if (!value) return "";
   return new Intl.DateTimeFormat("es-CO", {
     dateStyle: "long",
+    timeZone: "UTC",
   }).format(new Date(value));
 }
 
