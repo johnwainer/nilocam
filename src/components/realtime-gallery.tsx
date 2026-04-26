@@ -153,6 +153,8 @@ export function RealtimeGallery({
             freshIds={freshIds}
             autoplay={event.landing_config.galleryAutoplay ?? false}
             autoplayInterval={event.landing_config.galleryAutoplayInterval ?? 4}
+            likedIds={likedIds}
+            onLike={toggleLike}
           />
         ) : (
           <div className="rg-masonry">
@@ -195,11 +197,15 @@ function SliderView({
   freshIds,
   autoplay,
   autoplayInterval,
+  likedIds,
+  onLike,
 }: {
   photos: PhotoRecord[];
   freshIds: Set<string>;
   autoplay: boolean;
   autoplayInterval: number;
+  likedIds: Set<string>;
+  onLike: (id: string) => void;
 }) {
   const [index, setIndex] = useState(0);
   const [animKey, setAnimKey] = useState(0);
@@ -312,6 +318,8 @@ function SliderView({
   const uploader = photo.is_anonymous ? null : photo.uploaded_by_name;
   const isNew = freshIds.has(photo.id);
   const showArrows = count > 1;
+  const isLiked = likedIds.has(photo.id);
+  const likes = photo.likes_count ?? 0;
 
   const wrapStyle: React.CSSProperties = isFullscreen && !document.fullscreenElement
     ? { ...sl.cardWrap, ...sl.cardWrapFullscreen }
@@ -348,12 +356,23 @@ function SliderView({
           />
           <div style={sl.overlay} />
 
-          {/* Bottom row: uploader + counter */}
+          {/* Bottom row: uploader + like + counter */}
           <div style={sl.bottomRow}>
             {uploader ? <span style={sl.captionName}>{uploader}</span> : <span />}
-            <span style={sl.counter}>
-              {safeIndex + 1}<span style={{ opacity: 0.35 }}> / {count}</span>
-            </span>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <button
+                style={{ ...sl.likeBtn, ...(isLiked ? sl.likeBtnActive : {}) }}
+                onClick={(e) => { e.stopPropagation(); onLike(photo.id); }}
+                aria-label={isLiked ? "Quitar corazón" : "Dar corazón"}
+                type="button"
+              >
+                <HeartIcon filled={isLiked} />
+                {likes > 0 && <span style={{ fontSize: 12, fontWeight: 700 }}>{likes}</span>}
+              </button>
+              <span style={sl.counter}>
+                {safeIndex + 1}<span style={{ opacity: 0.35 }}> / {count}</span>
+              </span>
+            </div>
           </div>
 
           {/* New photo badge */}
@@ -913,6 +932,26 @@ const sl: Record<string, React.CSSProperties> = {
     fontWeight: 700,
     letterSpacing: "0.06em",
     color: "rgba(255,255,255,0.55)",
+  },
+  likeBtn: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 5,
+    padding: "6px 12px",
+    borderRadius: 999,
+    background: "rgba(0,0,0,0.45)",
+    backdropFilter: "blur(8px)",
+    border: "1px solid rgba(255,255,255,0.2)",
+    color: "rgba(255,255,255,0.85)",
+    cursor: "pointer",
+    transition: "transform 150ms ease, color 150ms ease, background 150ms ease",
+    WebkitTapHighlightColor: "transparent",
+    zIndex: 3,
+  } as React.CSSProperties,
+  likeBtnActive: {
+    color: "#fb7185",
+    background: "rgba(251,113,133,0.2)",
+    border: "1px solid rgba(251,113,133,0.4)",
   },
   arrow: {
     position: "absolute",
