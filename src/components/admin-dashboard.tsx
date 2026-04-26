@@ -2051,11 +2051,12 @@ export function AdminDashboard({
                                 {photo.filter_name}
                               </span>
                             )}
-                            {(photo.likes_count ?? 0) > 0 && (
-                              <span style={s.likesChip}>
-                                ♥ {photo.likes_count}
-                              </span>
-                            )}
+                            <span style={{
+                              ...s.likesChip,
+                              opacity: (photo.likes_count ?? 0) > 0 ? 1 : 0.35,
+                            }}>
+                              ♥ {photo.likes_count ?? 0}
+                            </span>
                           </div>
 
                           <div style={s.photoActions}>

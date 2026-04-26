@@ -453,7 +453,7 @@ function GalleryTile({
           type="button"
         >
           <HeartIcon filled={!!isLiked} />
-          {likes > 0 && <span style={s.tileLikeCount}>{likes}</span>}
+          <span style={s.tileLikeCount}>{likes > 0 ? likes : ""}</span>
         </button>
       </div>
     </div>
@@ -735,20 +735,23 @@ const s: Record<string, React.CSSProperties> = {
     display: "flex",
     alignItems: "center",
     gap: 4,
-    padding: "5px 9px",
+    padding: "6px 10px",
     borderRadius: 999,
-    background: "rgba(0,0,0,0.5)",
+    background: "rgba(0,0,0,0.55)",
     backdropFilter: "blur(8px)",
-    border: "none",
-    color: "rgba(255,255,255,0.7)",
+    border: "1px solid rgba(255,255,255,0.15)",
+    color: "rgba(255,255,255,0.85)",
     fontSize: 12,
     fontWeight: 700,
     cursor: "pointer",
-    transition: "transform 150ms ease, color 150ms ease",
+    transition: "transform 150ms ease, color 150ms ease, background 150ms ease",
     WebkitTapHighlightColor: "transparent",
+    zIndex: 2,
   },
   tileLikeBtnActive: {
     color: "#fb7185",
+    background: "rgba(251,113,133,0.2)",
+    border: "1px solid rgba(251,113,133,0.4)",
   },
   tileLikeCount: {
     fontSize: 11,
