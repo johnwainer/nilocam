@@ -96,7 +96,7 @@ export function TopNav() {
             <Link href="/#precios" style={s.navLink} className="nav-link">
               Precios
             </Link>
-            <Link href="/event/demo-nilo-cam" style={s.navLink} className="nav-link">
+            <Link href="/event/demo-memorica" style={s.navLink} className="nav-link">
               Demo
             </Link>
           </div>

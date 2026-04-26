@@ -15,7 +15,7 @@ export function Footer() {
           <div style={s.links}>
             <Link href="/#como-funciona" style={s.link}>Cómo funciona</Link>
             <Link href="/#precios" style={s.link}>Precios</Link>
-            <Link href="/event/demo-nilo-cam" style={s.link}>Demo</Link>
+            <Link href="/event/demo-memorica" style={s.link}>Demo</Link>
             <Link href="/terms" style={s.link}>Términos</Link>
             <Link href="/privacy" style={s.link}>Privacidad</Link>
           </div>

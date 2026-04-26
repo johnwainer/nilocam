@@ -46,9 +46,9 @@ export function BrandMark({ compact = false, className }: Props) {
               : "text-base font-semibold tracking-[0.22em] uppercase"
           }
         >
-          Nilo Cam
+          Memorica
         </p>
-        <p className="text-xs text-[var(--app-muted)]">Gato espía para eventos</p>
+        <p className="text-xs text-[var(--app-muted)]">Recuerdos en vivo para tu evento</p>
       </div>
     </div>
   );

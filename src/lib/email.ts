@@ -96,7 +96,7 @@ export const DEFAULT_TEMPLATE_BODIES: Record<string, string> = {
     para("Tu cuenta está lista. Puedes empezar a crear eventos ahora mismo.") +
     infoTable(row("Créditos de bienvenida", "{{credits}} créditos") + row("Correo", "{{email}}")) +
     para("Con tus créditos de bienvenida puedes crear tu primer evento y dar acceso a la galería en vivo.") +
-    btn("Ir al panel", "https://nilocam.vercel.app/admin"),
+    btn("Ir al panel", "https://memorica.vercel.app/admin"),
 
   tpl_payment_confirmed_body:
     h1("Pago confirmado.") +
@@ -108,7 +108,7 @@ export const DEFAULT_TEMPLATE_BODIES: Record<string, string> = {
       row("Nuevo saldo", "{{balance}} créditos")
     ) +
     para("Los créditos ya están disponibles en tu cuenta.") +
-    btn("Ver mi saldo", "https://nilocam.vercel.app/admin"),
+    btn("Ver mi saldo", "https://memorica.vercel.app/admin"),
 
   tpl_bank_approved_body:
     h1("Transferencia aprobada.") +
@@ -119,7 +119,7 @@ export const DEFAULT_TEMPLATE_BODIES: Record<string, string> = {
       row("Nuevo saldo", "{{balance}} créditos")
     ) +
     para("Los créditos ya están disponibles en tu cuenta. ¡Gracias por tu compra!") +
-    btn("Ver mi saldo", "https://nilocam.vercel.app/admin"),
+    btn("Ver mi saldo", "https://memorica.vercel.app/admin"),
 
   tpl_bank_rejected_body:
     h1("Transferencia no aprobada.") +
@@ -141,7 +141,7 @@ export const DEFAULT_TEMPLATE_BODIES: Record<string, string> = {
       row("Concepto", "{{description}}")
     ) +
     para("Si tienes preguntas sobre este ajuste, contáctanos.") +
-    btn("Ver mi saldo", "https://nilocam.vercel.app/admin"),
+    btn("Ver mi saldo", "https://memorica.vercel.app/admin"),
 
   tpl_bank_transfer_received_body:
     h1("Comprobante recibido.") +
@@ -151,7 +151,7 @@ export const DEFAULT_TEMPLATE_BODIES: Record<string, string> = {
       row("Monto", "${{amount}} USD")
     ) +
     para("Te notificaremos por correo cuando tu solicitud sea procesada.") +
-    btn("Ver mi cuenta", "https://nilocam.vercel.app/admin"),
+    btn("Ver mi cuenta", "https://memorica.vercel.app/admin"),
 };
 
 // ---------------------------------------------------------------------------

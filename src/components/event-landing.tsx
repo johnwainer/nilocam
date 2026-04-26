@@ -327,8 +327,8 @@ export function EventLanding({
         <section style={{ padding: "32px 0", borderTop: `1px solid ${borderColor}` }}>
           <div className="container">
             <p style={{ margin: 0, fontSize: 12, color: textMuted, opacity: 0.6 }}>
-              Powered by <strong>Nilo Cam</strong> · ¿Necesitas ayuda?{" "}
-              <a href="mailto:hola@nilocam.com" style={{ color: textMuted }}>hola@nilocam.com</a>
+              Powered by <strong>Memorica</strong> · ¿Necesitas ayuda?{" "}
+              <a href="mailto:hola@memorica.app" style={{ color: textMuted }}>hola@memorica.app</a>
             </p>
           </div>
         </section>

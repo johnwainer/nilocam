@@ -2031,7 +2031,7 @@ function EmailTab({
           <div style={p.payFieldRow}>
             <div style={p.payField}>
               <label style={p.formLabel}>Nombre del remitente</label>
-              <input className="input" type="text" value={draft.from_name} onChange={(e) => set("from_name", e.target.value)} placeholder="Nilo Cam" style={{ fontSize: 13 }} />
+              <input className="input" type="text" value={draft.from_name} onChange={(e) => set("from_name", e.target.value)} placeholder="Memorica" style={{ fontSize: 13 }} />
             </div>
             <div style={{ ...p.payField, flex: "2 1 280px" }}>
               <label style={p.formLabel}>Email del remitente</label>

@@ -86,7 +86,7 @@ export function PhotoEditor({ file, onCancel, onSave }: Props) {
       ctx.strokeRect(12, 12, width - 24, height - 24);
       ctx.fillStyle = "rgba(255,255,255,0.95)";
       ctx.font = "bold 36px sans-serif";
-      ctx.fillText("Nilo Cam", 36, 58);
+      ctx.fillText("Memorica", 36, 58);
     }
 
     const blob = await new Promise<Blob | null>((resolve) =>

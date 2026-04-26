@@ -129,7 +129,7 @@ export default function HomePage() {
               en 3 pasos.
             </h2>
             <p className="muted" style={styles.sectionLead}>
-              No hay que ser técnico. Si puedes mandar un mensaje de WhatsApp, puedes usar Nilo Cam.
+              No hay que ser técnico. Si puedes mandar un mensaje de WhatsApp, puedes usar Memorica.
             </p>
           </div>
 
@@ -382,7 +382,7 @@ export default function HomePage() {
               <Link className="btn btn-primary" href="/auth" style={styles.ctaBtnPrimary}>
                 Empezar gratis →
               </Link>
-              <Link className="btn btn-ghost" href="/event/demo-nilo-cam" style={styles.ctaBtnSecondary}>
+              <Link className="btn btn-ghost" href="/event/demo-memorica" style={styles.ctaBtnSecondary}>
                 Ver demo en vivo
               </Link>
             </div>

@@ -1,6 +1,6 @@
 {
-  "name": "Nilo Cam",
-  "short_name": "Nilo Cam",
+  "name": "Memorica",
+  "short_name": "Memorica",
   "description": "Fotos en vivo para eventos con QR",
   "start_url": "/",
   "display": "standalone",

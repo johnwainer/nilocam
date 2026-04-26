@@ -2,7 +2,7 @@ import { EventTypePreset, EventTypeKey, EventLandingConfig, LandingTemplatePrese
 
 export const EVENT_BUCKET = "event-photos";
 
-export const APP_NAME = "Nilo Cam";
+export const APP_NAME = "Memorica";
 export const APP_TAGLINE = "Fotos en tiempo real para eventos con QR, PWA y landing editable.";
 
 export const EVENT_TYPES: EventTypePreset[] = [
@@ -110,7 +110,7 @@ export const EVENT_TYPES: EventTypePreset[] = [
 
 export const DEFAULT_LANDING_CONFIG: EventLandingConfig = {
   sections: ["hero", "ctas", "event-info", "gallery", "privacy", "support"],
-  heroEyebrow: "Nilo Cam eventos en vivo",
+  heroEyebrow: "Memorica eventos en vivo",
   heroTitle: "Sube o toma fotos sin instalar nada",
   heroSubtitle: "Escanea el QR, captura el momento y míralo aparecer en tiempo real en la landing del evento.",
   primaryCta: "Tomar foto",

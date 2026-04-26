@@ -44,7 +44,7 @@ export async function POST(request: Request) {
       smtp_user: "",
       smtp_password: "",
       smtp_secure: false,
-      from_name: "Nilo Cam",
+      from_name: "Memorica",
       from_email: "noreply@example.com",
       tpl_welcome_subject: "Bienvenido a {{app_name}}, {{name}}",
       tpl_welcome_body: "",
@@ -73,17 +73,17 @@ export async function POST(request: Request) {
 
   const to = body.to ?? user.email!;
 
-  const result = await sendEmail(settings, to, "Email de prueba — Nilo Cam", `
+  const result = await sendEmail(settings, to, "Email de prueba — Memorica", `
     <h2 style="margin:0 0 16px;font-size:24px;font-weight:700;color:#0b0b0f;">¡El email funciona!</h2>
     <p style="margin:0 0 12px;font-size:16px;color:#444;line-height:1.6;">
-      Esta es una confirmación de que la configuración de email de <strong>Nilo Cam</strong> está funcionando correctamente.
+      Esta es una confirmación de que la configuración de email de <strong>Memorica</strong> está funcionando correctamente.
     </p>
     <p style="margin:0 0 12px;font-size:16px;color:#444;line-height:1.6;">
       Proveedor: <strong>${settings.provider === "resend" ? "Resend" : "SMTP"}</strong><br />
       Remitente: <strong>${settings.from_name} &lt;${settings.from_email}&gt;</strong><br />
       Destinatario: <strong>${to}</strong>
     </p>
-    <p style="margin:0;font-size:14px;color:#888;">Enviado desde el panel de super admin de Nilo Cam.</p>
+    <p style="margin:0;font-size:14px;color:#888;">Enviado desde el panel de super admin de Memorica.</p>
   `);
 
   if (!result.ok) {

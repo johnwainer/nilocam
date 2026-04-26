@@ -82,7 +82,7 @@ export async function POST(request: Request) {
       purchase_units: [
         {
           amount: { currency_code: "USD", value: amountUsd.toFixed(2) },
-          description: `${credits} créditos NiloCam`,
+          description: `${credits} créditos Memorica`,
           custom_id: purchase.id,
         },
       ],

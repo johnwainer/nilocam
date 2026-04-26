@@ -3,7 +3,7 @@ import type { EventRecord, PhotoRecord } from "@/types";
 
 const DEMO_EVENT: EventRecord = {
   id: "00000000-0000-0000-0000-000000000001",
-  slug: "demo-nilo-cam",
+  slug: "demo-memorica",
   title: "Boda de Ana & Carlos",
   subtitle: "Una noche que nunca olvidaremos",
   event_type_key: "matrimonio",

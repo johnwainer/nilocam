@@ -83,7 +83,7 @@ export function LandingHero() {
             <Link href="/auth" className="btn btn-primary">
               Empezar gratis
             </Link>
-            <Link href="/event/demo-nilo-cam" className="btn btn-secondary">
+            <Link href="/event/demo-memorica" className="btn btn-secondary">
               Ver demo en vivo
             </Link>
           </div>

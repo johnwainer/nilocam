@@ -61,7 +61,7 @@ export function AdminLogin() {
   const origin =
     typeof window !== "undefined" && window.location.origin
       ? window.location.origin
-      : "https://nilocam.vercel.app";
+      : "https://memorica.vercel.app";
 
   const switchMode = (next: Mode) => {
     setMode(next);

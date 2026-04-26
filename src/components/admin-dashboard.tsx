@@ -225,10 +225,10 @@ export function AdminDashboard({
   const [tourStep, setTourStep] = useState<number>(() => {
     if (initialEvents.length > 0) return -1;
     if (typeof window === "undefined") return -1;
-    return localStorage.getItem("nilo-tour-v1") ? -1 : 0;
+    return localStorage.getItem("memorica-tour-v1") ? -1 : 0;
   });
   const closeTour = useCallback(() => {
-    localStorage.setItem("nilo-tour-v1", "1");
+    localStorage.setItem("memorica-tour-v1", "1");
     setTourStep(-1);
   }, []);
 
@@ -680,7 +680,7 @@ export function AdminDashboard({
       const url = URL.createObjectURL(content);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `${selected.slug || "fotos"}-nilo-cam.zip`;
+      a.download = `${selected.slug || "fotos"}-memorica.zip`;
       a.click();
       URL.revokeObjectURL(url);
     } catch (err) {
@@ -3653,7 +3653,7 @@ const TOUR_STEPS_DEF: Array<{
     selector: '[data-tour="section-evento"]',
     tab: "evento",
     title: "1 · Nombre y URL del evento",
-    body: "Aquí defines los datos clave: el nombre del evento (lo que aparece en la galería), la fecha, el lugar y la URL única. La URL es la dirección que compartirás con tus invitados — por ejemplo nilocam.com/event/boda-ana-y-juan. El nombre y la URL son obligatorios para poder guardar.",
+    body: "Aquí defines los datos clave: el nombre del evento (lo que aparece en la galería), la fecha, el lugar y la URL única. La URL es la dirección que compartirás con tus invitados — por ejemplo memorica.app/event/boda-ana-y-juan. El nombre y la URL son obligatorios para poder guardar.",
   },
   {
     selector: '[data-tour="section-design"]',

@@ -2,7 +2,7 @@
  * Pure HTML layout wrapper for email previews.
  * No server-only imports — safe to use in client components.
  */
-export function emailLayout(body: string, fromName = "Nilo Cam") {
+export function emailLayout(body: string, fromName = "Memorica") {
   return `<!DOCTYPE html>
 <html lang="es">
 <head>
@@ -21,9 +21,9 @@ export function emailLayout(body: string, fromName = "Nilo Cam") {
         <tr><td style="padding:20px 40px 28px;border-top:1px solid #f0f0f0;">
           <p style="margin:0;font-size:12px;color:#999;line-height:1.6;">
             © ${new Date().getFullYear()} ${fromName}. Todos los derechos reservados.<br />
-            <a href="https://nilocam.vercel.app/privacy" style="color:#999;">Privacidad</a>
+            <a href="https://memorica.vercel.app/privacy" style="color:#999;">Privacidad</a>
             &nbsp;·&nbsp;
-            <a href="https://nilocam.vercel.app/terms" style="color:#999;">Términos</a>
+            <a href="https://memorica.vercel.app/terms" style="color:#999;">Términos</a>
           </p>
         </td></tr>
       </table>

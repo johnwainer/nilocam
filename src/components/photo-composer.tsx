@@ -131,7 +131,7 @@ type ComposerProps = {
   accentColor?: string;
 };
 
-const LS_NAME_KEY = "nilo-guest-name";
+const LS_NAME_KEY = "memorica-guest-name";
 
 export function PhotoComposer({ event, onUploaded, compact, accentColor }: ComposerProps) {
   const [isOpen, setIsOpen] = useState(false);

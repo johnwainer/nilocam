@@ -64,7 +64,7 @@ export async function POST(request: Request) {
     p_smtp_user:                      body.smtp_user                      ?? "",
     p_smtp_password:                  body.smtp_password                  ?? "",
     p_smtp_secure:                    body.smtp_secure                    ?? false,
-    p_from_name:                      body.from_name                      ?? "Nilo Cam",
+    p_from_name:                      body.from_name                      ?? "Memorica",
     p_from_email:                     body.from_email                     ?? "noreply@example.com",
     p_tpl_welcome_subject:            body.tpl_welcome_subject            ?? "Bienvenido a {{app_name}}, {{name}}",
     p_tpl_welcome_body:               body.tpl_welcome_body               ?? "",

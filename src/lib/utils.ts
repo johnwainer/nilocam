@@ -9,7 +9,7 @@ export function cx(...inputs: ClassValue[]) {
 }
 
 export function siteUrl(path = "") {
-  const base = process.env.NEXT_PUBLIC_SITE_URL ?? "https://nilocam.vercel.app";
+  const base = process.env.NEXT_PUBLIC_SITE_URL ?? "https://memorica.vercel.app";
   const normalized = base.startsWith("http") ? base : `https://${base}`;
   return new URL(path.replace(/^\//, ""), `${normalized.replace(/\/$/, "")}/`).toString();
 }
