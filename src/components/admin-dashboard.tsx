@@ -32,7 +32,6 @@ const sectionLabels: Record<string, string> = {
   gallery: "Galería",
   privacy: "Privacidad",
   "event-info": "Datos del evento",
-  support: "Soporte",
 };
 
 const STATUS_CFG = {
@@ -1529,7 +1528,7 @@ export function AdminDashboard({
                     <div style={s.field}>
                       <span className="label">Secciones visibles</span>
                       <div style={s.sectionChips}>
-                        {(["hero", "ctas", "how-it-works", "gallery", "privacy", "event-info", "support"] as const).map((sec) => {
+                        {(["hero", "ctas", "how-it-works", "gallery", "privacy", "event-info"] as const).map((sec) => {
                           const active = selected.landing_config.sections.includes(sec);
                           return (
                             <button key={sec} type="button"
