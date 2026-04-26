@@ -195,6 +195,8 @@ export function AdminDashboard({
   const [selectMode, setSelectMode] = useState(false);
   const [selectedPhotoIds, setSelectedPhotoIds] = useState<Set<string>>(new Set());
   const [exportState, setExportState] = useState<{ done: number; total: number } | null>(null);
+  const [bulkActionState, setBulkActionState] = useState<{ op: string; done: number; total: number } | null>(null);
+  const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
   const [deletingPhotoId, setDeletingPhotoId] = useState<string | null>(null);
   const [metaPhoto, setMetaPhoto] = useState<PhotoRecord | null>(null);
   const [lightboxPhoto, setLightboxPhoto] = useState<PhotoRecord | null>(null);
@@ -369,6 +371,54 @@ export function AdminDashboard({
       setNotice({ text: json.message ?? "Error al eliminar foto.", ok: false });
       setDeletingPhotoId(null);
     }
+  };
+
+  const bulkModerate = async (ids: string[], status: "approved" | "rejected") => {
+    const total = ids.length;
+    setBulkActionState({ op: status, done: 0, total });
+    let done = 0;
+    await Promise.all(
+      ids.map(async (id) => {
+        try {
+          const res = await fetch(`/api/photos/${id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ status }),
+          });
+          const json = await res.json() as { ok: boolean };
+          if (json.ok) setPhotos((cur) => cur.map((p) => (p.id === id ? { ...p, moderation_status: status } : p)));
+        } finally {
+          done++;
+          setBulkActionState({ op: status, done, total });
+        }
+      })
+    );
+    setBulkActionState(null);
+    setSelectedPhotoIds(new Set());
+    setNotice({ text: `${total} foto${total > 1 ? "s" : ""} ${status === "approved" ? "publicadas" : "despublicadas"}.`, ok: true });
+  };
+
+  const bulkDelete = async (ids: string[]) => {
+    const total = ids.length;
+    setBulkActionState({ op: "delete", done: 0, total });
+    let done = 0;
+    await Promise.all(
+      ids.map(async (id) => {
+        try {
+          const res = await fetch(`/api/photos/${id}`, { method: "DELETE" });
+          const json = await res.json() as { ok: boolean };
+          if (json.ok) setPhotos((cur) => cur.filter((p) => p.id !== id));
+        } finally {
+          done++;
+          setBulkActionState({ op: "delete", done, total });
+        }
+      })
+    );
+    setBulkActionState(null);
+    setSelectedPhotoIds(new Set());
+    setConfirmBulkDelete(false);
+    setSelectMode(false);
+    setNotice({ text: `${total} foto${total > 1 ? "s" : ""} eliminadas.`, ok: true });
   };
 
   // ── event ops ─────────────────────────────────────────────────────────────
@@ -1818,16 +1868,72 @@ export function AdminDashboard({
                         </button>
 
                         {selectedPhotoIds.size > 0 && (
-                          <button
-                            type="button"
-                            style={s.exportBtnPrimary}
-                            disabled={!!exportState}
-                            onClick={() => exportPhotos([...selectedPhotoIds])}
-                          >
-                            {exportState
-                              ? `Exportando ${exportState.done}/${exportState.total}…`
-                              : `↓ Exportar ${selectedPhotoIds.size} foto${selectedPhotoIds.size > 1 ? "s" : ""}`}
-                          </button>
+                          confirmBulkDelete ? (
+                            <>
+                              <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text)" }}>
+                                ¿Eliminar {selectedPhotoIds.size} foto{selectedPhotoIds.size > 1 ? "s" : ""}?
+                              </span>
+                              <button
+                                type="button"
+                                style={s.exportBtnDanger}
+                                disabled={!!bulkActionState}
+                                onClick={() => bulkDelete([...selectedPhotoIds])}
+                              >
+                                {bulkActionState?.op === "delete"
+                                  ? `Eliminando ${bulkActionState.done}/${bulkActionState.total}…`
+                                  : "Sí, eliminar"}
+                              </button>
+                              <button
+                                type="button"
+                                style={s.exportBtn}
+                                disabled={!!bulkActionState}
+                                onClick={() => setConfirmBulkDelete(false)}
+                              >
+                                Cancelar
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <button
+                                type="button"
+                                style={s.exportBtnApprove}
+                                disabled={!!bulkActionState}
+                                onClick={() => bulkModerate([...selectedPhotoIds], "approved")}
+                              >
+                                {bulkActionState?.op === "approved"
+                                  ? `Publicando ${bulkActionState.done}/${bulkActionState.total}…`
+                                  : `✓ Publicar ${selectedPhotoIds.size}`}
+                              </button>
+                              <button
+                                type="button"
+                                style={s.exportBtn}
+                                disabled={!!bulkActionState}
+                                onClick={() => bulkModerate([...selectedPhotoIds], "rejected")}
+                              >
+                                {bulkActionState?.op === "rejected"
+                                  ? `Despublicando ${bulkActionState.done}/${bulkActionState.total}…`
+                                  : `✕ Despublicar ${selectedPhotoIds.size}`}
+                              </button>
+                              <button
+                                type="button"
+                                style={s.exportBtnDanger}
+                                disabled={!!bulkActionState}
+                                onClick={() => setConfirmBulkDelete(true)}
+                              >
+                                Eliminar {selectedPhotoIds.size}
+                              </button>
+                              <button
+                                type="button"
+                                style={s.exportBtnPrimary}
+                                disabled={!!exportState}
+                                onClick={() => exportPhotos([...selectedPhotoIds])}
+                              >
+                                {exportState
+                                  ? `Exportando ${exportState.done}/${exportState.total}…`
+                                  : `↓ Exportar ${selectedPhotoIds.size}`}
+                              </button>
+                            </>
+                          )
                         )}
                       </>
                     )}
@@ -3341,6 +3447,26 @@ const s: Record<string, React.CSSProperties> = {
     fontWeight: 700,
     cursor: "pointer",
     marginLeft: "auto",
+  },
+  exportBtnApprove: {
+    padding: "8px 16px",
+    borderRadius: 999,
+    border: "none",
+    background: "#059669",
+    color: "#ffffff",
+    fontSize: 13,
+    fontWeight: 700,
+    cursor: "pointer",
+  },
+  exportBtnDanger: {
+    padding: "8px 16px",
+    borderRadius: 999,
+    border: "none",
+    background: "#dc2626",
+    color: "#ffffff",
+    fontSize: 13,
+    fontWeight: 700,
+    cursor: "pointer",
   },
 
   // Selection checkbox overlay on photo card
