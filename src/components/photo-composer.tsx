@@ -312,32 +312,43 @@ export function PhotoComposer({ event, onUploaded, compact, accentColor }: Compo
         const moderationStatus = event.moderation_mode === "auto" ? "approved" : "pending";
         const storageUrl = publicStorageUrl(path);
 
-        const { data, error: insertError } = await supabase
-          .from("photos")
-          .insert({
-            event_id: event.id,
-            storage_path: path,
-            original_name: file.name,
-            uploaded_by_name: isAnon ? null : trimmedName,
-            uploaded_by_email: sessionEmail,
-            is_anonymous: isAnon,
-            moderation_status: moderationStatus,
-            filter_name: effectiveFilter,
-            template_key: effectiveTemplate,
-            size_bytes: editedBlob.size,
-            original_size_bytes: file.size,
-            original_mime_type: file.type || null,
-            original_width: dims.width || null,
-            original_height: dims.height || null,
-            exif_data: exif,
-            device_data: deviceData,
-            upload_ip: uploadIp,
-          })
-          .select("*")
-          .single();
-        if (insertError) throw insertError;
+        const payload = {
+          event_id: event.id,
+          storage_path: path,
+          original_name: file.name,
+          uploaded_by_name: isAnon ? null : trimmedName,
+          uploaded_by_email: sessionEmail,
+          is_anonymous: isAnon,
+          moderation_status: moderationStatus,
+          filter_name: effectiveFilter,
+          template_key: effectiveTemplate,
+          size_bytes: editedBlob.size,
+          original_size_bytes: file.size,
+          original_mime_type: file.type || null,
+          original_width: dims.width || null,
+          original_height: dims.height || null,
+          exif_data: exif,
+          device_data: deviceData,
+          upload_ip: uploadIp,
+        };
 
-        onUploaded?.({ ...data, public_url: storageUrl } as PhotoRecord);
+        if (moderationStatus === "approved") {
+          // Auto mode: select the row back so the gallery updates instantly
+          const { data, error: insertError } = await supabase
+            .from("photos")
+            .insert(payload)
+            .select("*")
+            .single();
+          if (insertError) throw insertError;
+          onUploaded?.({ ...data, public_url: storageUrl } as PhotoRecord);
+        } else {
+          // Manual mode: RLS blocks reading pending rows back — just insert
+          const { error: insertError } = await supabase
+            .from("photos")
+            .insert(payload);
+          if (insertError) throw insertError;
+          // Don't call onUploaded — pending photos aren't shown in the gallery
+        }
       } catch {
         errorCount++;
       }
