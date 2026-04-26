@@ -333,6 +333,32 @@ export function EventLanding({
           </div>
         </section>
       )}
+
+      {/* ── POWERED BY (siempre visible) ──────────────────────────────── */}
+      <div style={{ padding: "20px 0 max(20px, env(safe-area-inset-bottom, 20px))", borderTop: `1px solid ${borderColor}`, textAlign: "center" }}>
+        <a
+          href="/"
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            fontSize: 11,
+            fontWeight: 600,
+            letterSpacing: "0.06em",
+            textTransform: "uppercase",
+            color: textMuted,
+            opacity: 0.45,
+            textDecoration: "none",
+          }}
+        >
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="7" width="18" height="13" rx="3" />
+            <path d="M9 7V5a3 3 0 0 1 6 0v2" />
+            <circle cx="12" cy="13.5" r="2" fill="currentColor" stroke="none" />
+          </svg>
+          Crea tu evento con Memorica
+        </a>
+      </div>
     </main>
   );
 }
