@@ -5,6 +5,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 import type { EventRecord, PhotoRecord } from "@/types";
 import { publicStorageUrl } from "@/lib/utils";
+import { PersonaFilterChips } from "@/components/persona-filter-chips";
+import { FindMyPhotos } from "@/components/find-my-photos";
 
 const supabase = createSupabaseBrowserClient();
 
@@ -23,6 +25,9 @@ export function RealtimeGallery({
   const [freshIds, setFreshIds] = useState<Set<string>>(new Set());
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
+  const [selectedPersonId, setSelectedPersonId] = useState<string | null>(null);
+  const [personPhotoIds, setPersonPhotoIds] = useState<Set<string> | null>(null);
+  const [findMyPhotosIds, setFindMyPhotosIds] = useState<Set<string> | null>(null);
 
   // Load liked IDs from localStorage on mount
   useEffect(() => {
@@ -81,11 +86,30 @@ export function RealtimeGallery({
     return () => { supabase.removeChannel(channel); };
   }, [event.id]);
 
+  // When a person chip is selected, load their photo IDs
+  useEffect(() => {
+    if (!selectedPersonId) { setPersonPhotoIds(null); return; }
+    fetch(`/api/faces/person-photos?eventId=${event.id}&personId=${selectedPersonId}`)
+      .then((r) => r.json())
+      .then((json: { ok: boolean; photoIds?: string[] }) => {
+        if (json.ok) setPersonPhotoIds(new Set(json.photoIds ?? []));
+      })
+      .catch(() => {});
+  }, [selectedPersonId, event.id]);
+
   const allPhotos = useMemo(() => {
     const ids = new Set(photos.map((p) => p.id));
     const extra = (additionalPhotos ?? []).filter((p) => !ids.has(p.id));
     return [...extra, ...photos].slice(0, 60);
   }, [photos, additionalPhotos]);
+
+  // Active filter: person chip filter OR "find my photos" filter
+  const activeFilterIds = findMyPhotosIds ?? personPhotoIds;
+
+  const displayedPhotos = useMemo(() => {
+    if (!activeFilterIds) return allPhotos;
+    return allPhotos.filter((p) => activeFilterIds.has(p.id));
+  }, [allPhotos, activeFilterIds]);
 
   useEffect(() => {
     if (!additionalPhotos?.length) return;
@@ -96,15 +120,33 @@ export function RealtimeGallery({
     });
   }, [additionalPhotos]);
 
-  const count = allPhotos.length;
+  const count = displayedPhotos.length;
+  const totalCount = allPhotos.length;
 
-  const headingText =
-    count === 1
+  const headingText = activeFilterIds
+    ? `${count} foto${count !== 1 ? "s" : ""} encontrada${count !== 1 ? "s" : ""}`
+    : totalCount === 1
       ? `El primer recuerdo de ${event.title}`
-      : `${count} recuerdos de ${event.title}`;
+      : `${totalCount} recuerdos de ${event.title}`;
 
   const openLightbox = useCallback((index: number) => setLightboxIndex(index), []);
   const closeLightbox = useCallback(() => setLightboxIndex(null), []);
+
+  const handlePersonSelect = useCallback((personId: string | null) => {
+    setSelectedPersonId(personId);
+    setFindMyPhotosIds(null);
+    setLightboxIndex(null);
+  }, []);
+
+  const handleFindMyPhotos = useCallback((photoIds: string[]) => {
+    setFindMyPhotosIds(new Set(photoIds));
+    setSelectedPersonId(null);
+    setLightboxIndex(null);
+  }, []);
+
+  const handleClearFind = useCallback(() => {
+    setFindMyPhotosIds(null);
+  }, []);
 
   const toggleLike = useCallback(async (photoId: string) => {
     const alreadyLiked = likedIds.has(photoId);
@@ -140,16 +182,38 @@ export function RealtimeGallery({
             <span style={s.eyebrow}>Galería en vivo</span>
             <h2 style={s.title}>{headingText}</h2>
           </div>
-          <div style={s.livePill}>
-            <span style={s.dot} />
-            En vivo
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+            <FindMyPhotos
+              eventId={event.id}
+              onFound={handleFindMyPhotos}
+              onClear={handleClearFind}
+              isActive={!!findMyPhotosIds}
+            />
+            <div style={s.livePill}>
+              <span style={s.dot} />
+              En vivo
+            </div>
           </div>
         </div>
+
+        {/* ── Persona filter chips ── */}
+        <PersonaFilterChips
+          eventId={event.id}
+          selectedPersonId={selectedPersonId}
+          onSelect={handlePersonSelect}
+        />
+
+        {/* ── Empty state for filtered view ── */}
+        {activeFilterIds && displayedPhotos.length === 0 && (
+          <div style={s.filterEmpty}>
+            <p>No se encontraron fotos.</p>
+          </div>
+        )}
 
         {/* ── Grid or Slider ── */}
         {mode === "slider" ? (
           <SliderView
-            photos={allPhotos}
+            photos={displayedPhotos}
             freshIds={freshIds}
             autoplay={event.landing_config.galleryAutoplay ?? false}
             autoplayInterval={event.landing_config.galleryAutoplayInterval ?? 4}
@@ -158,7 +222,7 @@ export function RealtimeGallery({
           />
         ) : (
           <div className="rg-masonry">
-            {allPhotos.map((photo, i) => (
+            {displayedPhotos.map((photo, i) => (
               <GalleryTile
                 key={photo.id}
                 photo={photo}
@@ -177,7 +241,7 @@ export function RealtimeGallery({
       {/* ── Lightbox (grid mode only) ── */}
       {mode !== "slider" && lightboxIndex !== null && (
         <Lightbox
-          photos={allPhotos}
+          photos={displayedPhotos}
           startIndex={lightboxIndex}
           likedIds={likedIds}
           onLike={toggleLike}
@@ -776,6 +840,12 @@ const s: Record<string, React.CSSProperties> = {
     fontSize: 11,
     fontWeight: 700,
     lineHeight: 1,
+  },
+  filterEmpty: {
+    padding: "32px 0",
+    textAlign: "center" as const,
+    color: "rgba(255,255,255,0.4)",
+    fontSize: 14,
   },
   // Lightbox
   lbClose: {

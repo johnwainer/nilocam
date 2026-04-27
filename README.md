@@ -18,6 +18,14 @@ PWA para eventos con QR — landing personalizable por evento, subida/captura de
 - Fotos en tiempo real vía Supabase Realtime
 - Moderación por foto: `pending` → `approved` / `rejected`
 - Solo las fotos aprobadas aparecen en la galería pública
+- Filtros de corazón (likes) por foto con sincronización en tiempo real
+
+### Reconocimiento facial (sin IA externa)
+- Detección de caras con [face-api.js](https://github.com/justadudewhohacks/face-api.js) (modelos ~12 MB, 100% cliente)
+- Agrupación automática de caras por persona (distancia euclidiana < 0.5 en descriptores de 128 dimensiones)
+- **Admin → pestaña "Personas"**: ve todas las personas detectadas, asigna nombre, Instagram, TikTok, elige foto de portada, une clusters duplicados o los elimina
+- **Galería pública**: chips de filtro por persona etiquetada; solo aparecen las personas con nombre asignado
+- **"Mis fotos"**: invitado sube una selfie → se detecta su cara en el cliente → busca en la galería fotos donde aparece → muestra solo esas fotos
 
 ### Sistema de créditos
 - Cada acción (crear evento, packs de fotos) cuesta créditos
@@ -167,4 +175,5 @@ supabase/
   setup-payments-complete.sql   ← 2. ejecutar para habilitar pagos
   super-admin.sql               ← 3. editar email y ejecutar
   seed.sql                      ← 4. opcional — evento demo
+  add-face-recognition.sql      ← 5. habilitar reconocimiento facial
 ```

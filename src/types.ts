@@ -240,6 +240,41 @@ export type EmailSettings = {
   tpl_bank_transfer_received_body: string;
 };
 
+// ─── Facial recognition ──────────────────────────────────────────────────────
+
+export type PersonRecord = {
+  id: string;
+  event_id: string;
+  display_name: string | null;
+  instagram: string | null;
+  tiktok: string | null;
+  cover_face_id: string | null;
+  face_count: number;
+  created_at: string;
+  updated_at: string;
+};
+
+export type FaceClusterRecord = {
+  id: string;
+  person_id: string | null;
+  event_id: string;
+  photo_id: string;
+  descriptor: number[];  // 128-dim float
+  bbox: { x: number; y: number; width: number; height: number };
+  created_at: string;
+};
+
+// Enriched face used in the UI (joins photo public_url)
+export type FaceWithPhoto = FaceClusterRecord & {
+  photo_public_url: string;
+};
+
+export type PersonWithFaces = PersonRecord & {
+  faces: FaceWithPhoto[];
+};
+
+// ─── Existing types below ─────────────────────────────────────────────────────
+
 export type LandingTemplatePreset = {
   key: string;
   name: string;

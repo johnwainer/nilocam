@@ -20,6 +20,7 @@ import type { CreditPricing, CreditTransaction, EventRecord, EventTypeKey, Landi
 import { SpyCatIcon } from "@/components/top-nav";
 import { SuperAdminPanel } from "@/components/super-admin-panel";
 import { CreditsPanel } from "@/components/credits-panel";
+import { PersonasTab } from "@/components/personas-tab";
 
 const supabase = createSupabaseBrowserClient();
 
@@ -169,7 +170,7 @@ export function AdminDashboard({
     initialEvents.length > 0 ? initialEvents : [initialDraft]
   );
   const [selectedId, setSelectedId] = useState<string>(initialDraft.id);
-  const [tab, setTab] = useState<"resumen" | "evento" | "fotos">(() =>
+  const [tab, setTab] = useState<"resumen" | "evento" | "fotos" | "personas">(() =>
     initialEvents.length > 0 ? "resumen" : "evento"
   );
   const [mainView, setMainView] = useState<"editor" | "system" | "credits">("editor");
@@ -975,6 +976,15 @@ export function AdminDashboard({
                 Fotos
                 {pendingCount > 0 && <span style={s.tabBadge}>{pendingCount} pendientes</span>}
               </button>
+              {savedIds.has(selected.id) && (
+                <button
+                  type="button"
+                  style={tab === "personas" ? s.tabActive : s.tabInactive}
+                  onClick={() => setTab("personas")}
+                >
+                  Personas
+                </button>
+              )}
             </div>
 
             {/* ── RESUMEN TAB ── */}
@@ -2139,6 +2149,11 @@ export function AdminDashboard({
                   </div>
                 )}
               </div>
+            )}
+
+            {/* ── PERSONAS TAB ── */}
+            {tab === "personas" && savedIds.has(selected.id) && (
+              <PersonasTab eventId={selected.id} savedIds={savedIds} />
             )}
           </div>}
         </div>
