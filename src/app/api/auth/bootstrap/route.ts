@@ -8,6 +8,7 @@ type RequestBody = {
   email?: string;
   password?: string;
   displayName?: string;
+  secret?: string;
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -32,6 +33,15 @@ async function grantInitialCredits(supabase: any, userId: string, email: string)
 }
 
 export async function POST(request: Request) {
+  // If BOOTSTRAP_SECRET is set in env, require it in the request body
+  const envSecret = process.env.BOOTSTRAP_SECRET;
+  if (envSecret) {
+    const authHeader = request.headers.get("x-bootstrap-secret");
+    if (authHeader !== envSecret) {
+      return NextResponse.json({ ok: false, message: "No autorizado." }, { status: 401 });
+    }
+  }
+
   const body = (await request.json().catch(() => ({}))) as RequestBody;
   const email = body.email?.trim().toLowerCase();
   const password = body.password ?? "";

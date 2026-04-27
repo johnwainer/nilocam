@@ -1031,10 +1031,14 @@ export function SuperAdminPanel({
                     onSave={async (patch) => {
                       setPaySaving(true);
                       try {
+                        // Strip sentinel values — secrets the admin didn't change
+                        const clean = Object.fromEntries(
+                          Object.entries(patch).filter(([, v]) => v !== "__SET__")
+                        );
                         const res = await fetch("/api/admin/payment-settings", {
                           method: "POST",
                           headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify(patch),
+                          body: JSON.stringify(clean),
                         });
                         const json = await res.json();
                         if (!json.ok) throw new Error(json.message);
@@ -1203,10 +1207,13 @@ export function SuperAdminPanel({
                   onSave={async (draft) => {
                     setEmailSaving(true);
                     try {
+                      const clean = Object.fromEntries(
+                        Object.entries(draft).filter(([, v]) => v !== "__SET__")
+                      );
                       const res = await fetch("/api/admin/email-settings", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify(draft),
+                        body: JSON.stringify(clean),
                       });
                       const json = await res.json();
                       if (!json.ok) throw new Error(json.message);
@@ -1332,9 +1339,9 @@ function PaymentsTab({
             <label style={p.formLabel}>Clave secreta (sk_live_… / sk_test_…)</label>
             <PasswordInput
               className="input"
-              value={draft.stripe_secret_key}
+              value={draft.stripe_secret_key === "__SET__" ? "" : draft.stripe_secret_key}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => set("stripe_secret_key", e.target.value)}
-              placeholder="sk_live_…"
+              placeholder={draft.stripe_secret_key === "__SET__" ? "Configurado · escribe para cambiar" : "sk_live_…"}
               style={{ fontSize: 13, fontFamily: "monospace" }}
             />
           </div>
@@ -1342,9 +1349,9 @@ function PaymentsTab({
             <label style={p.formLabel}>Webhook Signing Secret (whsec_…)</label>
             <PasswordInput
               className="input"
-              value={draft.stripe_webhook_secret}
+              value={draft.stripe_webhook_secret === "__SET__" ? "" : draft.stripe_webhook_secret}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => set("stripe_webhook_secret", e.target.value)}
-              placeholder="whsec_…"
+              placeholder={draft.stripe_webhook_secret === "__SET__" ? "Configurado · escribe para cambiar" : "whsec_…"}
               style={{ fontSize: 13, fontFamily: "monospace" }}
             />
           </div>
@@ -1390,9 +1397,9 @@ function PaymentsTab({
             <label style={p.formLabel}>Secret</label>
             <PasswordInput
               className="input"
-              value={draft.paypal_secret}
+              value={draft.paypal_secret === "__SET__" ? "" : draft.paypal_secret}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => set("paypal_secret", e.target.value)}
-              placeholder="Secret"
+              placeholder={draft.paypal_secret === "__SET__" ? "Configurado · escribe para cambiar" : "Secret"}
               style={{ fontSize: 13, fontFamily: "monospace" }}
             />
           </div>
@@ -1978,9 +1985,9 @@ function EmailTab({
             <label style={p.formLabel}>API Key</label>
             <PasswordInput
               className="input"
-              value={draft.resend_api_key}
+              value={draft.resend_api_key === "__SET__" ? "" : draft.resend_api_key}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => set("resend_api_key", e.target.value)}
-              placeholder="re_xxxxxxxxxxxxxxxxxxxxxxxx"
+              placeholder={draft.resend_api_key === "__SET__" ? "Configurado · escribe para cambiar" : "re_xxxxxxxxxxxxxxxxxxxxxxxx"}
               style={{ fontSize: 13, fontFamily: "monospace" }}
             />
           </div>
@@ -2008,9 +2015,9 @@ function EmailTab({
               <label style={p.formLabel}>Contraseña</label>
               <PasswordInput
                 className="input"
-                value={draft.smtp_password}
+                value={draft.smtp_password === "__SET__" ? "" : draft.smtp_password}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => set("smtp_password", e.target.value)}
-                placeholder="••••••••"
+                placeholder={draft.smtp_password === "__SET__" ? "Configurado · escribe para cambiar" : "••••••••"}
                 style={{ fontSize: 13 }}
               />
             </div>

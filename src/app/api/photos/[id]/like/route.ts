@@ -39,7 +39,14 @@ export async function POST(
   }
 
   const delta = body.action === "like" ? 1 : -1;
-  const newCount = Math.max(0, (photo.likes_count ?? 0) + delta);
+  const current = photo.likes_count ?? 0;
+
+  // Prevent runaway counts from scripted abuse
+  if (delta > 0 && current >= 50000) {
+    return NextResponse.json({ ok: true, likes_count: current });
+  }
+
+  const newCount = Math.max(0, current + delta);
 
   const { error: updateErr } = await admin
     .from("photos")

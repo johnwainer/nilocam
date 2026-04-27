@@ -26,6 +26,24 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, message: "Faltan datos del evento." }, { status: 400 });
   }
 
+  // Validate slug: lowercase alphanumeric and hyphens only, 3–60 chars
+  if (!/^[a-z0-9-]{3,60}$/.test(body.slug)) {
+    return NextResponse.json({
+      ok: false,
+      message: "El slug solo puede contener letras minúsculas, números y guiones (3–60 caracteres).",
+    }, { status: 400 });
+  }
+
+  // Validate title length
+  if (body.title.length > 200) {
+    return NextResponse.json({ ok: false, message: "El título no puede superar 200 caracteres." }, { status: 400 });
+  }
+
+  // Validate subtitle length if provided
+  if (body.subtitle && body.subtitle.length > 500) {
+    return NextResponse.json({ ok: false, message: "El subtítulo no puede superar 500 caracteres." }, { status: 400 });
+  }
+
   const admin = serviceClient();
 
   // Fetch pricing + current credits in parallel

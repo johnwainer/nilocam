@@ -32,7 +32,10 @@ export async function PATCH(
 
   const { id } = await params;
   const body = await request.json() as { action: "approve" | "reject"; admin_notes?: string };
-  const { action, admin_notes } = body;
+  const { action } = body;
+  const admin_notes = typeof body.admin_notes === "string"
+    ? body.admin_notes.slice(0, 1000)
+    : undefined;
 
   if (!["approve", "reject"].includes(action)) {
     return NextResponse.json({ ok: false, message: "Acción inválida." }, { status: 400 });

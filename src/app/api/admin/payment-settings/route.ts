@@ -5,6 +5,15 @@ import type { PaymentSettings } from "@/types";
 
 export const dynamic = "force-dynamic";
 
+// Sentinel returned when a secret is configured — never expose the real value
+const SET = "__SET__";
+
+const SECRET_FIELDS: (keyof PaymentSettings)[] = [
+  "stripe_secret_key",
+  "stripe_webhook_secret",
+  "paypal_secret",
+];
+
 function serviceClient() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -22,7 +31,7 @@ async function requireSuperAdmin() {
   return profile?.role === "super_admin" ? user : null;
 }
 
-// GET /api/admin/payment-settings — full settings including secrets (super admin only)
+// GET /api/admin/payment-settings — secrets are masked with "__SET__"
 export async function GET() {
   const user = await requireSuperAdmin();
   if (!user) return NextResponse.json({ ok: false, message: "Sin acceso." }, { status: 403 });
@@ -37,12 +46,19 @@ export async function GET() {
     }, { status: 500 });
   }
 
-  // Ensure new columns have safe defaults
   const settings = { stripe_webhook_secret: "", paypal_sandbox: false, ...data };
+
+  // Mask secret values — never send plaintext secrets to the browser
+  for (const field of SECRET_FIELDS) {
+    if (settings[field]) {
+      (settings as Record<string, unknown>)[field] = SET;
+    }
+  }
+
   return NextResponse.json({ ok: true, settings });
 }
 
-// POST /api/admin/payment-settings — update settings (super admin only)
+// POST /api/admin/payment-settings — skip "__SET__" sentinel (unchanged secrets)
 export async function POST(request: Request) {
   const user = await requireSuperAdmin();
   if (!user) return NextResponse.json({ ok: false, message: "Sin acceso." }, { status: 403 });
@@ -58,7 +74,10 @@ export async function POST(request: Request) {
 
   const patch: Record<string, unknown> = {};
   for (const key of allowed) {
-    if (key in body) patch[key] = body[key];
+    if (!(key in body)) continue;
+    // Skip sentinel — field was not changed by the admin
+    if (SECRET_FIELDS.includes(key) && body[key] === SET) continue;
+    patch[key] = body[key];
   }
 
   if (

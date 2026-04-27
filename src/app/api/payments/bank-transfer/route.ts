@@ -24,8 +24,18 @@ export async function POST(request: Request) {
   const credits = Math.floor(body.credits ?? 0);
   const proofUrl = body.proofUrl?.trim();
 
-  if (credits < 1) return NextResponse.json({ ok: false, message: "Cantidad inválida." }, { status: 400 });
+  if (credits < 1 || credits > 10000) {
+    return NextResponse.json({ ok: false, message: "Cantidad de créditos inválida." }, { status: 400 });
+  }
   if (!proofUrl) return NextResponse.json({ ok: false, message: "El comprobante es requerido." }, { status: 400 });
+
+  // Validate proofUrl is a proper HTTPS URL
+  try {
+    const parsed = new URL(proofUrl);
+    if (parsed.protocol !== "https:") throw new Error();
+  } catch {
+    return NextResponse.json({ ok: false, message: "El comprobante debe ser una URL HTTPS válida." }, { status: 400 });
+  }
 
   const admin = serviceClient();
   const { data: settings } = await admin.rpc("get_payment_settings");

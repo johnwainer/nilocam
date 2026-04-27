@@ -6,6 +6,9 @@ import { DEFAULT_TEMPLATE_BODIES } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
 
+const SET = "__SET__";
+const EMAIL_SECRET_FIELDS = ["resend_api_key", "smtp_password"] as const;
+
 function serviceClient() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -45,6 +48,15 @@ export async function GET() {
     }
   }
 
+  // Mask secret values
+  if (settings) {
+    for (const field of EMAIL_SECRET_FIELDS) {
+      if ((settings as Record<string, unknown>)[field]) {
+        (settings as Record<string, unknown>)[field] = SET;
+      }
+    }
+  }
+
   return NextResponse.json({ ok: true, settings });
 }
 
@@ -55,14 +67,18 @@ export async function POST(request: Request) {
 
   const body = await request.json() as Partial<EmailSettings>;
 
+  // Skip sentinel — unchanged secrets from the admin UI
+  const resend_api_key = body.resend_api_key === SET ? undefined : body.resend_api_key;
+  const smtp_password  = body.smtp_password  === SET ? undefined : body.smtp_password;
+
   const admin = serviceClient();
   const { error } = await admin.rpc("set_email_settings", {
     p_provider:                       body.provider                       ?? "disabled",
-    p_resend_api_key:                 body.resend_api_key                 ?? "",
+    p_resend_api_key:                 resend_api_key                      ?? "",
     p_smtp_host:                      body.smtp_host                      ?? "",
     p_smtp_port:                      body.smtp_port                      ?? 587,
     p_smtp_user:                      body.smtp_user                      ?? "",
-    p_smtp_password:                  body.smtp_password                  ?? "",
+    p_smtp_password:                  smtp_password                       ?? "",
     p_smtp_secure:                    body.smtp_secure                    ?? false,
     p_from_name:                      body.from_name                      ?? "Memorica",
     p_from_email:                     body.from_email                     ?? "noreply@example.com",
