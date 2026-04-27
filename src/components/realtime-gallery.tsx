@@ -176,13 +176,10 @@ export function RealtimeGallery({
   return (
     <section id="gallery" style={s.section}>
       <div className="container">
-        {/* ── Header ── */}
+        {/* ── Header: single row ── */}
         <div style={s.head}>
-          <div style={s.headCopy}>
-            <span style={s.eyebrow}>Galería en vivo</span>
-            <h2 style={s.title}>{headingText}</h2>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+          <h2 style={s.title}>{headingText}</h2>
+          <div style={s.headRight}>
             <FindMyPhotos
               eventId={event.id}
               onFound={handleFindMyPhotos}
@@ -196,7 +193,7 @@ export function RealtimeGallery({
           </div>
         </div>
 
-        {/* ── Persona filter chips ── */}
+        {/* ── Persona filter slider ── */}
         <PersonaFilterChips
           eventId={event.id}
           selectedPersonId={selectedPersonId}
@@ -730,29 +727,30 @@ const s: Record<string, React.CSSProperties> = {
   section: { padding: "64px 0 80px" },
   head: {
     display: "flex",
+    alignItems: "center",
     justifyContent: "space-between",
-    alignItems: "flex-end",
-    gap: 16,
-    flexWrap: "wrap",
-    marginBottom: 28,
+    gap: 12,
+    marginBottom: 16,
+    flexWrap: "nowrap" as const,
+    minWidth: 0,
   },
-  headCopy: { display: "grid", gap: 8 },
-  eyebrow: {
-    display: "block",
-    fontSize: 11,
-    fontWeight: 700,
-    letterSpacing: "0.16em",
-    textTransform: "uppercase" as const,
-    color: "rgba(255,255,255,0.35)",
+  headRight: {
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+    flexShrink: 0,
   },
   title: {
-    fontSize: "clamp(22px, 4vw, 44px)",
-    lineHeight: 1,
+    fontSize: "clamp(18px, 3.5vw, 36px)",
+    lineHeight: 1.1,
     margin: 0,
     color: "#ffffff",
     fontWeight: 700,
-    letterSpacing: "-0.03em",
-    maxWidth: 640,
+    letterSpacing: "-0.02em",
+    whiteSpace: "nowrap" as const,
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    minWidth: 0,
   },
   livePill: {
     display: "inline-flex",
