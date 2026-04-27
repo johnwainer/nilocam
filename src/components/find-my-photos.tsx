@@ -83,8 +83,6 @@ export function FindMyPhotos({ eventId, onFound, onClear, isActive, accentColor 
         style={{
           ...s.trigger,
           ...(isActive ? s.triggerActive : {}),
-          borderColor: isActive ? accentColor : undefined,
-          color: isActive ? accentColor : undefined,
         }}
         onClick={() => (isActive ? handleClear() : setOpen(true))}
         title={isActive ? "Quitar filtro" : "Buscar mis fotos con selfie"}
@@ -177,19 +175,19 @@ const s: Record<string, React.CSSProperties> = {
     gap: 6,
     padding: "7px 14px",
     borderRadius: 999,
-    border: "1px solid rgba(255,255,255,0.18)",
-    background: "rgba(255,255,255,0.07)",
-    color: "rgba(255,255,255,0.75)",
+    border: "1px solid rgba(255,255,255,0.25)",
+    background: "rgba(255,255,255,0.08)",
+    color: "#ffffff",
     fontSize: 13,
     fontWeight: 600,
     cursor: "pointer",
     backdropFilter: "blur(8px)",
-    transition: "background 0.15s, color 0.15s",
+    transition: "background 0.15s",
   },
   triggerActive: {
-    background: "rgba(255,255,255,0.14)",
-    color: "#fff",
-    border: "1px solid rgba(255,255,255,0.35)",
+    background: "rgba(255,255,255,0.18)",
+    color: "#ffffff",
+    border: "1px solid rgba(255,255,255,0.4)",
   },
   backdrop: {
     position: "fixed",
