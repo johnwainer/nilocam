@@ -21,6 +21,7 @@ type Props = {
 export function PersonaFilterChips({ eventId, selectedPersonId, onSelect }: Props) {
   const [persons, setPersons] = useState<PublicPerson[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const dragRef = useRef({ dragging: false, startX: 0, scrollLeft: 0 });
 
   useEffect(() => {
     fetch(`/api/events/${eventId}/persons/public`)
@@ -32,9 +33,6 @@ export function PersonaFilterChips({ eventId, selectedPersonId, onSelect }: Prop
   }, [eventId]);
 
   if (persons.length === 0) return null;
-
-  // Drag-to-scroll
-  const dragRef = useRef({ dragging: false, startX: 0, scrollLeft: 0 });
   const onMouseDown = (e: React.MouseEvent) => {
     const el = scrollRef.current;
     if (!el) return;

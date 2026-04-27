@@ -9,8 +9,16 @@ const nextConfig = {
   },
   webpack: (config, { isServer }) => {
     if (isServer) {
-      // face-api.js tries to require 'canvas' for Node — keep it external
       config.externals = [...(config.externals || []), "canvas"];
+    } else {
+      // face-api.js / @tensorflow reference Node-only modules — tell webpack to ignore them in the browser bundle
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        encoding: false,
+        path: false,
+        crypto: false,
+      };
     }
     return config;
   },

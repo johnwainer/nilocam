@@ -10,10 +10,9 @@ type Props = {
   onFound: (photoIds: string[]) => void;
   onClear: () => void;
   isActive: boolean;
-  accentColor?: string;
 };
 
-export function FindMyPhotos({ eventId, onFound, onClear, isActive, accentColor = "#111" }: Props) {
+export function FindMyPhotos({ eventId, onFound, onClear, isActive }: Props) {
   const [open, setOpen] = useState(false);
   const [status, setStatus] = useState<"idle" | "detecting" | "searching" | "done" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState("");
@@ -105,6 +104,7 @@ export function FindMyPhotos({ eventId, onFound, onClear, isActive, accentColor 
             </p>
 
             {previewUrl && (
+              // eslint-disable-next-line @next/next/no-img-element
               <img
                 ref={imgRef}
                 src={previewUrl}

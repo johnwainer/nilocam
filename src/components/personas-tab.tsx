@@ -4,7 +4,6 @@
 // Shows all auto-detected clusters, lets admin name them, add social handles,
 // merge clusters, delete, and set a cover face.
 
-import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { FaceWithPhoto, PersonWithFaces } from "@/types";
 import { publicStorageUrl } from "@/lib/utils";
