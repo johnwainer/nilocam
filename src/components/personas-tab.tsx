@@ -24,6 +24,7 @@ export function PersonasTab({ eventId, savedIds }: Props) {
   const [mergeMode, setMergeMode] = useState(false);
   const [mergeSource, setMergeSource] = useState<string | null>(null);
   const [processProgress, setProcessProgress] = useState<{ done: number; total: number } | null>(null);
+  const [reclustering, setReclustering] = useState(false);
 
   const isSaved = savedIds.has(eventId);
 
@@ -100,6 +101,35 @@ export function PersonasTab({ eventId, savedIds }: Props) {
     } finally {
       setProcessing(false);
       setProcessProgress(null);
+    }
+  };
+
+  // ── Re-cluster: auto-merge similar unnamed clusters ───────────────────────────
+
+  const recluster = async () => {
+    setReclustering(true);
+    try {
+      const res = await fetch("/api/faces/recluster", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ eventId }),
+      });
+      const json = await res.json() as { ok: boolean; merged?: number; message?: string };
+      if (json.ok) {
+        await loadPersons();
+        showNotice(
+          json.merged === 0
+            ? "Los grupos ya están optimizados."
+            : `Se unieron ${json.merged} grupo${json.merged !== 1 ? "s" : ""} duplicado${json.merged !== 1 ? "s" : ""}.`,
+          true
+        );
+      } else {
+        showNotice(json.message ?? "Error al re-agrupar.", false);
+      }
+    } catch {
+      showNotice("Error al re-agrupar.", false);
+    } finally {
+      setReclustering(false);
     }
   };
 
@@ -215,16 +245,27 @@ export function PersonasTab({ eventId, savedIds }: Props) {
         </div>
         <div style={s.toolbarActions}>
           {persons.length > 1 && (
-            <button
-              type="button"
-              style={mergeMode ? s.btnActive : s.btnSecondary}
-              onClick={() => {
-                setMergeMode((v) => !v);
-                setMergeSource(null);
-              }}
-            >
-              {mergeMode ? "Cancelar unión" : "Unir personas"}
-            </button>
+            <>
+              <button
+                type="button"
+                style={mergeMode ? s.btnActive : s.btnSecondary}
+                onClick={() => {
+                  setMergeMode((v) => !v);
+                  setMergeSource(null);
+                }}
+              >
+                {mergeMode ? "Cancelar unión" : "Unir personas"}
+              </button>
+              <button
+                type="button"
+                style={s.btnSecondary}
+                onClick={recluster}
+                disabled={reclustering}
+                title="Une automáticamente grupos que parecen ser la misma persona"
+              >
+                {reclustering ? "Re-agrupando…" : "⚡ Auto-agrupar"}
+              </button>
+            </>
           )}
           <button
             type="button"

@@ -1,7 +1,7 @@
 // POST /api/faces/process
-// Body: { eventId, photoId, storageUrl, descriptor: number[], bbox: {...} }
+// Body: { eventId, photoId, descriptor: number[], bbox: {...} }
 // Called from the browser after client-side detection. Stores the face cluster
-// and auto-assigns it to an existing person if a match is found.
+// and auto-assigns it to an existing person if a match is found (via centroid comparison).
 
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
@@ -16,7 +16,8 @@ function serviceClient() {
   );
 }
 
-const MATCH_THRESHOLD = 0.5;
+const MATCH_THRESHOLD = 0.48; // centroid comparison — slightly stricter than raw descriptor
+const DUPLICATE_THRESHOLD = 0.15; // same face submitted twice
 
 function euclidean(a: number[], b: number[]): number {
   let sum = 0;
@@ -25,6 +26,15 @@ function euclidean(a: number[], b: number[]): number {
     sum += d * d;
   }
   return Math.sqrt(sum);
+}
+
+function computeCentroid(descriptors: number[][]): number[] {
+  const n = descriptors.length;
+  const c = new Array(128).fill(0) as number[];
+  for (const d of descriptors) {
+    for (let i = 0; i < 128; i++) c[i] += d[i];
+  }
+  return c.map((v) => v / n);
 }
 
 type BBox = { x: number; y: number; width: number; height: number };
@@ -58,43 +68,48 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, message: "Foto no encontrada." }, { status: 404 });
   }
 
-  // Check for duplicate face in same photo (same bbox area)
-  const { data: existing } = await admin
+  // Check for duplicate: same face already stored in this photo (descriptor distance < 0.15)
+  const { data: photoFaces } = await admin
     .from("face_clusters")
-    .select("id")
-    .eq("photo_id", photoId)
-    .limit(50);
+    .select("id, descriptor")
+    .eq("photo_id", photoId);
 
-  if (existing && existing.length > 0) {
-    // Already processed this photo — skip
+  if (photoFaces && photoFaces.some((f) => {
+    if (!f.descriptor) return false;
+    return euclidean(descriptor, f.descriptor as number[]) < DUPLICATE_THRESHOLD;
+  })) {
     return NextResponse.json({ ok: true, skipped: true });
   }
 
-  // Fetch all existing face descriptors for this event to find a match
+  // Fetch all existing faces for this event grouped by person (for centroid computation)
   const { data: allFaces } = await admin
     .from("face_clusters")
-    .select("id, person_id, descriptor")
+    .select("person_id, descriptor")
     .eq("event_id", eventId)
     .not("person_id", "is", null);
 
-  let matchedPersonId: string | null = null;
-
-  if (allFaces && allFaces.length > 0) {
-    let bestDistance = Infinity;
-    let bestPersonId: string | null = null;
-
-    for (const face of allFaces) {
-      if (!face.descriptor || !face.person_id) continue;
-      const d = euclidean(descriptor, face.descriptor as number[]);
-      if (d < MATCH_THRESHOLD && d < bestDistance) {
-        bestDistance = d;
-        bestPersonId = face.person_id as string;
-      }
-    }
-    matchedPersonId = bestPersonId;
+  // Build centroid per person
+  const personDescriptors = new Map<string, number[][]>();
+  for (const face of allFaces ?? []) {
+    if (!face.descriptor || !face.person_id) continue;
+    const pid = face.person_id as string;
+    if (!personDescriptors.has(pid)) personDescriptors.set(pid, []);
+    personDescriptors.get(pid)!.push(face.descriptor as number[]);
   }
 
-  // If no person matched, create a new unnamed person cluster
+  let matchedPersonId: string | null = null;
+  let bestDistance = Infinity;
+
+  for (const [pid, descriptors] of personDescriptors) {
+    const centroid = computeCentroid(descriptors);
+    const d = euclidean(descriptor, centroid);
+    if (d < MATCH_THRESHOLD && d < bestDistance) {
+      bestDistance = d;
+      matchedPersonId = pid;
+    }
+  }
+
+  // No match → create a new unnamed person
   if (!matchedPersonId) {
     const { data: newPerson, error: personErr } = await admin
       .from("persons")
@@ -131,7 +146,7 @@ export async function POST(request: Request) {
     .eq("id", matchedPersonId)
     .is("cover_face_id", null);
 
-  // Update face_count on person
+  // Update face_count
   await admin.rpc("increment_person_face_count", { p_person_id: matchedPersonId });
 
   return NextResponse.json({ ok: true, faceId: faceRow.id, personId: matchedPersonId });

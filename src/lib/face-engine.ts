@@ -43,7 +43,7 @@ export async function detectFaces(
 ): Promise<DetectedFace[]> {
   const api = await ensureModels();
   const detections = await api
-    .detectAllFaces(source, new api.SsdMobilenetv1Options({ minConfidence: 0.5 }))
+    .detectAllFaces(source, new api.SsdMobilenetv1Options({ minConfidence: 0.3 }))
     .withFaceLandmarks()
     .withFaceDescriptors();
 
