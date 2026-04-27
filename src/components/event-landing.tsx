@@ -6,6 +6,7 @@ import type { EventRecord, PhotoRecord } from "@/types";
 import { formatDate, publicStorageUrl } from "@/lib/utils";
 import { PhotoComposer } from "@/components/photo-composer";
 import { RealtimeGallery } from "@/components/realtime-gallery";
+import { OfflineUploadProcessor } from "@/components/offline-upload-processor";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 
 const supabase = createSupabaseBrowserClient();
@@ -103,6 +104,7 @@ export function EventLanding({
       className={darkPage ? "dark-theme" : ""}
       style={{ background: theme.background, color: textPrimary, minHeight: "100vh" }}
     >
+      <OfflineUploadProcessor event={event} onUploaded={(p) => setLivePhotos((prev) => [p, ...prev])} />
       {/* ── HERO ──────────────────────────────────────────────────────── */}
       <section style={s.heroSection}>
         {coverUrl ? (

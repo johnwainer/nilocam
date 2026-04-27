@@ -7,6 +7,7 @@ import { EVENT_BUCKET, FILTERS, TEMPLATES } from "@/lib/constants";
 import type { EventRecord, PhotoDeviceData, PhotoExif, PhotoRecord } from "@/types";
 import { formatBytes, publicStorageUrl } from "@/lib/utils";
 import { renderEditedImage, type FilterKey, type TemplateKey } from "@/lib/image-tools";
+import { enqueueUpload, isNetworkError } from "@/lib/upload-queue";
 
 const supabase = createSupabaseBrowserClient();
 
@@ -146,6 +147,7 @@ export function PhotoComposer({ event, onUploaded, compact, accentColor }: Compo
   const [error, setError] = useState<string | null>(null);
   const [acceptedTerms, setAcceptedTerms] = useState(true);
   const [uploadedPending, setUploadedPending] = useState(false);
+  const [uploadedQueued, setUploadedQueued] = useState(0);
   const uploadRef = useRef<HTMLInputElement | null>(null);
   const cameraRef = useRef<HTMLInputElement | null>(null);
 
@@ -225,6 +227,7 @@ export function PhotoComposer({ event, onUploaded, compact, accentColor }: Compo
     setError(null);
     setAcceptedTerms(true);
     setUploadedPending(false);
+    setUploadedQueued(0);
   };
 
   const submit = async () => {
@@ -286,6 +289,7 @@ export function PhotoComposer({ event, onUploaded, compact, accentColor }: Compo
     const sessionEmail = sessionData.data.user?.email ?? null;
 
     let errorCount = 0;
+    let queuedCount = 0;
     setUploadProgress({ done: 0, total: files.length });
 
     for (let i = 0; i < files.length; i++) {
@@ -306,13 +310,8 @@ export function PhotoComposer({ event, onUploaded, compact, accentColor }: Compo
         });
 
         const path = `${event.id}/${crypto.randomUUID()}.jpg`;
-        const { error: uploadError } = await supabase.storage
-          .from(EVENT_BUCKET)
-          .upload(path, editedBlob, { contentType: "image/jpeg", upsert: false, cacheControl: "3600" });
-        if (uploadError) throw uploadError;
 
         const moderationStatus = event.moderation_mode === "auto" ? "approved" : "pending";
-        const storageUrl = publicStorageUrl(path);
 
         const payload = {
           event_id: event.id,
@@ -334,6 +333,13 @@ export function PhotoComposer({ event, onUploaded, compact, accentColor }: Compo
           upload_ip: uploadIp,
         };
 
+        const { error: uploadError } = await supabase.storage
+          .from(EVENT_BUCKET)
+          .upload(path, editedBlob, { contentType: "image/jpeg", upsert: false, cacheControl: "3600" });
+        if (uploadError) throw uploadError;
+
+        const storageUrl = publicStorageUrl(path);
+
         if (moderationStatus === "approved") {
           // Auto mode: select the row back so the gallery updates instantly
           const { data, error: insertError } = await supabase
@@ -351,8 +357,56 @@ export function PhotoComposer({ event, onUploaded, compact, accentColor }: Compo
           if (insertError) throw insertError;
           // Don't call onUploaded — pending photos aren't shown in the gallery
         }
-      } catch {
-        errorCount++;
+      } catch (err) {
+        if (isNetworkError(err)) {
+          // Save to local queue — will be retried when connection is restored
+          try {
+            const [dims, exif] = await Promise.all([
+              getImageDimensions(file),
+              extractExif(file),
+            ]).catch(() => [{ width: 0, height: 0 }, null]);
+            const editedBlob = await renderEditedImage(file, {
+              filter: effectiveFilter,
+              template: effectiveTemplate,
+              title: event.title,
+              subtitle: event.subtitle ?? event.landing_config.heroSubtitle,
+              watermark: wm,
+            }).catch(() => file);
+            const path = `${event.id}/${crypto.randomUUID()}.jpg`;
+            await enqueueUpload({
+              id: crypto.randomUUID(),
+              eventId: event.id,
+              blob: editedBlob,
+              path,
+              payload: {
+                event_id: event.id,
+                storage_path: path,
+                original_name: file.name,
+                uploaded_by_name: isAnon ? null : trimmedName,
+                uploaded_by_email: sessionEmail,
+                is_anonymous: isAnon,
+                moderation_status: event.moderation_mode === "auto" ? "approved" : "pending",
+                filter_name: effectiveFilter,
+                template_key: effectiveTemplate,
+                size_bytes: editedBlob.size,
+                original_size_bytes: file.size,
+                original_mime_type: file.type || null,
+                original_width: (dims as { width: number }).width || null,
+                original_height: (dims as { height: number }).height || null,
+                exif_data: exif,
+                device_data: deviceData,
+                upload_ip: null,
+              },
+              moderationMode: event.moderation_mode,
+              queuedAt: new Date().toISOString(),
+            });
+            queuedCount++;
+          } catch {
+            errorCount++;
+          }
+        } else {
+          errorCount++;
+        }
       }
       setUploadProgress({ done: i + 1, total: files.length });
     }
@@ -363,6 +417,11 @@ export function PhotoComposer({ event, onUploaded, compact, accentColor }: Compo
           ? "No pudimos subir ninguna foto. Intenta de nuevo."
           : `${errorCount} foto${errorCount > 1 ? "s" : ""} no se pudieron subir.`
       );
+      setIsSaving(false);
+      setUploadProgress(null);
+    } else if (queuedCount > 0 && errorCount === 0) {
+      // All queued — no errors
+      setUploadedQueued(queuedCount);
       setIsSaving(false);
       setUploadProgress(null);
     } else if (event.moderation_mode === "manual") {
@@ -509,8 +568,35 @@ export function PhotoComposer({ event, onUploaded, compact, accentColor }: Compo
         </div>
       )}
 
+      {/* ── Offline queued screen ───────────────────────────────────────── */}
+      {isOpen && uploadedQueued > 0 && (
+        <div className="pc-backdrop">
+          <div className="card glass pc-modal" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 20, padding: 32, textAlign: "center" }}>
+            <div style={{ width: 64, height: 64, borderRadius: "50%", background: "rgba(255,200,0,0.12)", border: "1px solid rgba(255,200,0,0.25)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28 }}>
+              📶
+            </div>
+            <div style={{ display: "grid", gap: 8 }}>
+              <h3 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: "#fff", letterSpacing: "-0.02em" }}>
+                Sin señal — guardada
+              </h3>
+              <p style={{ margin: 0, fontSize: 15, color: "rgba(255,255,255,0.6)", lineHeight: 1.65, maxWidth: 320 }}>
+                Tu foto{uploadedQueued > 1 ? "s quedan" : " queda"} guardada{uploadedQueued > 1 ? "s" : ""} en este dispositivo y se {uploadedQueued > 1 ? "subirán" : "subirá"} automáticamente cuando recuperes conexión.
+              </p>
+              <p style={{ margin: 0, fontSize: 14, color: "rgba(255,255,255,0.35)", lineHeight: 1.5 }}>
+                No cierres el navegador — mantén esta página abierta.
+              </p>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10, width: "100%", maxWidth: 280 }}>
+              <button type="button" style={styles.btnPublish} onClick={reset}>
+                Entendido
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── Editor modal ────────────────────────────────────────────────── */}
-      {isOpen && !uploadedPending && files.length > 0 && activeUrl ? (
+      {isOpen && !uploadedPending && uploadedQueued === 0 && files.length > 0 && activeUrl ? (
         <div className="pc-backdrop">
           <div className="card glass pc-modal">
             {/* Header */}
