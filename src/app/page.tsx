@@ -6,6 +6,37 @@ import { EVENT_TYPES } from "@/lib/constants";
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 
+const testimonials = [
+  {
+    name: "Daniela Ríos",
+    role: "Novia · Boda en Guadalajara",
+    text: "Antes de Memorica me imaginaba persiguiendo a 150 personas por WhatsApp para conseguir las fotos. En cambio, al final del día teníamos más de 400 imágenes en la galería. Mis invitados no podían creer lo fácil que fue.",
+    avatar: "D",
+    color: "#6366f1",
+  },
+  {
+    name: "Tomás Varela",
+    role: "Papá · Quinceañera de su hija",
+    text: "Los abuelos, los tíos, los amigos del colegio — todos subiendo fotos desde su celular sin instalar nada. Mi hija lloraba de emoción viendo las fotos aparecer en la pantalla en tiempo real. Eso no tiene precio.",
+    avatar: "T",
+    color: "#8b5cf6",
+  },
+  {
+    name: "Laura Méndez",
+    role: "Organizadora de eventos",
+    text: "Lo que más me sorprendió fue lo de encontrar las fotos con selfie. Al final del evento cada invitado tenía sus propias fotos en segundos, sin pedirme nada. Les ahorra horas de trabajo a mis clientes.",
+    avatar: "L",
+    color: "#a78bfa",
+  },
+  {
+    name: "Andrés Castillo",
+    role: "RRHH · Empresa de 80 personas",
+    text: "Usamos Memorica en nuestro evento corporativo de fin de año. El equipo entero participó desde el primer minuto. Las fotos salían en la pantalla del salón mientras la gente celebraba. Fue un éxito total.",
+    avatar: "A",
+    color: "#6366f1",
+  },
+];
+
 const howItWorks = [
   {
     step: "1",
@@ -76,6 +107,11 @@ const features = [
     icon: "⚡",
     title: "Activo en 3 minutos",
     desc: "En el tiempo que tardas en tomarte un café, tienes el evento listo, el QR generado y la galería funcionando.",
+  },
+  {
+    icon: "🖼",
+    title: "Sin la compresión de WhatsApp",
+    desc: "Las fotos se guardan en calidad original — tal como salieron de la cámara. Sin píxeles perdidos, sin ese efecto borroso que arruina los recuerdos.",
   },
 ];
 
@@ -149,8 +185,8 @@ export default function HomePage() {
             {[
               { icon: "📸", text: "Todos la ven en su cel al instante" },
               { icon: "🤖", text: "Encuentra tus fotos con una selfie" },
+              { icon: "🖼", text: "Calidad original, sin compresión" },
               { icon: "📱", text: "Sin apps · Sin registro" },
-              { icon: "🎨", text: "20+ diseños listos para usar" },
               { icon: "⚡", text: "Tu evento activo en 3 minutos" },
             ].map((item) => (
               <div key={item.text} style={styles.trustItem}>
@@ -161,6 +197,67 @@ export default function HomePage() {
           </div>
         </div>
       </div>
+
+      {/* ── El problema ───────────────────────────────────── */}
+      <section className="section" style={{ background: "rgba(0,0,0,0.02)", paddingTop: 64, paddingBottom: 64 }}>
+        <div className="container">
+          <div style={styles.problemGrid} className="home-problem-grid">
+            {/* Left: the pain */}
+            <div style={styles.problemLeft}>
+              <span className="eyebrow" style={{ color: "#dc2626" }}>El problema que conoces</span>
+              <h2 className="serif" style={{ ...styles.h2, marginTop: 16 }}>
+                Las fotos de
+                <br />
+                tu evento acaban
+                <br />
+                perdidas.
+              </h2>
+              <div style={styles.problemList}>
+                {[
+                  { icon: "😩", text: "Terminas persiguiendo a 50 personas para que te manden las fotos" },
+                  { icon: "📉", text: "WhatsApp comprime todo y arruina la calidad de los recuerdos" },
+                  { icon: "🗂", text: "Las fotos se dispersan en 10 grupos distintos y nunca encuentras la tuya" },
+                  { icon: "⏳", text: "Pasan semanas y el álbum del evento todavía no existe" },
+                ].map((item) => (
+                  <div key={item.text} style={styles.problemItem}>
+                    <span style={styles.problemIcon}>{item.icon}</span>
+                    <span style={styles.problemText}>{item.text}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            {/* Right: the solution */}
+            <div style={styles.problemRight}>
+              <span className="eyebrow" style={{ color: "#059669" }}>Con Memorica</span>
+              <h2 className="serif" style={{ ...styles.h2, marginTop: 16 }}>
+                Todo en un
+                <br />
+                solo lugar,
+                <br />
+                en tiempo real.
+              </h2>
+              <div style={styles.problemList}>
+                {[
+                  { icon: "✅", text: "Las fotos aparecen en la galería solas — sin pedirle nada a nadie" },
+                  { icon: "✅", text: "Calidad original, sin compresión. Tal como salieron de la cámara" },
+                  { icon: "✅", text: "Todos las ven desde su celular al instante, y en la pantalla grande si tienes proyector" },
+                  { icon: "✅", text: "Cada invitado encuentra sus propias fotos con una selfie, en segundos" },
+                ].map((item) => (
+                  <div key={item.text} style={styles.problemItem}>
+                    <span style={styles.problemIcon}>{item.icon}</span>
+                    <span style={styles.problemText}>{item.text}</span>
+                  </div>
+                ))}
+              </div>
+              <div style={{ marginTop: 32 }}>
+                <Link href="/auth" className="btn btn-primary" style={{ padding: "14px 28px", fontSize: 15 }}>
+                  Probar gratis ahora →
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* ── IA Facial Spotlight ────────────────────────────── */}
       <section style={styles.aiSection} className="ai-spotlight" id="ia-facial">
@@ -375,6 +472,36 @@ export default function HomePage() {
                 >
                   {f.desc}
                 </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Testimonios ───────────────────────────────────── */}
+      <section className="section" id="testimonios">
+        <div className="container">
+          <div style={styles.sectionHead}>
+            <span className="eyebrow">Lo que dicen</span>
+            <h2 className="serif" style={styles.h2}>
+              Personas reales,
+              <br />
+              eventos reales.
+            </h2>
+          </div>
+          <div style={styles.testimonialsGrid} className="home-testimonials-grid">
+            {testimonials.map((t) => (
+              <div key={t.name} className="card glass" style={styles.testimonialCard}>
+                <p style={styles.testimonialText}>"{t.text}"</p>
+                <div style={styles.testimonialAuthor}>
+                  <div style={{ ...styles.testimonialAvatar, background: `${t.color}20`, border: `2px solid ${t.color}40` }}>
+                    <span style={{ color: t.color, fontWeight: 800, fontSize: 15 }}>{t.avatar}</span>
+                  </div>
+                  <div>
+                    <div style={styles.testimonialName}>{t.name}</div>
+                    <div style={styles.testimonialRole}>{t.role}</div>
+                  </div>
+                </div>
               </div>
             ))}
           </div>
@@ -616,6 +743,74 @@ const styles: Record<string, React.CSSProperties> = {
     lineHeight: 1.65,
     maxWidth: 560,
     margin: 0,
+  },
+
+  /* Problem section */
+  problemGrid: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr",
+    gap: 48,
+    alignItems: "start",
+  },
+  problemLeft: { display: "flex", flexDirection: "column" as const },
+  problemRight: { display: "flex", flexDirection: "column" as const },
+  problemList: {
+    display: "flex",
+    flexDirection: "column" as const,
+    gap: 14,
+    marginTop: 28,
+  },
+  problemItem: {
+    display: "flex",
+    alignItems: "flex-start",
+    gap: 12,
+  },
+  problemIcon: { fontSize: 18, flexShrink: 0, marginTop: 1 },
+  problemText: { fontSize: 15, lineHeight: 1.6, color: "#374151" },
+
+  /* Testimonials */
+  testimonialsGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+    gap: 20,
+  },
+  testimonialCard: {
+    display: "flex",
+    flexDirection: "column" as const,
+    gap: 20,
+    padding: "24px 26px",
+  },
+  testimonialText: {
+    margin: 0,
+    fontSize: 15,
+    lineHeight: 1.75,
+    color: "#374151",
+    flex: 1,
+  },
+  testimonialAuthor: {
+    display: "flex",
+    alignItems: "center",
+    gap: 12,
+  },
+  testimonialAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: "50%",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+  },
+  testimonialName: {
+    fontSize: 14,
+    fontWeight: 700,
+    color: "#111",
+    lineHeight: 1.2,
+  },
+  testimonialRole: {
+    fontSize: 12,
+    color: "var(--muted)",
+    marginTop: 2,
   },
 
   /* Trust bar */

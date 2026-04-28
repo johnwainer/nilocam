@@ -1061,6 +1061,19 @@ img {
   .home-faq-grid {
     grid-template-columns: 1fr !important;
   }
+
+  /* Testimonials grid: single column */
+  .home-testimonials-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Problem section: single column on mobile */
+@media (max-width: 720px) {
+  .home-problem-grid {
+    grid-template-columns: 1fr !important;
+    gap: 48px !important;
+  }
 }
 
 /* ─── Trust bar: horizontal scroll on mobile ─────────────────────────────── */
