@@ -3,15 +3,15 @@ import { APP_NAME } from "@/lib/constants";
 
 const slides = [
   {
-    title: "Las fotos en pantalla grande, mientras la fiesta pasa.",
+    title: "La galería del evento, en el celular de todos.",
     subtitle:
-      "Un QR y tus invitados están dentro. Cada foto que suben aparece en la galería al instante — para que todos la vean juntos.",
+      "Un QR y tus invitados están dentro. Cada foto que suben aparece al instante en la galería — visible desde cualquier celular y en pantalla grande.",
     image:
       "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=1400&q=80",
   },
   {
-    title: "Lo que captura uno, lo celebran todos.",
-    subtitle: "La foto llega a la galería en segundos. Sin recargar, sin esperar. El momento se comparte en el momento.",
+    title: "Lo que captura uno, lo ven todos.",
+    subtitle: "La foto llega en segundos a la galería compartida. Cada invitado la ve desde su propio teléfono, en tiempo real. El momento se comparte en el momento.",
     image:
       "https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&w=1200&q=80",
   },
@@ -70,15 +70,16 @@ export function LandingHero() {
             Sin app · Sin registro · Solo el QR
           </span>
           <h1 className="serif" style={s.title}>
-            Las fotos de
+            Todos ven las
             <br />
-            tu evento, en
+            fotos al mismo
             <br />
-            pantalla grande.
+            tiempo.
           </h1>
           <p className="muted" style={s.lead}>
-            Tus invitados sacan la foto desde su celular — y en segundos aparece en la pantalla
-            para que todos la vean juntos. Sin apps, sin cuentas. Solo el QR.
+            Tus invitados sacan la foto y en segundos aparece en la galería del evento — todos
+            la ven desde su propio celular, y también en la pantalla grande si tienes proyector.
+            Sin apps, sin cuentas. Solo el QR.
           </p>
           <div style={s.actions}>
             <Link href="/auth" className="btn btn-primary">
@@ -132,7 +133,7 @@ export function LandingHero() {
           <div style={s.statItem}>
             <strong style={s.statLabel}>En vivo</strong>
             <span className="muted" style={s.statSub}>
-              la foto aparece antes de que bajen el teléfono
+              en el celular de todos y en pantalla grande
             </span>
           </div>
           <div className="lh-stat-div" />

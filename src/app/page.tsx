@@ -19,16 +19,16 @@ const howItWorks = [
   },
   {
     step: "3",
-    title: "Las fotos aparecen en la pantalla grande",
-    text: "Cada foto sube en segundos y aparece en la galería del evento. Si tienes pantalla o proyector, todos la ven al mismo tiempo. Ese momento de \"¡ahí salgo yo!\" no tiene precio.",
+    title: "Todos la ven al instante desde su celular",
+    text: "La foto aparece en la galería del evento en segundos — cada invitado la ve desde su propio teléfono en tiempo real. Si tienes pantalla o proyector, también sale ahí. Ese momento de \"¡ahí salgo yo!\" no tiene precio.",
   },
 ];
 
 const features = [
   {
     icon: "📸",
-    title: "Fotos en pantalla, al segundo",
-    desc: "La foto aparece antes de que el invitado baje el teléfono. Sin recargar, sin esperar. El momento se vive mientras sucede.",
+    title: "Todos la ven al mismo tiempo",
+    desc: "La foto aparece en la galería en segundos — cada invitado la ve desde su propio celular en tiempo real, y también en la pantalla grande si tienes proyector.",
   },
   {
     icon: "🔗",
@@ -59,8 +59,8 @@ const features = [
   },
   {
     icon: "📺",
-    title: "Proyéctalo en el salón",
-    desc: "Slideshow con animaciones para proyectar en pantalla grande. Cuando llega una foto nueva, aparece sola. La reacción del salón es inmediata.",
+    title: "Y también en pantalla grande",
+    desc: "Además de verse en el celular de cada invitado, puedes proyectar un slideshow en el salón. Cuando llega una foto nueva, aparece sola. La reacción es inmediata.",
   },
   {
     icon: "📱",
@@ -82,7 +82,7 @@ const features = [
 const faqs = [
   {
     q: "¿En qué se diferencia de mandar las fotos por WhatsApp o Google Photos?",
-    a: "WhatsApp y Google Photos son para después del evento. Memorica es durante. Las fotos aparecen en la pantalla grande mientras la fiesta está pasando — el momento se comparte en el momento. Además, cada invitado puede encontrar sus fotos solo con una selfie, sin pedirte nada y sin buscar entre cientos de imágenes.",
+    a: "WhatsApp y Google Photos son para después del evento. Memorica es durante. Cada foto aparece en la galería en tiempo real — todos la ven desde su celular al instante, y también en la pantalla grande si hay proyector. El momento se comparte en el momento. Además, cada invitado puede encontrar sus fotos con una selfie, sin pedirte nada.",
   },
   {
     q: "¿Mis invitados tienen que instalar algo?",
@@ -147,7 +147,7 @@ export default function HomePage() {
         <div className="container">
           <div className="home-trust-inner" style={styles.trustInner}>
             {[
-              { icon: "📸", text: "La foto en pantalla en segundos" },
+              { icon: "📸", text: "Todos la ven en su cel al instante" },
               { icon: "🤖", text: "Encuentra tus fotos con una selfie" },
               { icon: "📱", text: "Sin apps · Sin registro" },
               { icon: "🎨", text: "20+ diseños listos para usar" },
@@ -569,7 +569,8 @@ export default function HomePage() {
               </h2>
               <p style={styles.ctaText}>
                 Crea tu cuenta gratis. Ten el QR listo antes de que lleguen tus invitados.
-                Y disfruta viendo cómo las fotos llenan la pantalla mientras la fiesta pasa.
+                Y disfruta viendo cómo las fotos aparecen en el celular de todos — y en la
+                pantalla grande — mientras la fiesta pasa.
               </p>
               <div style={styles.ctaPills}>
                 {["Sin apps para tus invitados", "Sin tarjeta de crédito", "Listo en 3 minutos", "IA facial incluida"].map((t) => (
