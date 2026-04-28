@@ -69,11 +69,11 @@ export function LandingHero() {
             Sin app · Sin registro · Solo el QR
           </span>
           <h1 className="serif" style={s.title}>
-            Todos ven las
+            El álbum del
             <br />
-            fotos al mismo
+            evento que se
             <br />
-            tiempo.
+            llena solo.
           </h1>
           <p className="muted" style={s.lead}>
             Tus invitados sacan la foto y en segundos aparece en la galería del evento — todos
