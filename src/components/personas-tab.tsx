@@ -236,7 +236,7 @@ export function PersonasTab({ eventId, savedIds }: Props) {
       )}
 
       {/* Header actions */}
-      <div style={s.toolbar}>
+      <div style={s.toolbar} data-tour="personas-toolbar">
         <div>
           <h2 style={s.heading}>Reconocimiento facial</h2>
           <p className="muted" style={{ fontSize: 13, marginTop: 2 }}>
@@ -249,6 +249,7 @@ export function PersonasTab({ eventId, savedIds }: Props) {
               <button
                 type="button"
                 style={mergeMode ? s.btnActive : s.btnSecondary}
+                data-tour="personas-merge"
                 onClick={() => {
                   setMergeMode((v) => !v);
                   setMergeSource(null);
@@ -259,6 +260,7 @@ export function PersonasTab({ eventId, savedIds }: Props) {
               <button
                 type="button"
                 style={s.btnSecondary}
+                data-tour="personas-recluster"
                 onClick={recluster}
                 disabled={reclustering}
                 title="Une automáticamente grupos que parecen ser la misma persona"
@@ -270,6 +272,7 @@ export function PersonasTab({ eventId, savedIds }: Props) {
           <button
             type="button"
             style={s.btnPrimary}
+            data-tour="personas-analyze"
             onClick={processPhotos}
             disabled={processing}
           >

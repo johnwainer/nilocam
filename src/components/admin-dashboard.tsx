@@ -227,10 +227,10 @@ export function AdminDashboard({
   const [tourStep, setTourStep] = useState<number>(() => {
     if (initialEvents.length > 0) return -1;
     if (typeof window === "undefined") return -1;
-    return localStorage.getItem("memorica-tour-v1") ? -1 : 0;
+    return localStorage.getItem("memorica-tour-v2") ? -1 : 0;
   });
   const closeTour = useCallback(() => {
-    localStorage.setItem("memorica-tour-v1", "1");
+    localStorage.setItem("memorica-tour-v2", "1");
     setTourStep(-1);
   }, []);
 
@@ -335,8 +335,8 @@ export function AdminDashboard({
     if (tourStep < 0 || tourStep >= TOUR_STEPS_DEF.length) return;
     const step = TOUR_STEPS_DEF[tourStep];
     setMainView("editor");
-    // Only switch to resumen/fotos if this event is saved
-    if ((step.tab === "resumen" || step.tab === "fotos") && !savedIds.has(selectedId)) {
+    // Only switch to resumen/fotos/personas if this event is saved
+    if ((step.tab === "resumen" || step.tab === "fotos" || step.tab === "personas") && !savedIds.has(selectedId)) {
       // skip to next available step
       const next = TOUR_STEPS_DEF.findIndex((s, i) => i > tourStep && s.tab === "evento");
       setTourStep(next >= 0 ? next : -1);
@@ -3792,7 +3792,7 @@ const s: Record<string, React.CSSProperties> = {
 
 const TOUR_STEPS_DEF: Array<{
   selector: string;
-  tab: "evento" | "resumen" | "fotos";
+  tab: "evento" | "resumen" | "fotos" | "personas";
   title: string;
   body: string;
 }> = [
@@ -3843,6 +3843,24 @@ const TOUR_STEPS_DEF: Array<{
     tab: "fotos",
     title: "8 · Moderación de fotos",
     body: "En esta pestaña ves y gestionas todas las fotos de tu evento. Filtra por estado: pendientes de revisión, aprobadas (visibles en la galería) o rechazadas. Puedes moderar una a una o seleccionar varias para aprobar, rechazar o eliminar en bloque. Al final del evento, exporta todo el álbum como ZIP.",
+  },
+  {
+    selector: '[data-tour="personas-toolbar"]',
+    tab: "personas",
+    title: "9 · Reconocimiento facial con IA",
+    body: "Esta pestaña usa inteligencia artificial para detectar todas las caras en las fotos del evento y agruparlas por persona automáticamente. Haz clic en \"▶ Analizar fotos\" para procesarlas: los modelos corren en tu navegador, sin enviar datos a servidores externos. Cada persona detectada aparece como una tarjeta con todas sus fotos.",
+  },
+  {
+    selector: '[data-tour="personas-analyze"]',
+    tab: "personas",
+    title: "10 · Organizar y unir personas",
+    body: "Después del análisis puedes darle nombre e Instagram/TikTok a cada persona detectada — ese nombre aparece en los filtros de la galería pública. Si la IA agrupó mal a alguien, usa \"Unir personas\" para fusionar dos tarjetas manualmente, o \"⚡ Auto-agrupar\" para que la IA reanalice y una automáticamente los grupos que parezcan la misma persona.",
+  },
+  {
+    selector: '[data-tour="section-filter-bar"]',
+    tab: "fotos",
+    title: "11 · Filtros por persona y \"Mis fotos\"",
+    body: "Una vez que hay personas nombradas, los invitados ven un slider de personas en la galería del evento y pueden filtrar las fotos por persona con un solo toque. También pueden usar \"Mis fotos\" para hacerse una selfie y encontrar todas sus fotos automáticamente — sin registro ni cuenta. Los ❤️ likes también son en tiempo real y los ves reflejados aquí.",
   },
 ];
 
