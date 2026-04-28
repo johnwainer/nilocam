@@ -242,54 +242,89 @@ export default function HomePage() {
           <div style={styles.aiSteps}>
             {faceSteps.map((step, i) => (
               <div key={step.num} style={styles.aiStep}>
-                <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 20 }}>
+                {/* Top row: number left, icon right */}
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                   <span style={{ ...styles.aiStepNum, color: step.color }}>{step.num}</span>
-                  {i < faceSteps.length - 1 && <span style={styles.aiStepArrow}>→</span>}
-                </div>
-                <div style={{ ...styles.aiStepIcon, background: `${step.color}18`, border: `1px solid ${step.color}30` }}>
-                  {step.icon}
+                  <div style={{ ...styles.aiStepIcon, background: `${step.color}18`, border: `1px solid ${step.color}30` }}>
+                    {step.icon}
+                  </div>
                 </div>
                 <h3 style={styles.aiStepTitle}>{step.title}</h3>
                 <p style={styles.aiStepDesc}>{step.desc}</p>
+                {/* Connector arrow between cards */}
+                {i < faceSteps.length - 1 && (
+                  <div style={styles.aiStepConnector}>
+                    <span style={{ color: step.color, opacity: 0.5 }}>↓</span>
+                  </div>
+                )}
               </div>
             ))}
           </div>
 
           {/* Bottom visual demo strip */}
           <div style={styles.aiDemoStrip}>
+            {/* Photos side */}
             <div style={styles.aiDemoLeft}>
-              <span style={styles.aiDemoLabel}>Galería del evento</span>
+              <div style={styles.aiDemoSectionHead}>
+                <span style={styles.aiDemoDot} />
+                <span style={styles.aiDemoLabel}>Fotos del evento</span>
+              </div>
               <div style={styles.aiDemoPhotos}>
                 {[
-                  "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=120&h=120&fit=crop&auto=format",
-                  "https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?w=120&h=120&fit=crop&auto=format",
-                  "https://images.unsplash.com/photo-1519741497674-611481863552?w=120&h=120&fit=crop&auto=format",
-                  "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=120&h=120&fit=crop&auto=format",
+                  "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=160&h=160&fit=crop&auto=format",
+                  "https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?w=160&h=160&fit=crop&auto=format",
+                  "https://images.unsplash.com/photo-1519741497674-611481863552?w=160&h=160&fit=crop&auto=format",
+                  "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=160&h=160&fit=crop&auto=format",
                 ].map((url, idx) => (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img key={idx} src={url} alt="" style={styles.aiDemoPhoto} />
+                  <img
+                    key={idx}
+                    src={url}
+                    alt=""
+                    style={{
+                      ...styles.aiDemoPhoto,
+                      marginLeft: idx > 0 ? -14 : 0,
+                      zIndex: 4 - idx,
+                      position: "relative",
+                    }}
+                  />
                 ))}
+                <div style={styles.aiDemoMoreBadge}>+128</div>
               </div>
             </div>
-            <div style={styles.aiDemoArrow}>→</div>
+
+            {/* Arrow center */}
+            <div style={styles.aiDemoCenter}>
+              <div style={styles.aiDemoPulse} />
+              <span style={styles.aiDemoArrow}>→</span>
+              <span style={styles.aiDemoArrowLabel}>IA detecta</span>
+            </div>
+
+            {/* Persons side */}
             <div style={styles.aiDemoRight}>
-              <span style={styles.aiDemoLabel}>Personas detectadas</span>
+              <div style={styles.aiDemoSectionHead}>
+                <span style={{ ...styles.aiDemoDot, background: "#22d3ee", boxShadow: "0 0 8px #22d3ee" }} />
+                <span style={styles.aiDemoLabel}>Personas identificadas</span>
+              </div>
               <div style={styles.aiPersonCards}>
                 {[
-                  { name: "Ana García", handle: "@anagarcia", color: "#6366f1" },
-                  { name: "Carlos M.", handle: "@carlosm", color: "#8b5cf6" },
-                  { name: "Laura R.", handle: "@laur", color: "#a78bfa" },
+                  { name: "Ana García", handle: "@anagarcia", color: "#6366f1", count: 34 },
+                  { name: "Carlos M.", handle: "@carlosm_", color: "#8b5cf6", count: 21 },
+                  { name: "Laura R.", handle: "@laurarod", color: "#a78bfa", count: 18 },
                 ].map((p) => (
                   <div key={p.name} style={styles.aiPersonCard}>
-                    <div style={{ ...styles.aiPersonAvatar, background: `${p.color}22`, border: `1.5px solid ${p.color}55` }}>
-                      <span style={{ color: p.color, fontWeight: 700, fontSize: 15 }}>
+                    <div style={{ ...styles.aiPersonAvatar, background: `${p.color}20`, border: `2px solid ${p.color}50` }}>
+                      <span style={{ color: p.color, fontWeight: 800, fontSize: 16 }}>
                         {p.name.charAt(0)}
                       </span>
                     </div>
-                    <div>
+                    <div style={{ flex: 1 }}>
                       <div style={styles.aiPersonName}>{p.name}</div>
                       <div style={{ ...styles.aiPersonHandle, color: p.color }}>{p.handle}</div>
                     </div>
+                    <span style={{ ...styles.aiPersonCount, background: `${p.color}18`, color: p.color }}>
+                      {p.count} fotos
+                    </span>
                   </div>
                 ))}
               </div>
@@ -330,8 +365,13 @@ export default function HomePage() {
               >
                 {f.highlight && <span style={styles.featureNewBadge}>Nuevo</span>}
                 <span style={styles.featureIcon}>{f.icon}</span>
-                <h3 style={styles.featureTitle}>{f.title}</h3>
-                <p className={f.highlight ? undefined : "muted"} style={{ ...styles.featureDesc, ...(f.highlight ? { color: "rgba(255,255,255,0.65)" } : {}) }}>
+                <h3 style={{ ...styles.featureTitle, ...(f.highlight ? { color: "#ffffff" } : {}) }}>
+                  {f.title}
+                </h3>
+                <p
+                  className={f.highlight ? undefined : "muted"}
+                  style={{ ...styles.featureDesc, ...(f.highlight ? { color: "rgba(255,255,255,0.55)" } : {}) }}
+                >
                   {f.desc}
                 </p>
               </div>
@@ -694,84 +734,156 @@ const styles: Record<string, React.CSSProperties> = {
   aiSteps: {
     display: "grid",
     gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-    gap: 2,
-    marginBottom: 64,
+    gap: 12,
+    marginBottom: 16,
   },
   aiStep: {
-    background: "rgba(255,255,255,0.03)",
-    border: "1px solid rgba(255,255,255,0.07)",
-    borderRadius: 24,
-    padding: "32px 28px",
+    background: "rgba(255,255,255,0.035)",
+    border: "1px solid rgba(255,255,255,0.08)",
+    borderRadius: 28,
+    padding: "36px 32px",
     display: "flex",
     flexDirection: "column" as const,
-    gap: 14,
+    gap: 20,
+    position: "relative" as const,
   },
   aiStepNum: {
-    fontSize: 48,
+    fontSize: 56,
     fontWeight: 800,
-    letterSpacing: "-0.06em",
+    letterSpacing: "-0.07em",
     lineHeight: 1,
     fontFamily: "inherit",
   },
-  aiStepArrow: {
-    color: "rgba(255,255,255,0.1)",
-    fontSize: 28,
-    fontWeight: 300,
+  aiStepConnector: {
+    position: "absolute" as const,
+    bottom: -28,
+    left: "50%",
+    transform: "translateX(-50%)",
+    fontSize: 18,
+    lineHeight: 1,
+    display: "none",
   },
   aiStepIcon: {
-    width: 52,
-    height: 52,
-    borderRadius: 14,
+    width: 56,
+    height: 56,
+    borderRadius: 16,
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    fontSize: 24,
+    fontSize: 26,
     flexShrink: 0,
   },
   aiStepTitle: {
     margin: 0,
     color: "#ffffff",
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: 700,
     letterSpacing: "-0.03em",
     lineHeight: 1.15,
   },
   aiStepDesc: {
     margin: 0,
-    color: "rgba(255,255,255,0.38)",
+    color: "rgba(255,255,255,0.35)",
     fontSize: 14,
-    lineHeight: 1.7,
+    lineHeight: 1.75,
   },
   /* Demo strip */
   aiDemoStrip: {
+    display: "grid",
+    gridTemplateColumns: "1fr auto 1fr",
+    alignItems: "center",
+    gap: 24,
+    background: "rgba(255,255,255,0.03)",
+    border: "1px solid rgba(255,255,255,0.08)",
+    borderRadius: 28,
+    padding: "32px 36px",
+    marginTop: 12,
+  },
+  aiDemoSectionHead: { display: "flex", alignItems: "center", gap: 8, marginBottom: 16 },
+  aiDemoDot: {
+    width: 6,
+    height: 6,
+    borderRadius: "50%",
+    background: "#6366f1",
+    boxShadow: "0 0 8px #6366f1",
+    flexShrink: 0,
+  },
+  aiDemoLeft: { display: "flex", flexDirection: "column" as const },
+  aiDemoLabel: {
+    fontSize: 11,
+    fontWeight: 700,
+    letterSpacing: "0.16em",
+    color: "rgba(255,255,255,0.3)",
+    textTransform: "uppercase" as const,
+  },
+  aiDemoPhotos: { display: "flex", alignItems: "center" },
+  aiDemoPhoto: {
+    width: 72,
+    height: 72,
+    borderRadius: 12,
+    objectFit: "cover" as const,
+    border: "2px solid rgba(255,255,255,0.06)",
+  },
+  aiDemoMoreBadge: {
+    width: 72,
+    height: 72,
+    borderRadius: 12,
+    background: "rgba(255,255,255,0.05)",
+    border: "2px solid rgba(255,255,255,0.06)",
     display: "flex",
     alignItems: "center",
-    gap: 32,
-    background: "rgba(255,255,255,0.03)",
-    border: "1px solid rgba(255,255,255,0.07)",
-    borderRadius: 24,
-    padding: "28px 32px",
-    flexWrap: "wrap" as const,
+    justifyContent: "center",
+    fontSize: 13,
+    fontWeight: 700,
+    color: "rgba(255,255,255,0.3)",
+    flexShrink: 0,
+    marginLeft: -14,
+    zIndex: 0,
+    position: "relative" as const,
   },
-  aiDemoLeft: { display: "flex", flexDirection: "column" as const, gap: 14, flex: "1 1 240px" },
-  aiDemoLabel: { fontSize: 11, fontWeight: 700, letterSpacing: "0.14em", color: "rgba(255,255,255,0.25)", textTransform: "uppercase" as const },
-  aiDemoPhotos: { display: "flex", gap: 8 },
-  aiDemoPhoto: { width: 64, height: 64, borderRadius: 10, objectFit: "cover" as const, filter: "brightness(0.75)" },
-  aiDemoArrow: { fontSize: 28, color: "rgba(255,255,255,0.12)", flexShrink: 0 },
-  aiDemoRight: { display: "flex", flexDirection: "column" as const, gap: 14, flex: "1 1 240px" },
-  aiPersonCards: { display: "flex", flexDirection: "column" as const, gap: 8 },
+  aiDemoCenter: {
+    display: "flex",
+    flexDirection: "column" as const,
+    alignItems: "center",
+    gap: 6,
+    flexShrink: 0,
+  },
+  aiDemoPulse: {
+    width: 10,
+    height: 10,
+    borderRadius: "50%",
+    background: "#22d3ee",
+    boxShadow: "0 0 16px #22d3ee",
+  },
+  aiDemoArrow: { fontSize: 22, color: "rgba(255,255,255,0.2)", flexShrink: 0 },
+  aiDemoArrowLabel: {
+    fontSize: 10,
+    fontWeight: 700,
+    letterSpacing: "0.12em",
+    color: "rgba(255,255,255,0.2)",
+    textTransform: "uppercase" as const,
+  },
+  aiDemoRight: { display: "flex", flexDirection: "column" as const },
+  aiPersonCards: { display: "flex", flexDirection: "column" as const, gap: 10 },
   aiPersonCard: { display: "flex", alignItems: "center", gap: 12 },
   aiPersonAvatar: {
-    width: 40,
-    height: 40,
+    width: 44,
+    height: 44,
     borderRadius: "50%",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,
   },
-  aiPersonName: { fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.75)" },
-  aiPersonHandle: { fontSize: 11, fontWeight: 500 },
+  aiPersonName: { fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.8)", lineHeight: 1.3 },
+  aiPersonHandle: { fontSize: 11, fontWeight: 500, marginTop: 1 },
+  aiPersonCount: {
+    fontSize: 11,
+    fontWeight: 700,
+    padding: "3px 9px",
+    borderRadius: 999,
+    flexShrink: 0,
+  },
   aiCta: {
     background: "rgba(255,255,255,0.1)",
     border: "1px solid rgba(255,255,255,0.18)",
