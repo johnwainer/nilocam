@@ -31,11 +31,11 @@ const copy: Record<Mode, { title: string; subtitle: string; primary: string }> =
 };
 
 const perks = [
-  { icon: "⚡", text: "Evento activo en 3 minutos" },
-  { icon: "📱", text: "Sin apps para tus invitados" },
-  { icon: "🖼", text: "Fotos en pantalla en tiempo real" },
+  { icon: "🤖", text: "IA facial automática incluida" },
+  { icon: "❤️", text: "Likes en fotos en tiempo real" },
+  { icon: "📸", text: "Galería en vivo sin apps" },
   { icon: "🎨", text: "20+ temas visuales editables" },
-  { icon: "🛡", text: "Moderación de fotos incluida" },
+  { icon: "⚡", text: "Evento activo en 3 minutos" },
 ];
 
 export function AdminLogin() {
@@ -162,6 +162,13 @@ export function AdminLogin() {
         </div>
 
         <div style={s.formArea} className="auth-form-area">
+          {/* Mobile feature chips — visible only on small screens */}
+          <div style={s.mobileChips} className="auth-mobile-chips">
+            {["🤖 IA facial", "❤️ Likes", "📸 Galería en vivo", "📱 Sin apps"].map((t) => (
+              <span key={t} style={s.mobileChip}>{t}</span>
+            ))}
+          </div>
+
           {/* Heading */}
           <div style={s.heading}>
             <h1 style={s.title}>{copy[mode].title}</h1>
@@ -483,6 +490,20 @@ const s: Record<string, React.CSSProperties> = {
     color: "var(--muted)",
     lineHeight: 1.6,
     textAlign: "center" as const,
+  },
+  mobileChips: {
+    display: "none",
+    flexWrap: "wrap" as const,
+    gap: 6,
+  },
+  mobileChip: {
+    fontSize: 12,
+    fontWeight: 600,
+    padding: "5px 12px",
+    borderRadius: 999,
+    background: "rgba(99,102,241,0.07)",
+    border: "1px solid rgba(99,102,241,0.2)",
+    color: "#4338ca",
   },
   alert: {
     borderRadius: 16,

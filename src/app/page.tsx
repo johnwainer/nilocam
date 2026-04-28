@@ -163,7 +163,7 @@ export default function HomePage() {
       </div>
 
       {/* ── IA Facial Spotlight ────────────────────────────── */}
-      <section style={styles.aiSection} id="ia-facial">
+      <section style={styles.aiSection} className="ai-spotlight" id="ia-facial">
         <div className="container">
           {/* Eyebrow */}
           <div style={styles.aiBadgeRow}>
@@ -172,7 +172,7 @@ export default function HomePage() {
           </div>
 
           {/* Headline */}
-          <div style={styles.aiHeadWrap}>
+          <div style={styles.aiHeadWrap} className="ai-head-wrap">
             <h2 style={styles.aiHeadline}>
               Reconocimiento facial
               <br />
@@ -194,7 +194,7 @@ export default function HomePage() {
           </div>
 
           {/* Steps */}
-          <div style={styles.aiSteps}>
+          <div style={styles.aiSteps} className="ai-steps">
             {faceSteps.map((step, i) => (
               <div key={step.num} style={styles.aiStep}>
                 {/* Top row: number left, icon right */}
@@ -217,7 +217,7 @@ export default function HomePage() {
           </div>
 
           {/* Bottom visual demo strip */}
-          <div style={styles.aiDemoStrip}>
+          <div style={styles.aiDemoStrip} className="ai-demo-strip">
             {/* Photos side */}
             <div style={styles.aiDemoLeft}>
               <div style={styles.aiDemoSectionHead}>
@@ -249,7 +249,7 @@ export default function HomePage() {
             </div>
 
             {/* Arrow center */}
-            <div style={styles.aiDemoCenter}>
+            <div style={styles.aiDemoCenter} className="ai-demo-center">
               <div style={styles.aiDemoPulse} />
               <span style={styles.aiDemoArrow}>→</span>
               <span style={styles.aiDemoArrowLabel}>IA detecta</span>

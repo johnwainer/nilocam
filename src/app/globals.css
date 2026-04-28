@@ -1057,3 +1057,110 @@ img {
     grid-template-columns: 1fr !important;
   }
 }
+
+/* ─── Trust bar: horizontal scroll on mobile ─────────────────────────────── */
+@media (max-width: 640px) {
+  .home-trust-inner {
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    scrollbar-width: none !important;
+    justify-content: flex-start !important;
+    gap: 0 !important;
+  }
+  .home-trust-inner::-webkit-scrollbar {
+    display: none;
+  }
+  .home-trust-inner > div {
+    flex-shrink: 0 !important;
+    padding: 12px 16px !important;
+  }
+}
+
+/* ─── AI spotlight section ───────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .ai-spotlight {
+    padding: 64px 0 !important;
+  }
+  .ai-head-wrap {
+    gap: 28px !important;
+    margin-bottom: 48px !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .ai-spotlight {
+    padding: 48px 0 !important;
+  }
+  .ai-steps {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+  .ai-demo-strip {
+    grid-template-columns: 1fr !important;
+    gap: 24px !important;
+    padding: 22px 20px !important;
+  }
+  /* Hide center arrow on mobile — photos + persons stack vertically */
+  .ai-demo-center {
+    display: none !important;
+  }
+}
+
+/* ─── Admin tab bar: scrollable on small phones ──────────────────────────── */
+@media (max-width: 600px) {
+  .admin-tab-bar {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: auto !important;
+    scrollbar-width: none !important;
+    border-radius: 16px !important;
+  }
+  .admin-tab-bar::-webkit-scrollbar {
+    display: none;
+  }
+  .admin-tab-bar > button {
+    flex-shrink: 0 !important;
+    padding: 8px 14px !important;
+    font-size: 13px !important;
+    white-space: nowrap !important;
+  }
+}
+
+/* ─── Auth: show mobile feature chips, hide on desktop ───────────────────── */
+@media (max-width: 720px) {
+  .auth-mobile-chips {
+    display: flex !important;
+  }
+}
+
+/* ─── Auth form: tighter padding on very small screens ───────────────────── */
+@media (max-width: 400px) {
+  .auth-form-area {
+    padding: 24px 16px !important;
+    padding-top: 28px !important;
+  }
+}
+
+/* ─── Landing hero: feature chip strip spacing ───────────────────────────── */
+@media (max-width: 480px) {
+  /* Slightly smaller chip text on very narrow phones */
+  .lh-copy .feat-chip {
+    font-size: 12px !important;
+    padding: 5px 10px !important;
+  }
+}
+
+/* ─── Admin main area: more breathing room at bottom (avoids browser chrome) */
+@media (max-width: 768px) {
+  .admin-main-wrap {
+    padding-bottom: 32px !important;
+  }
+}
+
+/* ─── Home CTA section: tighten title on mobile ──────────────────────────── */
+@media (max-width: 480px) {
+  .demo-section .cta-actions-wrap {
+    flex-direction: column !important;
+    width: 100% !important;
+  }
+}

@@ -950,7 +950,7 @@ export function AdminDashboard({
             )}
 
             {/* Tab bar */}
-            <div style={s.tabBar}>
+            <div style={s.tabBar} className="admin-tab-bar">
               {savedIds.has(selected.id) && (
                 <button
                   type="button"
