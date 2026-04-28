@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { APP_NAME } from "@/lib/constants";
 
 const slides = [
   {

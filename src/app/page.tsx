@@ -492,7 +492,7 @@ export default function HomePage() {
           <div style={styles.testimonialsGrid} className="home-testimonials-grid">
             {testimonials.map((t) => (
               <div key={t.name} className="card glass" style={styles.testimonialCard}>
-                <p style={styles.testimonialText}>"{t.text}"</p>
+                <p style={styles.testimonialText}>&ldquo;{t.text}&rdquo;</p>
                 <div style={styles.testimonialAuthor}>
                   <div style={{ ...styles.testimonialAvatar, background: `${t.color}20`, border: `2px solid ${t.color}40` }}>
                     <span style={{ color: t.color, fontWeight: 800, fontSize: 15 }}>{t.avatar}</span>
