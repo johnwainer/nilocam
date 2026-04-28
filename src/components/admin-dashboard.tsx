@@ -869,7 +869,7 @@ export function AdminDashboard({
         </aside>
 
         {/* ── Main ── */}
-        <div className="admin-main-wrap" style={s.mainWrap}>
+        <div className={`admin-main-wrap${mainView === "system" ? " admin-system-active" : ""}`} style={s.mainWrap}>
           {/* ── Credits panel (all users) ── */}
           {mainView === "credits" && (
             <div style={s.main}>
@@ -883,7 +883,7 @@ export function AdminDashboard({
 
           {/* ── Super admin system panel ── */}
           {mainView === "system" && isSuperAdmin && (
-            <div style={s.main}>
+            <div style={{ ...s.main, maxWidth: "none" }}>
               <SuperAdminPanel
                 userEmail={userEmail}
                 onSelectEvent={(eventId) => {

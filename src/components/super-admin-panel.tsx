@@ -573,8 +573,8 @@ export function SuperAdminPanel({
 
           {/* ── STATS ── */}
           {tab === "stats" && (
-            <div style={p.content}>
-              <div style={p.pageHead}>
+            <div style={p.content} className="sa-content">
+              <div style={p.pageHead} className="sa-page-head">
                 <div>
                   <h2 style={p.pageTitle}>Dashboard</h2>
                   <p style={p.pageDesc}>Resumen en tiempo real de toda la plataforma.</p>
@@ -583,7 +583,7 @@ export function SuperAdminPanel({
               </div>
               {statsLoading ? <p style={p.loading}>Cargando estadísticas…</p> : stats ? (
                 <>
-                  <div style={p.metricGrid}>
+                  <div style={p.metricGrid} className="sa-metric-grid">
                   <MetricCard label="Eventos activos" value={stats.activeEvents} total={stats.totalEvents} icon="📅" accent />
                   <MetricCard label="Fotos totales" value={stats.totalPhotos} icon="🖼" />
                   <MetricCard label="Fotos hoy" value={stats.photosToday} icon="⚡" highlight />
@@ -648,18 +648,18 @@ export function SuperAdminPanel({
 
           {/* ── EVENTS ── */}
           {tab === "events" && (
-            <div style={p.content}>
-              <div style={p.pageHead}>
+            <div style={p.content} className="sa-content">
+              <div style={p.pageHead} className="sa-page-head">
                 <div>
                   <h2 style={p.pageTitle}>Eventos</h2>
                   <p style={p.pageDesc}>Todos los eventos del sistema. Actívalos, desactívalos o elimínalos.</p>
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }} className="sa-page-actions">
                   <span style={p.tableCount}>{filteredEvents.length} de {events.length}</span>
                   <button type="button" style={p.refreshBtn} onClick={loadEvents} disabled={eventsLoading}>{eventsLoading ? "Actualizando…" : "↺ Actualizar"}</button>
                 </div>
               </div>
-              <div style={p.filterBar}>
+              <div style={p.filterBar} className="sa-filter-bar">
             <div style={p.searchWrap}>
               <svg style={p.searchIcon} viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="9" cy="9" r="6"/><path d="M15 15l-3.5-3.5"/></svg>
               <input
@@ -670,7 +670,7 @@ export function SuperAdminPanel({
               />
               {eventsSearch && <button type="button" onClick={() => setEventsSearch("")} style={p.searchClear}>✕</button>}
             </div>
-            <div style={p.filterGroup}>
+            <div style={p.filterGroup} className="sa-filter-group">
               <select style={p.filterSel} value={eventsStatus} onChange={(e) => setEventsStatus(e.target.value as typeof eventsStatus)}>
                 <option value="all">Estado: todos</option>
                 <option value="active">Activos</option>
@@ -747,13 +747,13 @@ export function SuperAdminPanel({
 
           {/* ── USERS ── */}
           {tab === "users" && (
-            <div style={p.content}>
-              <div style={p.pageHead}>
+            <div style={p.content} className="sa-content">
+              <div style={p.pageHead} className="sa-page-head">
                 <div>
                   <h2 style={p.pageTitle}>Usuarios</h2>
                   <p style={p.pageDesc}>Gestiona cuentas, roles, créditos y acceso al sistema.</p>
                 </div>
-                <div style={{ display: "flex", gap: 8 }}>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }} className="sa-page-actions">
                   <span style={{ ...p.tableCount, alignSelf: "center" }}>{filteredUsers.length} de {users.length}</span>
                   <button type="button" style={{ ...p.refreshBtn, color: "#6d28d9", borderColor: "rgba(124,58,237,0.3)", background: "rgba(124,58,237,0.06)" }} onClick={() => setShowNewUser(true)}>
                     + Nuevo usuario
@@ -761,7 +761,7 @@ export function SuperAdminPanel({
                   <button type="button" style={p.refreshBtn} onClick={loadUsers} disabled={usersLoading}>{usersLoading ? "Actualizando…" : "↺ Actualizar"}</button>
                 </div>
               </div>
-              <div style={p.filterBar}>
+              <div style={p.filterBar} className="sa-filter-bar">
             <div style={p.searchWrap}>
               <svg style={p.searchIcon} viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="9" cy="9" r="6"/><path d="M15 15l-3.5-3.5"/></svg>
               <input
@@ -772,7 +772,7 @@ export function SuperAdminPanel({
               />
               {usersSearch && <button type="button" onClick={() => setUsersSearch("")} style={p.searchClear}>✕</button>}
             </div>
-            <div style={p.filterGroup}>
+            <div style={p.filterGroup} className="sa-filter-group">
               <select style={p.filterSel} value={usersRole} onChange={(e) => setUsersRole(e.target.value as typeof usersRole)}>
                 <option value="all">Rol: todos</option>
                 <option value="owner">Owner</option>
@@ -928,14 +928,14 @@ export function SuperAdminPanel({
 
           {/* ── CREDITS ── */}
           {tab === "credits" && (
-            <div style={p.content}>
-              <div style={p.pageHead}>
+            <div style={p.content} className="sa-content">
+              <div style={p.pageHead} className="sa-page-head">
                 <div>
                   <h2 style={p.pageTitle}>Créditos</h2>
                   <p style={p.pageDesc}>Consulta saldos de usuarios y configura el costo de cada operación.</p>
                 </div>
               </div>
-              <div style={p.subTabBar}>
+              <div style={p.subTabBar} className="sa-sub-tab-bar">
                 {(["saldos", "precios"] as const).map((st) => (
                   <button
                     key={st}
@@ -999,14 +999,14 @@ export function SuperAdminPanel({
 
           {/* ── PAYMENTS ── */}
           {tab === "payments" && (
-            <div style={p.content}>
-              <div style={p.pageHead}>
+            <div style={p.content} className="sa-content">
+              <div style={p.pageHead} className="sa-page-head">
                 <div>
                   <h2 style={p.pageTitle}>Pagos</h2>
                   <p style={p.pageDesc}>Configura los métodos de pago aceptados y revisa las compras de créditos.</p>
                 </div>
               </div>
-              <div style={p.subTabBar}>
+              <div style={p.subTabBar} className="sa-sub-tab-bar">
                 {(["config", "purchases"] as const).map((st) => (
                   <button
                     key={st}
@@ -1181,8 +1181,8 @@ export function SuperAdminPanel({
 
           {/* ── EMAIL ── */}
           {tab === "email" && (
-            <div style={p.content}>
-              <div style={p.pageHead}>
+            <div style={p.content} className="sa-content">
+              <div style={p.pageHead} className="sa-page-head">
                 <div>
                   <h2 style={p.pageTitle}>Email</h2>
                   <p style={p.pageDesc}>Configura el proveedor de envío y personaliza las plantillas de notificación automática.</p>
@@ -2127,7 +2127,7 @@ function EmailTab({
 
 const p: Record<string, React.CSSProperties> = {
   shell: { display: "flex", flexDirection: "column", minHeight: 0, flex: 1 },
-  layout: { display: "flex", flex: 1, minHeight: 0 },
+  layout: { display: "flex", flex: 1, minHeight: 400 },
 
   // Sidebar
   sidebar: {

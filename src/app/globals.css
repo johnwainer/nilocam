@@ -796,6 +796,11 @@ img {
 
 /* ─── Admin content responsive ───────────────────────────────────────────── */
 
+/* Sistema panel fills full width — no outer wrapper padding */
+.admin-main-wrap.admin-system-active {
+  padding: 0 !important;
+}
+
 @media (max-width: 768px) {
   /* Reduce main area padding */
   .admin-main-wrap {
@@ -1162,5 +1167,91 @@ img {
   .demo-section .cta-actions-wrap {
     flex-direction: column !important;
     width: 100% !important;
+  }
+}
+
+/* ─── Super admin panel: mobile-first layout ─────────────────────────────── */
+
+/* Reduce inner padding on phones */
+@media (max-width: 600px) {
+  .sa-content {
+    padding: 16px !important;
+    gap: 16px !important;
+  }
+
+  /* Page header: stack title and actions vertically */
+  .sa-page-head {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 10px !important;
+  }
+
+  /* Action buttons row: allow wrap */
+  .sa-page-actions {
+    width: 100% !important;
+    justify-content: flex-start !important;
+  }
+
+  /* Filter bar: stack search + selects vertically */
+  .sa-filter-bar {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 8px !important;
+  }
+
+  /* Search box full-width */
+  .sa-filter-bar .sa-filter-bar > * {
+    width: 100% !important;
+  }
+
+  /* Selects row: horizontal scroll so they don't wrap awkwardly */
+  .sa-filter-group {
+    overflow-x: auto !important;
+    scrollbar-width: none !important;
+    flex-wrap: nowrap !important;
+  }
+  .sa-filter-group::-webkit-scrollbar {
+    display: none;
+  }
+  .sa-filter-group select {
+    flex-shrink: 0 !important;
+  }
+
+  /* Sub-tab bar: horizontal scroll */
+  .sa-sub-tab-bar {
+    overflow-x: auto !important;
+    scrollbar-width: none !important;
+    flex-wrap: nowrap !important;
+  }
+  .sa-sub-tab-bar::-webkit-scrollbar {
+    display: none;
+  }
+  .sa-sub-tab-bar > button {
+    flex-shrink: 0 !important;
+    white-space: nowrap !important;
+  }
+
+  /* Metric grid: minimum 2 per row even on 320px */
+  .sa-metric-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px !important;
+  }
+
+  /* Tables: ensure container scrolls, prevent fixed columns overflowing */
+  .sa-content .tableWrap,
+  .sa-content [style*="overflowX"] {
+    border-radius: 12px !important;
+  }
+}
+
+/* Very small phones (≤ 380px) */
+@media (max-width: 380px) {
+  .sa-content {
+    padding: 12px !important;
+  }
+
+  .sa-metric-grid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
   }
 }
