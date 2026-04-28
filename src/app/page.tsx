@@ -162,51 +162,6 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* ── Cómo funciona ─────────────────────────────────── */}
-      <section className="section" id="como-funciona">
-        <div className="container">
-          <div style={styles.sectionHead}>
-            <span className="eyebrow">Cómo funciona</span>
-            <h2 className="serif" style={styles.h2}>
-              De cero a galería
-              <br />
-              en 3 pasos.
-            </h2>
-            <p className="muted" style={styles.sectionLead}>
-              No hay que ser técnico. Si puedes mandar un mensaje de WhatsApp, puedes usar Memorica.
-            </p>
-          </div>
-
-          <div style={styles.stepList}>
-            {howItWorks.map((item, i) => (
-              <div
-                key={item.step}
-                className="home-step-row"
-                style={{
-                  ...styles.stepRow,
-                  borderBottom:
-                    i < howItWorks.length - 1 ? "1px solid rgba(0,0,0,0.07)" : "none",
-                }}
-              >
-                <span style={styles.stepNum}>0{item.step}</span>
-                <div style={styles.stepBody}>
-                  <h3 style={styles.stepTitle}>{item.title}</h3>
-                  <p className="muted" style={styles.stepText}>
-                    {item.text}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div style={styles.stepCta}>
-            <Link href="/auth" className="btn btn-primary" style={{ padding: "14px 32px", fontSize: 16 }}>
-              Crear mi primer evento gratis →
-            </Link>
-          </div>
-        </div>
-      </section>
-
       {/* ── IA Facial Spotlight ────────────────────────────── */}
       <section style={styles.aiSection} id="ia-facial">
         <div className="container">
@@ -334,6 +289,51 @@ export default function HomePage() {
           <div style={{ marginTop: 48 }}>
             <Link href="/auth" className="btn" style={styles.aiCta}>
               Probar reconocimiento facial gratis →
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Cómo funciona ─────────────────────────────────── */}
+      <section className="section" id="como-funciona">
+        <div className="container">
+          <div style={styles.sectionHead}>
+            <span className="eyebrow">Cómo funciona</span>
+            <h2 className="serif" style={styles.h2}>
+              De cero a galería
+              <br />
+              en 3 pasos.
+            </h2>
+            <p className="muted" style={styles.sectionLead}>
+              No hay que ser técnico. Si puedes mandar un mensaje de WhatsApp, puedes usar Memorica.
+            </p>
+          </div>
+
+          <div style={styles.stepList}>
+            {howItWorks.map((item, i) => (
+              <div
+                key={item.step}
+                className="home-step-row"
+                style={{
+                  ...styles.stepRow,
+                  borderBottom:
+                    i < howItWorks.length - 1 ? "1px solid rgba(0,0,0,0.07)" : "none",
+                }}
+              >
+                <span style={styles.stepNum}>0{item.step}</span>
+                <div style={styles.stepBody}>
+                  <h3 style={styles.stepTitle}>{item.title}</h3>
+                  <p className="muted" style={styles.stepText}>
+                    {item.text}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div style={styles.stepCta}>
+            <Link href="/auth" className="btn btn-primary" style={{ padding: "14px 32px", fontSize: 16 }}>
+              Crear mi primer evento gratis →
             </Link>
           </div>
         </div>

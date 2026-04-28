@@ -90,6 +90,26 @@ export function LandingHero() {
           <p style={s.freeNote}>
             Sin tarjeta de crédito · Créditos de bienvenida incluidos
           </p>
+
+          {/* Feature highlights — visible above the fold */}
+          <div style={s.featStrip}>
+            {[
+              { icon: "🤖", label: "IA facial incluida", highlight: true },
+              { icon: "🔍", label: "Busca tus fotos con selfie", highlight: true },
+              { icon: "❤️", label: "Likes en tiempo real" },
+              { icon: "📸", label: "Galería en vivo" },
+              { icon: "🎨", label: "20+ temas visuales" },
+              { icon: "📱", label: "Sin app ni registro" },
+            ].map((f) => (
+              <span
+                key={f.label}
+                style={{ ...s.featChip, ...(f.highlight ? s.featChipHL : {}) }}
+              >
+                <span>{f.icon}</span>
+                {f.label}
+              </span>
+            ))}
+          </div>
         </div>
 
         {/* Bento showcase */}
@@ -153,6 +173,32 @@ const s: Record<string, React.CSSProperties> = {
     margin: 0,
     textAlign: "center",
     opacity: 0.75,
+  },
+  featStrip: {
+    display: "flex",
+    flexWrap: "wrap" as const,
+    gap: 8,
+    justifyContent: "center",
+    paddingTop: 4,
+  },
+  featChip: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 6,
+    padding: "6px 14px",
+    borderRadius: 999,
+    background: "rgba(0,0,0,0.04)",
+    border: "1px solid rgba(0,0,0,0.08)",
+    fontSize: 13,
+    fontWeight: 500,
+    color: "var(--text)",
+    lineHeight: 1.2,
+  },
+  featChipHL: {
+    background: "rgba(99,102,241,0.08)",
+    border: "1px solid rgba(99,102,241,0.25)",
+    color: "#4338ca",
+    fontWeight: 600,
   },
   slideInner: {
     position: "relative",
