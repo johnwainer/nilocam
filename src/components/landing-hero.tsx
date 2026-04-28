@@ -3,21 +3,21 @@ import { APP_NAME } from "@/lib/constants";
 
 const slides = [
   {
-    title: "Tu evento tiene su propia pantalla.",
+    title: "Las fotos en pantalla grande, mientras la fiesta pasa.",
     subtitle:
-      "Un QR abre una landing personalizada, lista para recibir fotos desde el primer segundo.",
+      "Un QR y tus invitados están dentro. Cada foto que suben aparece en la galería al instante — para que todos la vean juntos.",
     image:
       "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=1400&q=80",
   },
   {
-    title: "Cada foto, vista por todos.",
-    subtitle: "Lo que captura un invitado aparece en la galería al instante, sin esperar.",
+    title: "Lo que captura uno, lo celebran todos.",
+    subtitle: "La foto llega a la galería en segundos. Sin recargar, sin esperar. El momento se comparte en el momento.",
     image:
       "https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&w=1200&q=80",
   },
   {
-    title: "Funciona en cualquier teléfono.",
-    subtitle: "iPhone, Android, cualquier browser moderno. Sin descargar nada, sin registrarse.",
+    title: "Cualquier celular. Cero instalaciones.",
+    subtitle: "iPhone, Android, lo que sea. Solo el QR. Sin apps, sin cuentas, sin contraseñas. El 100% de tus invitados puede participar.",
     image:
       "https://images.unsplash.com/photo-1504196606672-aef5c9cefc92?auto=format&fit=crop&w=1200&q=80",
   },
@@ -70,21 +70,22 @@ export function LandingHero() {
             Sin app · Sin registro · Solo el QR
           </span>
           <h1 className="serif" style={s.title}>
-            La galería viva
+            Las fotos de
             <br />
-            de tu evento.
+            tu evento, en
+            <br />
+            pantalla grande.
           </h1>
           <p className="muted" style={s.lead}>
-            {APP_NAME} convierte un código QR en una experiencia inmersiva: los invitados
-            capturan el momento y sus fotos aparecen en pantalla grande, en tiempo real,
-            mientras todo sucede.
+            Tus invitados sacan la foto desde su celular — y en segundos aparece en la pantalla
+            para que todos la vean juntos. Sin apps, sin cuentas. Solo el QR.
           </p>
           <div style={s.actions}>
             <Link href="/auth" className="btn btn-primary">
-              Empezar gratis
+              Crear mi evento gratis →
             </Link>
             <Link href="/event/demo-memorica" className="btn btn-secondary">
-              Ver demo en vivo
+              Ver cómo se ve
             </Link>
           </div>
           <p style={s.freeNote}>
@@ -95,11 +96,11 @@ export function LandingHero() {
           <div style={s.featStrip}>
             {[
               { icon: "🤖", label: "IA facial incluida", highlight: true },
-              { icon: "🔍", label: "Busca tus fotos con selfie", highlight: true },
-              { icon: "❤️", label: "Likes en tiempo real" },
-              { icon: "📸", label: "Galería en vivo" },
-              { icon: "🎨", label: "20+ temas visuales" },
-              { icon: "📱", label: "Sin app ni registro" },
+              { icon: "🔍", label: "Mis fotos con selfie", highlight: true },
+              { icon: "📸", label: "Fotos en pantalla en vivo" },
+              { icon: "❤️", label: "Likes al instante" },
+              { icon: "🎨", label: "20+ diseños" },
+              { icon: "📱", label: "Sin app · Sin registro" },
             ].map((f) => (
               <span
                 key={f.label}
@@ -131,14 +132,14 @@ export function LandingHero() {
           <div style={s.statItem}>
             <strong style={s.statLabel}>En vivo</strong>
             <span className="muted" style={s.statSub}>
-              fotos que aparecen al segundo
+              la foto aparece antes de que bajen el teléfono
             </span>
           </div>
           <div className="lh-stat-div" />
           <div style={s.statItem}>
-            <strong style={s.statLabel}>Tu marca</strong>
+            <strong style={s.statLabel}>Para todos</strong>
             <span className="muted" style={s.statSub}>
-              landing 100% personalizable
+              cualquier celular, sin apps, sin cuentas
             </span>
           </div>
         </div>

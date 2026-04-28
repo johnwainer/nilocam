@@ -9,104 +9,104 @@ import { EVENT_TYPES } from "@/lib/constants";
 const howItWorks = [
   {
     step: "1",
-    title: "Crea tu evento en minutos",
-    text: "Elige el nombre, el estilo visual, el tipo de evento y cómo quieres moderar las fotos. No necesitas saber de tecnología.",
+    title: "Crea tu evento en 3 minutos",
+    text: "Ponle nombre, elige el diseño y decide si quieres revisar las fotos antes de que aparezcan. No necesitas saber de tecnología — si sabes usar WhatsApp, puedes usar Memorica.",
   },
   {
     step: "2",
-    title: "Comparte el QR con tus invitados",
-    text: "Imprímelo, proyéctalo o mándalo por WhatsApp. Al abrirlo, el invitado está dentro al instante: sin apps, sin cuentas, sin pasos extra.",
+    title: "Comparte el QR y listo",
+    text: "Ponlo en la mesa, proyéctalo en la sala o mándalo por WhatsApp. El invitado lo abre desde su celular y ya está dentro — sin apps, sin contraseña, sin nada raro.",
   },
   {
     step: "3",
-    title: "Las fotos aparecen en vivo",
-    text: "Cada captura llega a la galería del evento en tiempo real. Todos los presentes la ven al mismo tiempo en la pantalla grande.",
+    title: "Las fotos aparecen en la pantalla grande",
+    text: "Cada foto sube en segundos y aparece en la galería del evento. Si tienes pantalla o proyector, todos la ven al mismo tiempo. Ese momento de \"¡ahí salgo yo!\" no tiene precio.",
   },
 ];
 
 const features = [
   {
     icon: "📸",
-    title: "Galería en tiempo real",
-    desc: "Las fotos aparecen en pantalla en segundos, sin recargar. El momento se ve mientras sucede.",
+    title: "Fotos en pantalla, al segundo",
+    desc: "La foto aparece antes de que el invitado baje el teléfono. Sin recargar, sin esperar. El momento se vive mientras sucede.",
   },
   {
     icon: "🔗",
-    title: "QR instantáneo",
-    desc: "Cada evento genera su propio código QR. Imprímelo, proyéctalo o compártelo por mensaje.",
+    title: "Un QR para todo",
+    desc: "Un código y tus invitados ya están dentro. Ponlo en las mesas, proyéctalo o mándalo por mensaje. Sin explicaciones.",
   },
   {
     icon: "🤖",
-    title: "IA facial automática",
-    desc: "Detecta y agrupa cada cara de tus fotos sin configuración. El admin las nombra, los invitados las encuentran.",
+    title: "Cada quien encuentra sus fotos",
+    desc: "La IA agrupa todas las caras del evento por persona. Con una selfie, cada invitado ve todas las fotos donde aparece — sin buscar nada.",
     highlight: true,
   },
   {
     icon: "🔍",
-    title: "Busca con selfie",
-    desc: "\"Mis fotos\": el invitado sube una selfie y en segundos aparecen todas las fotos del evento en las que aparece.",
+    title: "Se acabó el \"mándame las fotos\"",
+    desc: "Selfie → fotos tuyas. Al instante. Sin pedirle nada al organizador. Funciona para todos los invitados sin que hagan nada extra.",
     highlight: true,
   },
   {
     icon: "🎨",
-    title: "Landing personalizable",
-    desc: "Más de 20 temas visuales, colores y textos editables. Tu evento, tu identidad.",
+    title: "Tu diseño, tu estilo",
+    desc: "Más de 20 temas visuales con colores, tipografía y portada propios. La galería de tu boda se ve como una boda, no como una app genérica.",
   },
   {
     icon: "🛡",
-    title: "Moderación de fotos",
-    desc: "Aprueba manualmente o activa el modo automático. Tú decides qué aparece en pantalla.",
+    title: "Tú controlas qué aparece",
+    desc: "¿Prefieres revisar cada foto antes de que se vea en pantalla? Activa la moderación. ¿Quieres que todo sea automático? También puedes.",
   },
   {
     icon: "📺",
-    title: "Pantalla de proyección",
-    desc: "Slideshow en pantalla grande con efecto Ken Burns. Ideal para proyectar en el salón.",
+    title: "Proyéctalo en el salón",
+    desc: "Slideshow con animaciones para proyectar en pantalla grande. Cuando llega una foto nueva, aparece sola. La reacción del salón es inmediata.",
   },
   {
     icon: "📱",
-    title: "Sin app. Sin cuenta.",
-    desc: "El invitado abre el QR desde cualquier teléfono y sube la foto. Nada que instalar.",
+    title: "Cero fricción para tus invitados",
+    desc: "Cualquier celular, cualquier marca. Sin apps, sin cuenta, sin contraseña. El 100% de tus invitados puede participar sin ayuda.",
   },
   {
     icon: "🎞",
-    title: "Filtros y marcos",
-    desc: "15 filtros de cámara y 8 marcos fotográficos. Fotos con estilo desde el primer clic.",
+    title: "Filtros y marcos al instante",
+    desc: "15 filtros de cámara y 8 marcos. Las fotos salen con estilo desde el primer momento, sin editar nada después.",
   },
   {
     icon: "⚡",
-    title: "Listo en 3 minutos",
-    desc: "Desde que creas la cuenta hasta tener un evento activo. Sin configuraciones complicadas.",
+    title: "Activo en 3 minutos",
+    desc: "En el tiempo que tardas en tomarte un café, tienes el evento listo, el QR generado y la galería funcionando.",
   },
 ];
 
 const faqs = [
   {
-    q: "¿Los invitados tienen que instalar algo?",
-    a: "No. Abren el QR desde el navegador de su teléfono (iPhone o Android) y listo. No necesitan cuenta, no bajan ninguna app.",
+    q: "¿En qué se diferencia de mandar las fotos por WhatsApp o Google Photos?",
+    a: "WhatsApp y Google Photos son para después del evento. Memorica es durante. Las fotos aparecen en la pantalla grande mientras la fiesta está pasando — el momento se comparte en el momento. Además, cada invitado puede encontrar sus fotos solo con una selfie, sin pedirte nada y sin buscar entre cientos de imágenes.",
   },
   {
-    q: "¿Cómo funciona el reconocimiento facial?",
-    a: "El administrador ejecuta el análisis desde el panel. El sistema detecta y agrupa automáticamente las caras de todas las fotos aprobadas. Cada grupo se puede nombrar y enlazar a redes sociales. Los invitados pueden usar \"Mis fotos\" para subir una selfie y encontrar todas las fotos en las que aparecen, sin compartir datos con terceros.",
+    q: "¿Mis invitados tienen que instalar algo?",
+    a: "No. Solo escanean el QR con la cámara de su celular y listo. No hay apps, no hay cuentas, no hay contraseñas. Si saben usar WhatsApp, pueden usar Memorica.",
   },
   {
-    q: "¿El reconocimiento facial es privado?",
-    a: "Sí. Todo el procesamiento ocurre en el navegador del administrador y en tu propio servidor. No usamos APIs externas como AWS Rekognition o Google Vision. Los descriptores faciales son vectores matemáticos almacenados en tu base de datos, sin imagen asociada.",
+    q: "¿Funciona para invitados mayores que no son muy tecnológicos?",
+    a: "Sí, es lo más sencillo que existe. Si saben abrir el navegador del teléfono, pueden participar. Solo escanean el QR, eligen su foto y listo. Sin formularios, sin registros, sin nada raro.",
   },
   {
-    q: "¿Cómo funcionan los créditos?",
-    a: "Al registrarte recibes créditos de bienvenida para empezar. Cada operación (crear un evento, subir fotos) consume créditos. Cuando los necesites, compras más directamente desde el panel.",
+    q: "¿Cómo funciona lo de encontrar mis fotos con selfie?",
+    a: "Abres la galería del evento, tocas \"Mis fotos\", te haces una selfie y en segundos aparecen todas las fotos del evento donde apareces tú. La IA compara tu cara con todas las fotos automáticamente. No necesitas cuenta ni app. Es completamente privado — tus datos no se comparten con nadie.",
   },
   {
     q: "¿Necesito tarjeta de crédito para comenzar?",
-    a: "No. Te registras, recibes tus créditos y puedes crear tu primer evento sin pagar nada. Solo recargas cuando los créditos se terminan.",
+    a: "No. Te registras, recibes créditos de bienvenida y puedes crear tu primer evento sin pagar nada. Solo recargas cuando los créditos se acaben.",
   },
   {
-    q: "¿Puedo personalizar el diseño de la landing del evento?",
-    a: "Sí. Más de 20 temas visuales, colores de acento, imagen de portada, títulos y textos completamente editables.",
+    q: "¿Puedo personalizar el diseño de la galería?",
+    a: "Sí. Más de 20 temas visuales con colores, tipografía, imagen de portada y textos completamente editables. La galería de tu boda se ve como una boda, la de tu empresa como tu empresa.",
   },
   {
-    q: "¿Las fotos se almacenan para siempre?",
-    a: "Las fotos se guardan en tu cuenta mientras el evento esté activo. Puedes desactivarlo cuando quieras.",
+    q: "¿Las fotos se ven solo en el evento o también después?",
+    a: "Ambas. Durante el evento se ven en vivo en la galería (y en la pantalla grande si tienes proyector). Después, el enlace sigue activo para que todos puedan descargar sus fotos cuando quieran.",
   },
 ];
 
@@ -114,22 +114,22 @@ const faceSteps = [
   {
     num: "01",
     icon: "📸",
-    title: "Detecta cada cara",
-    desc: "Analiza todas las fotos aprobadas. Extrae un descriptor facial de 128 dimensiones por cada persona, directo en el navegador — sin servidores externos.",
+    title: "La IA escanea todas las fotos",
+    desc: "Con un clic, la IA analiza cada foto del evento y reconoce todas las caras que aparecen. Automático. Sin configurar nada.",
     color: "#6366f1",
   },
   {
     num: "02",
     icon: "🧩",
-    title: "Agrupa por persona",
-    desc: "Cada cara se asigna automáticamente al cluster correcto usando distancia euclidiana sobre centroides. Tú le pones nombre e Instagram.",
+    title: "Organiza a cada persona",
+    desc: "Las fotos se agrupan por persona solas. Puedes ponerle nombre a cada grupo si quieres. Tus invitados quedan asombrados cuando lo ven.",
     color: "#8b5cf6",
   },
   {
     num: "03",
     icon: "🔍",
-    title: "Búsqueda con selfie",
-    desc: "El invitado sube una selfie desde la galería del evento. En segundos aparecen todas las fotos donde aparece. Privado, sin APIs de terceros.",
+    title: "Cada quien busca las suyas",
+    desc: "El invitado abre la galería, toca \"Mis fotos\", se hace una selfie y aparecen todas las fotos del evento donde sale él. Sin cuenta. Sin apps. Al instante.",
     color: "#a78bfa",
   },
 ];
@@ -147,11 +147,11 @@ export default function HomePage() {
         <div className="container">
           <div className="home-trust-inner" style={styles.trustInner}>
             {[
-              { icon: "⚡", text: "Fotos en pantalla en segundos" },
-              { icon: "🤖", text: "IA facial incluida" },
-              { icon: "📱", text: "Sin apps ni cuentas" },
-              { icon: "🎨", text: "20+ temas visuales" },
-              { icon: "🚀", text: "Evento activo en 3 minutos" },
+              { icon: "📸", text: "La foto en pantalla en segundos" },
+              { icon: "🤖", text: "Encuentra tus fotos con una selfie" },
+              { icon: "📱", text: "Sin apps · Sin registro" },
+              { icon: "🎨", text: "20+ diseños listos para usar" },
+              { icon: "⚡", text: "Tu evento activo en 3 minutos" },
             ].map((item) => (
               <div key={item.text} style={styles.trustItem}>
                 <span style={styles.trustIcon}>{item.icon}</span>
@@ -168,25 +168,26 @@ export default function HomePage() {
           {/* Eyebrow */}
           <div style={styles.aiBadgeRow}>
             <span style={styles.aiDot} />
-            <span style={styles.aiEyebrow}>Nuevo · IA facial incluida</span>
+            <span style={styles.aiEyebrow}>Nuevo · Reconocimiento facial inteligente</span>
           </div>
 
           {/* Headline */}
           <div style={styles.aiHeadWrap} className="ai-head-wrap">
             <h2 style={styles.aiHeadline}>
-              Reconocimiento facial
+              Cada persona
               <br />
-              <span style={styles.aiHeadlineDim}>que conoce a</span>
+              <span style={styles.aiHeadlineDim}>encuentra</span>
               <br />
-              tus invitados.
+              sus fotos.
             </h2>
             <div style={styles.aiHeadRight}>
               <p style={styles.aiLead}>
-                Sin configuración. Sin APIs de terceros. Todo ocurre en el dispositivo y en
-                tu servidor. Privado, rápido, preciso.
+                Ya no hay que buscar tu cara en 400 fotos ni pedirle el álbum al organizador.
+                La IA organiza sola las fotos por persona — y cada invitado encuentra las suyas
+                con una selfie, en segundos.
               </p>
               <div style={styles.aiTagList}>
-                {["Sin API externa", "100% privado", "Cliente + servidor", "Auto-clustering", "Filtros por persona", "Búsqueda con selfie"].map((t) => (
+                {["Sin apps externas", "100% privado", "Sin registro para invitados", "Grupos automáticos", "Filtros por persona", "Búsqueda con selfie"].map((t) => (
                   <span key={t} style={styles.aiTag}>{t}</span>
                 ))}
               </div>
@@ -288,7 +289,7 @@ export default function HomePage() {
 
           <div style={{ marginTop: 48 }}>
             <Link href="/auth" className="btn" style={styles.aiCta}>
-              Probar reconocimiento facial gratis →
+              Probarlo gratis en mi próximo evento →
             </Link>
           </div>
         </div>
@@ -300,12 +301,12 @@ export default function HomePage() {
           <div style={styles.sectionHead}>
             <span className="eyebrow">Cómo funciona</span>
             <h2 className="serif" style={styles.h2}>
-              De cero a galería
+              Tan fácil como
               <br />
-              en 3 pasos.
+              mandar un mensaje.
             </h2>
             <p className="muted" style={styles.sectionLead}>
-              No hay que ser técnico. Si puedes mandar un mensaje de WhatsApp, puedes usar Memorica.
+              No necesitas saber de tecnología. Si sabes usar WhatsApp, puedes usar Memorica.
             </p>
           </div>
 
@@ -345,12 +346,12 @@ export default function HomePage() {
           <div style={styles.sectionHead}>
             <span className="eyebrow">Todo incluido</span>
             <h2 className="serif" style={styles.h2}>
-              Una herramienta
+              Funciona de verdad.
               <br />
-              completa.
+              Para todos.
             </h2>
             <p className="muted" style={styles.sectionLead}>
-              Todo lo que necesitas para que las fotos de tu evento sean la experiencia del evento.
+              Mientras otras apps guardan fotos para después, Memorica las convierte en el centro de la fiesta — mientras la fiesta pasa.
             </p>
           </div>
           <div style={styles.featuresGrid}>
@@ -386,12 +387,14 @@ export default function HomePage() {
           <div style={styles.sectionHead}>
             <span className="eyebrow">10 tipos de evento</span>
             <h2 className="serif" style={styles.h2}>
-              Hecho para
+              Para la boda, la
               <br />
-              cada ocasión.
+              quinceañera
+              <br />
+              y mucho más.
             </h2>
             <p className="muted" style={styles.sectionLead}>
-              Desde bodas hasta lanzamientos corporativos. Cada tipo trae su propio estilo visual pre-configurado.
+              Cada tipo de evento tiene su propio estilo visual ya configurado. Solo elige el tuyo y personaliza los detalles.
             </p>
           </div>
           <div className="home-event-cards" style={styles.cards}>
@@ -418,22 +421,24 @@ export default function HomePage() {
           <div style={styles.sectionHead}>
             <span className="eyebrow">Precios</span>
             <h2 className="serif" style={styles.h2}>
-              Simple y
+              Empieza gratis.
               <br />
-              sin sorpresas.
+              Paga cuando
+              <br />
+              lo uses.
             </h2>
             <p className="muted" style={styles.sectionLead}>
-              Sin suscripciones mensuales. Sin contratos. Pagas solo lo que usas, cuando lo usas.
+              Sin mensualidad. Sin contrato. Sin sorpresas al final. Pagas solo lo que necesitas, cuando lo necesitas.
             </p>
           </div>
 
           <div className="home-pricing-grid" style={styles.pricingGrid}>
             <div className="card glass" style={{ ...styles.pricingCard, ...styles.pricingCardFeatured }}>
-              <div style={styles.pricingBadge}>Recomendado para empezar</div>
+              <div style={styles.pricingBadge}>Empieza aquí</div>
               <div style={styles.pricingPill}>Gratis</div>
-              <h3 style={styles.pricingTitle}>Registro sin costo</h3>
+              <h3 style={styles.pricingTitle}>Tu primer evento sin pagar nada</h3>
               <p className="muted" style={styles.pricingDesc}>
-                Crea tu cuenta y recibe créditos de bienvenida automáticamente. Úsalos para crear tu primer evento y vivir la experiencia completa antes de pagar nada.
+                Crea tu cuenta y recibe créditos de bienvenida al instante. Úsalos para crear tu primer evento real y ver con tus propios ojos cómo funciona — sin tarjeta.
               </p>
               <ul style={styles.pricingList}>
                 {[
@@ -458,9 +463,9 @@ export default function HomePage() {
 
             <div className="card glass" style={styles.pricingCard}>
               <div style={styles.pricingPill}>Créditos</div>
-              <h3 style={styles.pricingTitle}>Paga lo que usas</h3>
+              <h3 style={styles.pricingTitle}>Recarga solo cuando los necesites</h3>
               <p className="muted" style={styles.pricingDesc}>
-                Cuando tus créditos se terminen, recarga desde el panel. Sin mensualidad, sin renovación automática. Tus créditos no vencen.
+                Cuando tus créditos se terminen, recargas desde el panel en minutos. Sin mensualidad, sin cobro automático. Tus créditos no tienen fecha de vencimiento.
               </p>
               <ul style={styles.pricingList}>
                 {[
@@ -483,10 +488,10 @@ export default function HomePage() {
             </div>
 
             <div className="card glass" style={{ ...styles.pricingCard, background: "rgba(0,0,0,0.03)" }}>
-              <div style={styles.pricingPill}>¿Qué son los créditos?</div>
-              <h3 style={styles.pricingTitle}>Tu moneda de evento</h3>
+              <div style={styles.pricingPill}>¿Cómo funciona?</div>
+              <h3 style={styles.pricingTitle}>Los créditos son simples</h3>
               <p className="muted" style={styles.pricingDesc}>
-                Los créditos son la unidad de uso de la plataforma. Se consumen al crear eventos y al añadir fotos a las galerías.
+                Los créditos son la unidad de uso de Memorica. Se gastan al crear eventos y al añadir fotos. Los invitados participan sin costo adicional.
               </p>
               <div style={styles.creditExamples}>
                 {[
@@ -526,10 +531,13 @@ export default function HomePage() {
           <div style={styles.sectionHead}>
             <span className="eyebrow">Preguntas frecuentes</span>
             <h2 className="serif" style={styles.h2}>
-              Todo lo que
+              Seguro tienes
               <br />
-              quieres saber.
+              alguna duda.
             </h2>
+            <p className="muted" style={styles.sectionLead}>
+              Las preguntas que más nos hacen antes del primer evento.
+            </p>
           </div>
           <div className="home-faq-grid" style={styles.faqGrid}>
             {faqs.map((item) => (
@@ -551,16 +559,20 @@ export default function HomePage() {
                 Empieza hoy
               </span>
               <h2 className="serif" style={styles.ctaTitle}>
-                Tu próximo evento
+                La próxima boda,
                 <br />
-                merece esto.
+                quinceañera o
+                <br />
+                cumpleaños
+                <br />
+                que recuerden.
               </h2>
               <p style={styles.ctaText}>
-                Crea tu cuenta gratis, configura tu evento en minutos y comparte el QR.
-                Tus invitados harán el resto.
+                Crea tu cuenta gratis. Ten el QR listo antes de que lleguen tus invitados.
+                Y disfruta viendo cómo las fotos llenan la pantalla mientras la fiesta pasa.
               </p>
               <div style={styles.ctaPills}>
-                {["Sin instalación", "Sin tarjeta", "Listo en 3 min", "IA facial incluida"].map((t) => (
+                {["Sin apps para tus invitados", "Sin tarjeta de crédito", "Listo en 3 minutos", "IA facial incluida"].map((t) => (
                   <span key={t} style={styles.ctaPill}>{t}</span>
                 ))}
               </div>
