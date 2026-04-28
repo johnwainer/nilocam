@@ -431,7 +431,7 @@ export function SuperCreditsPanel({ userEmail }: { userEmail: string }) {
 // ─── styles ───────────────────────────────────────────────────────────────────
 
 const r: Record<string, React.CSSProperties> = {
-  shell: { display: "flex", flexDirection: "column", gap: 24, padding: "24px", overflowY: "auto", flex: 1 },
+  shell: { display: "flex", flexDirection: "column", gap: 24, padding: "24px", overflowY: "auto", overflowX: "hidden", flex: 1, minWidth: 0 },
   header: { display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, flexWrap: "wrap" },
   title: { margin: 0, fontSize: 22, fontWeight: 800, letterSpacing: "-0.03em", color: "#111" },
   sub: { display: "block", fontSize: 13, color: "var(--muted)", marginTop: 2 },

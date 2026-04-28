@@ -2126,8 +2126,8 @@ function EmailTab({
 // ─── styles ───────────────────────────────────────────────────────────────────
 
 const p: Record<string, React.CSSProperties> = {
-  shell: { display: "flex", flexDirection: "column", minHeight: 0, flex: 1 },
-  layout: { display: "flex", flex: 1, minHeight: 400 },
+  shell: { display: "flex", flexDirection: "column", minHeight: 0, flex: 1, minWidth: 0, overflow: "hidden" },
+  layout: { display: "flex", flex: 1, minHeight: 400, minWidth: 0, overflow: "hidden" },
 
   // Sidebar
   sidebar: {
@@ -2157,8 +2157,8 @@ const p: Record<string, React.CSSProperties> = {
   },
 
   // Main area
-  main: { flex: 1, display: "flex", flexDirection: "column", minWidth: 0, minHeight: 0 },
-  content: { padding: "24px", display: "flex", flexDirection: "column", gap: 20, overflowY: "auto", flex: 1 },
+  main: { flex: 1, display: "flex", flexDirection: "column", minWidth: 0, minHeight: 0, overflow: "hidden" },
+  content: { padding: "24px", display: "flex", flexDirection: "column", gap: 20, overflowY: "auto", overflowX: "hidden", flex: 1 },
   notice: { margin: "12px 24px 0", padding: "10px 14px", borderRadius: 12, fontSize: 13, fontWeight: 600, border: "1px solid" },
 
   // Page header (title + description + optional action)

@@ -1170,9 +1170,24 @@ img {
   }
 }
 
+/* ─── Super admin panel: overflow containment (all screens) ─────────────── */
+
+/* Hard clip at the shell level — nothing escapes horizontally */
+.sa-content {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+/* Magic link code and monospace strings must truncate, not stretch */
+.sa-content code,
+.sa-content pre {
+  word-break: break-all;
+  overflow-wrap: anywhere;
+  max-width: 100%;
+}
+
 /* ─── Super admin panel: mobile-first layout ─────────────────────────────── */
 
-/* Reduce inner padding on phones */
 @media (max-width: 600px) {
   .sa-content {
     padding: 16px !important;
@@ -1199,23 +1214,14 @@ img {
     gap: 8px !important;
   }
 
-  /* Search box full-width */
-  .sa-filter-bar .sa-filter-bar > * {
-    width: 100% !important;
-  }
-
   /* Selects row: horizontal scroll so they don't wrap awkwardly */
   .sa-filter-group {
     overflow-x: auto !important;
     scrollbar-width: none !important;
     flex-wrap: nowrap !important;
   }
-  .sa-filter-group::-webkit-scrollbar {
-    display: none;
-  }
-  .sa-filter-group select {
-    flex-shrink: 0 !important;
-  }
+  .sa-filter-group::-webkit-scrollbar { display: none; }
+  .sa-filter-group select { flex-shrink: 0 !important; }
 
   /* Sub-tab bar: horizontal scroll */
   .sa-sub-tab-bar {
@@ -1223,24 +1229,16 @@ img {
     scrollbar-width: none !important;
     flex-wrap: nowrap !important;
   }
-  .sa-sub-tab-bar::-webkit-scrollbar {
-    display: none;
-  }
+  .sa-sub-tab-bar::-webkit-scrollbar { display: none; }
   .sa-sub-tab-bar > button {
     flex-shrink: 0 !important;
     white-space: nowrap !important;
   }
 
-  /* Metric grid: minimum 2 per row even on 320px */
+  /* Metric grid: 2 columns even on 320px */
   .sa-metric-grid {
     grid-template-columns: repeat(2, 1fr) !important;
     gap: 10px !important;
-  }
-
-  /* Tables: ensure container scrolls, prevent fixed columns overflowing */
-  .sa-content .tableWrap,
-  .sa-content [style*="overflowX"] {
-    border-radius: 12px !important;
   }
 }
 
@@ -1249,7 +1247,6 @@ img {
   .sa-content {
     padding: 12px !important;
   }
-
   .sa-metric-grid {
     grid-template-columns: 1fr 1fr !important;
     gap: 8px !important;

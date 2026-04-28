@@ -31,7 +31,7 @@ export function HtmlEditor({ value, onChange, height = 320, placeholder }: Props
   const previewHtml = emailLayout(value || placeholder || "");
 
   return (
-    <div style={{ border: "1px solid rgba(0,0,0,0.12)", borderRadius: 12, overflow: "hidden" }}>
+    <div style={{ border: "1px solid rgba(0,0,0,0.12)", borderRadius: 12, overflow: "hidden", maxWidth: "100%", minWidth: 0 }}>
       {/* Toolbar */}
       <div style={{
         display: "flex",
