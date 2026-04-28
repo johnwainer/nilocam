@@ -36,6 +36,18 @@ const features = [
     desc: "Cada evento genera su propio código QR. Imprímelo, proyéctalo o compártelo por mensaje.",
   },
   {
+    icon: "🤖",
+    title: "IA facial automática",
+    desc: "Detecta y agrupa cada cara de tus fotos sin configuración. El admin las nombra, los invitados las encuentran.",
+    highlight: true,
+  },
+  {
+    icon: "🔍",
+    title: "Busca con selfie",
+    desc: "\"Mis fotos\": el invitado sube una selfie y en segundos aparecen todas las fotos del evento en las que aparece.",
+    highlight: true,
+  },
+  {
     icon: "🎨",
     title: "Landing personalizable",
     desc: "Más de 20 temas visuales, colores y textos editables. Tu evento, tu identidad.",
@@ -73,6 +85,14 @@ const faqs = [
     a: "No. Abren el QR desde el navegador de su teléfono (iPhone o Android) y listo. No necesitan cuenta, no bajan ninguna app.",
   },
   {
+    q: "¿Cómo funciona el reconocimiento facial?",
+    a: "El administrador ejecuta el análisis desde el panel. El sistema detecta y agrupa automáticamente las caras de todas las fotos aprobadas. Cada grupo se puede nombrar y enlazar a redes sociales. Los invitados pueden usar \"Mis fotos\" para subir una selfie y encontrar todas las fotos en las que aparecen, sin compartir datos con terceros.",
+  },
+  {
+    q: "¿El reconocimiento facial es privado?",
+    a: "Sí. Todo el procesamiento ocurre en el navegador del administrador y en tu propio servidor. No usamos APIs externas como AWS Rekognition o Google Vision. Los descriptores faciales son vectores matemáticos almacenados en tu base de datos, sin imagen asociada.",
+  },
+  {
     q: "¿Cómo funcionan los créditos?",
     a: "Al registrarte recibes créditos de bienvenida para empezar. Cada operación (crear un evento, subir fotos) consume créditos. Cuando los necesites, compras más directamente desde el panel.",
   },
@@ -90,6 +110,30 @@ const faqs = [
   },
 ];
 
+const faceSteps = [
+  {
+    num: "01",
+    icon: "📸",
+    title: "Detecta cada cara",
+    desc: "Analiza todas las fotos aprobadas. Extrae un descriptor facial de 128 dimensiones por cada persona, directo en el navegador — sin servidores externos.",
+    color: "#6366f1",
+  },
+  {
+    num: "02",
+    icon: "🧩",
+    title: "Agrupa por persona",
+    desc: "Cada cara se asigna automáticamente al cluster correcto usando distancia euclidiana sobre centroides. Tú le pones nombre e Instagram.",
+    color: "#8b5cf6",
+  },
+  {
+    num: "03",
+    icon: "🔍",
+    title: "Búsqueda con selfie",
+    desc: "El invitado sube una selfie desde la galería del evento. En segundos aparecen todas las fotos donde aparece. Privado, sin APIs de terceros.",
+    color: "#a78bfa",
+  },
+];
+
 // ─── Page ────────────────────────────────────────────────────────────────────
 
 export default function HomePage() {
@@ -98,15 +142,15 @@ export default function HomePage() {
       <TopNav />
       <LandingHero />
 
-      {/* ── Trust bar ─────────────────────────────────────────── */}
+      {/* ── Trust bar ─────────────────────────────────────── */}
       <div style={styles.trustBar}>
         <div className="container">
           <div className="home-trust-inner" style={styles.trustInner}>
             {[
               { icon: "⚡", text: "Fotos en pantalla en segundos" },
-              { icon: "📱", text: "Sin apps ni cuentas para invitados" },
+              { icon: "🤖", text: "IA facial incluida" },
+              { icon: "📱", text: "Sin apps ni cuentas" },
               { icon: "🎨", text: "20+ temas visuales" },
-              { icon: "🛡", text: "Moderación de contenido incluida" },
               { icon: "🚀", text: "Evento activo en 3 minutos" },
             ].map((item) => (
               <div key={item.text} style={styles.trustItem}>
@@ -118,7 +162,7 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* ── Cómo funciona ─────────────────────────────────────── */}
+      {/* ── Cómo funciona ─────────────────────────────────── */}
       <section className="section" id="como-funciona">
         <div className="container">
           <div style={styles.sectionHead}>
@@ -163,7 +207,104 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── Qué incluye ───────────────────────────────────────── */}
+      {/* ── IA Facial Spotlight ────────────────────────────── */}
+      <section style={styles.aiSection} id="ia-facial">
+        <div className="container">
+          {/* Eyebrow */}
+          <div style={styles.aiBadgeRow}>
+            <span style={styles.aiDot} />
+            <span style={styles.aiEyebrow}>Nuevo · IA facial incluida</span>
+          </div>
+
+          {/* Headline */}
+          <div style={styles.aiHeadWrap}>
+            <h2 style={styles.aiHeadline}>
+              Reconocimiento facial
+              <br />
+              <span style={styles.aiHeadlineDim}>que conoce a</span>
+              <br />
+              tus invitados.
+            </h2>
+            <div style={styles.aiHeadRight}>
+              <p style={styles.aiLead}>
+                Sin configuración. Sin APIs de terceros. Todo ocurre en el dispositivo y en
+                tu servidor. Privado, rápido, preciso.
+              </p>
+              <div style={styles.aiTagList}>
+                {["Sin API externa", "100% privado", "Cliente + servidor", "Auto-clustering", "Filtros por persona", "Búsqueda con selfie"].map((t) => (
+                  <span key={t} style={styles.aiTag}>{t}</span>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Steps */}
+          <div style={styles.aiSteps}>
+            {faceSteps.map((step, i) => (
+              <div key={step.num} style={styles.aiStep}>
+                <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 20 }}>
+                  <span style={{ ...styles.aiStepNum, color: step.color }}>{step.num}</span>
+                  {i < faceSteps.length - 1 && <span style={styles.aiStepArrow}>→</span>}
+                </div>
+                <div style={{ ...styles.aiStepIcon, background: `${step.color}18`, border: `1px solid ${step.color}30` }}>
+                  {step.icon}
+                </div>
+                <h3 style={styles.aiStepTitle}>{step.title}</h3>
+                <p style={styles.aiStepDesc}>{step.desc}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Bottom visual demo strip */}
+          <div style={styles.aiDemoStrip}>
+            <div style={styles.aiDemoLeft}>
+              <span style={styles.aiDemoLabel}>Galería del evento</span>
+              <div style={styles.aiDemoPhotos}>
+                {[
+                  "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=120&h=120&fit=crop&auto=format",
+                  "https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?w=120&h=120&fit=crop&auto=format",
+                  "https://images.unsplash.com/photo-1519741497674-611481863552?w=120&h=120&fit=crop&auto=format",
+                  "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=120&h=120&fit=crop&auto=format",
+                ].map((url, idx) => (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img key={idx} src={url} alt="" style={styles.aiDemoPhoto} />
+                ))}
+              </div>
+            </div>
+            <div style={styles.aiDemoArrow}>→</div>
+            <div style={styles.aiDemoRight}>
+              <span style={styles.aiDemoLabel}>Personas detectadas</span>
+              <div style={styles.aiPersonCards}>
+                {[
+                  { name: "Ana García", handle: "@anagarcia", color: "#6366f1" },
+                  { name: "Carlos M.", handle: "@carlosm", color: "#8b5cf6" },
+                  { name: "Laura R.", handle: "@laur", color: "#a78bfa" },
+                ].map((p) => (
+                  <div key={p.name} style={styles.aiPersonCard}>
+                    <div style={{ ...styles.aiPersonAvatar, background: `${p.color}22`, border: `1.5px solid ${p.color}55` }}>
+                      <span style={{ color: p.color, fontWeight: 700, fontSize: 15 }}>
+                        {p.name.charAt(0)}
+                      </span>
+                    </div>
+                    <div>
+                      <div style={styles.aiPersonName}>{p.name}</div>
+                      <div style={{ ...styles.aiPersonHandle, color: p.color }}>{p.handle}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div style={{ marginTop: 48 }}>
+            <Link href="/auth" className="btn" style={styles.aiCta}>
+              Probar reconocimiento facial gratis →
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Qué incluye ───────────────────────────────────── */}
       <section className="section" style={{ background: "rgba(0,0,0,0.02)" }}>
         <div className="container">
           <div style={styles.sectionHead}>
@@ -179,17 +320,27 @@ export default function HomePage() {
           </div>
           <div style={styles.featuresGrid}>
             {features.map((f) => (
-              <div key={f.title} className="card glass" style={styles.featureItem}>
+              <div
+                key={f.title}
+                className="card glass"
+                style={{
+                  ...styles.featureItem,
+                  ...(f.highlight ? styles.featureHighlight : {}),
+                }}
+              >
+                {f.highlight && <span style={styles.featureNewBadge}>Nuevo</span>}
                 <span style={styles.featureIcon}>{f.icon}</span>
                 <h3 style={styles.featureTitle}>{f.title}</h3>
-                <p className="muted" style={styles.featureDesc}>{f.desc}</p>
+                <p className={f.highlight ? undefined : "muted"} style={{ ...styles.featureDesc, ...(f.highlight ? { color: "rgba(255,255,255,0.65)" } : {}) }}>
+                  {f.desc}
+                </p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ── Tipos de evento ───────────────────────────────────── */}
+      {/* ── Tipos de evento ───────────────────────────────── */}
       <section className="section" id="tipos">
         <div className="container">
           <div style={styles.sectionHead}>
@@ -221,7 +372,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── Precios ───────────────────────────────────────────── */}
+      {/* ── Precios ───────────────────────────────────────── */}
       <section className="section" id="precios" style={{ background: "rgba(0,0,0,0.02)" }}>
         <div className="container">
           <div style={styles.sectionHead}>
@@ -236,9 +387,7 @@ export default function HomePage() {
             </p>
           </div>
 
-          {/* Pricing model cards */}
           <div className="home-pricing-grid" style={styles.pricingGrid}>
-            {/* Free to start */}
             <div className="card glass" style={{ ...styles.pricingCard, ...styles.pricingCardFeatured }}>
               <div style={styles.pricingBadge}>Recomendado para empezar</div>
               <div style={styles.pricingPill}>Gratis</div>
@@ -253,6 +402,7 @@ export default function HomePage() {
                   "Galería en tiempo real",
                   "QR descargable",
                   "Moderación de fotos",
+                  "IA facial incluida",
                   "Sin tarjeta de crédito",
                 ].map((item) => (
                   <li key={item} style={styles.pricingListItem}>
@@ -266,7 +416,6 @@ export default function HomePage() {
               </Link>
             </div>
 
-            {/* Pay as you go */}
             <div className="card glass" style={styles.pricingCard}>
               <div style={styles.pricingPill}>Créditos</div>
               <h3 style={styles.pricingTitle}>Paga lo que usas</h3>
@@ -293,7 +442,6 @@ export default function HomePage() {
               </Link>
             </div>
 
-            {/* What costs credits */}
             <div className="card glass" style={{ ...styles.pricingCard, background: "rgba(0,0,0,0.03)" }}>
               <div style={styles.pricingPill}>¿Qué son los créditos?</div>
               <h3 style={styles.pricingTitle}>Tu moneda de evento</h3>
@@ -302,11 +450,11 @@ export default function HomePage() {
               </p>
               <div style={styles.creditExamples}>
                 {[
-                  { action: "Registro en la plataforma", label: "Gratis + créditos incluidos" },
+                  { action: "Registro en la plataforma", label: "Gratis + créditos" },
                   { action: "Crear un evento nuevo", label: "Pocos créditos" },
                   { action: "Cada foto en la galería", label: "Mínimo por foto" },
-                  { action: "Los invitados participan", label: "Sin costo adicional" },
-                  { action: "Descargar el QR", label: "Incluido" },
+                  { action: "Los invitados participan", label: "Sin costo extra" },
+                  { action: "IA facial del evento", label: "Incluido" },
                   { action: "Pantalla de proyección", label: "Incluido" },
                 ].map((ex) => (
                   <div key={ex.action} style={styles.creditRow}>
@@ -321,7 +469,6 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Bottom note */}
           <p style={styles.pricingNote}>
             Todos los precios se muestran en USD. Los créditos de bienvenida se acreditan automáticamente al crear la cuenta.
             Si tienes un evento grande o necesitas un plan personalizado,{" "}
@@ -333,7 +480,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── FAQ ───────────────────────────────────────────────── */}
+      {/* ── FAQ ───────────────────────────────────────────── */}
       <section className="section">
         <div className="container">
           <div style={styles.sectionHead}>
@@ -355,7 +502,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── CTA final ─────────────────────────────────────────── */}
+      {/* ── CTA final ─────────────────────────────────────── */}
       <section className="section demo-section" id="demo" style={styles.ctaSection}>
         <div className="container">
           <div style={styles.ctaInner}>
@@ -373,7 +520,7 @@ export default function HomePage() {
                 Tus invitados harán el resto.
               </p>
               <div style={styles.ctaPills}>
-                {["Sin instalación", "Sin tarjeta", "Listo en 3 min"].map((t) => (
+                {["Sin instalación", "Sin tarjeta", "Listo en 3 min", "IA facial incluida"].map((t) => (
                   <span key={t} style={styles.ctaPill}>{t}</span>
                 ))}
               </div>
@@ -439,22 +586,11 @@ const styles: Record<string, React.CSSProperties> = {
     padding: "14px 18px",
     flex: "1 1 160px",
   },
-  trustIcon: {
-    fontSize: 16,
-    flexShrink: 0,
-  },
-  trustText: {
-    fontSize: 13,
-    fontWeight: 600,
-    color: "#374151",
-    lineHeight: 1.3,
-  },
+  trustIcon: { fontSize: 16, flexShrink: 0 },
+  trustText: { fontSize: 13, fontWeight: 600, color: "#374151", lineHeight: 1.3 },
 
   /* Steps */
-  stepList: {
-    display: "grid",
-    gap: 0,
-  },
+  stepList: { display: "grid", gap: 0 },
   stepRow: {
     display: "grid",
     gridTemplateColumns: "minmax(72px, 96px) 1fr",
@@ -470,56 +606,221 @@ const styles: Record<string, React.CSSProperties> = {
     color: "rgba(0,0,0,0.08)",
     paddingTop: 4,
   },
-  stepBody: {
-    display: "grid",
-    gap: 10,
-  },
+  stepBody: { display: "grid", gap: 10 },
   stepTitle: {
     margin: 0,
     fontSize: "clamp(26px, 2.8vw, 42px)",
     lineHeight: 1,
     letterSpacing: "-0.04em",
   },
-  stepText: {
-    margin: 0,
-    fontSize: 17,
-    lineHeight: 1.75,
-    maxWidth: 560,
+  stepText: { margin: 0, fontSize: 17, lineHeight: 1.75, maxWidth: 560 },
+  stepCta: { marginTop: 48, display: "flex", justifyContent: "flex-start" },
+
+  /* ── AI Facial Spotlight ── */
+  aiSection: {
+    background: "linear-gradient(180deg, #06070f 0%, #0c0e1a 50%, #0a0c18 100%)",
+    padding: "96px 0",
+    position: "relative",
+    overflow: "hidden",
   },
-  stepCta: {
-    marginTop: 48,
+  aiBadgeRow: {
     display: "flex",
-    justifyContent: "flex-start",
+    alignItems: "center",
+    gap: 10,
+    marginBottom: 40,
+  },
+  aiDot: {
+    width: 8,
+    height: 8,
+    borderRadius: "50%",
+    background: "#22d3ee",
+    boxShadow: "0 0 12px #22d3ee, 0 0 4px #22d3ee",
+    flexShrink: 0,
+  },
+  aiEyebrow: {
+    color: "rgba(255,255,255,0.35)",
+    fontSize: 12,
+    fontWeight: 700,
+    letterSpacing: "0.2em",
+    textTransform: "uppercase" as const,
+  },
+  aiHeadWrap: {
+    display: "flex",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    gap: 48,
+    flexWrap: "wrap",
+    marginBottom: 72,
+  },
+  aiHeadline: {
+    margin: 0,
+    color: "#ffffff",
+    fontSize: "clamp(38px, 5.5vw, 88px)",
+    lineHeight: 0.91,
+    letterSpacing: "-0.05em",
+    fontFamily: "inherit",
+  },
+  aiHeadlineDim: {
+    color: "rgba(255,255,255,0.2)",
+  },
+  aiHeadRight: {
+    maxWidth: 480,
+    display: "flex",
+    flexDirection: "column" as const,
+    gap: 24,
+    paddingTop: 8,
+  },
+  aiLead: {
+    color: "rgba(255,255,255,0.45)",
+    fontSize: 18,
+    lineHeight: 1.7,
+    margin: 0,
+  },
+  aiTagList: {
+    display: "flex",
+    flexWrap: "wrap" as const,
+    gap: 8,
+  },
+  aiTag: {
+    fontSize: 12,
+    fontWeight: 600,
+    letterSpacing: "0.04em",
+    padding: "5px 12px",
+    borderRadius: 999,
+    background: "rgba(255,255,255,0.06)",
+    border: "1px solid rgba(255,255,255,0.1)",
+    color: "rgba(255,255,255,0.5)",
+  },
+  aiSteps: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+    gap: 2,
+    marginBottom: 64,
+  },
+  aiStep: {
+    background: "rgba(255,255,255,0.03)",
+    border: "1px solid rgba(255,255,255,0.07)",
+    borderRadius: 24,
+    padding: "32px 28px",
+    display: "flex",
+    flexDirection: "column" as const,
+    gap: 14,
+  },
+  aiStepNum: {
+    fontSize: 48,
+    fontWeight: 800,
+    letterSpacing: "-0.06em",
+    lineHeight: 1,
+    fontFamily: "inherit",
+  },
+  aiStepArrow: {
+    color: "rgba(255,255,255,0.1)",
+    fontSize: 28,
+    fontWeight: 300,
+  },
+  aiStepIcon: {
+    width: 52,
+    height: 52,
+    borderRadius: 14,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: 24,
+    flexShrink: 0,
+  },
+  aiStepTitle: {
+    margin: 0,
+    color: "#ffffff",
+    fontSize: 20,
+    fontWeight: 700,
+    letterSpacing: "-0.03em",
+    lineHeight: 1.15,
+  },
+  aiStepDesc: {
+    margin: 0,
+    color: "rgba(255,255,255,0.38)",
+    fontSize: 14,
+    lineHeight: 1.7,
+  },
+  /* Demo strip */
+  aiDemoStrip: {
+    display: "flex",
+    alignItems: "center",
+    gap: 32,
+    background: "rgba(255,255,255,0.03)",
+    border: "1px solid rgba(255,255,255,0.07)",
+    borderRadius: 24,
+    padding: "28px 32px",
+    flexWrap: "wrap" as const,
+  },
+  aiDemoLeft: { display: "flex", flexDirection: "column" as const, gap: 14, flex: "1 1 240px" },
+  aiDemoLabel: { fontSize: 11, fontWeight: 700, letterSpacing: "0.14em", color: "rgba(255,255,255,0.25)", textTransform: "uppercase" as const },
+  aiDemoPhotos: { display: "flex", gap: 8 },
+  aiDemoPhoto: { width: 64, height: 64, borderRadius: 10, objectFit: "cover" as const, filter: "brightness(0.75)" },
+  aiDemoArrow: { fontSize: 28, color: "rgba(255,255,255,0.12)", flexShrink: 0 },
+  aiDemoRight: { display: "flex", flexDirection: "column" as const, gap: 14, flex: "1 1 240px" },
+  aiPersonCards: { display: "flex", flexDirection: "column" as const, gap: 8 },
+  aiPersonCard: { display: "flex", alignItems: "center", gap: 12 },
+  aiPersonAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: "50%",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+  },
+  aiPersonName: { fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.75)" },
+  aiPersonHandle: { fontSize: 11, fontWeight: 500 },
+  aiCta: {
+    background: "rgba(255,255,255,0.1)",
+    border: "1px solid rgba(255,255,255,0.18)",
+    color: "#ffffff",
+    padding: "14px 28px",
+    fontSize: 15,
+    fontWeight: 600,
+    borderRadius: 999,
+    display: "inline-flex",
+    alignItems: "center",
+    backdropFilter: "blur(8px)",
   },
 
   /* Features grid */
   featuresGrid: {
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
+    gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))",
     gap: 16,
   },
   featureItem: {
     borderRadius: 24,
     padding: "24px 22px",
     display: "flex",
-    flexDirection: "column",
+    flexDirection: "column" as const,
     gap: 10,
+    position: "relative" as const,
   },
-  featureIcon: {
-    fontSize: 28,
-    lineHeight: 1,
+  featureHighlight: {
+    background: "linear-gradient(135deg, #0f1020 0%, #161830 100%)",
+    border: "1px solid rgba(99,102,241,0.35)",
+    boxShadow: "0 0 40px rgba(99,102,241,0.12)",
   },
-  featureTitle: {
-    margin: 0,
-    fontSize: 17,
-    fontWeight: 700,
-    letterSpacing: "-0.02em",
+  featureNewBadge: {
+    position: "absolute" as const,
+    top: 14,
+    right: 14,
+    fontSize: 10,
+    fontWeight: 800,
+    letterSpacing: "0.1em",
+    textTransform: "uppercase" as const,
+    color: "#a78bfa",
+    background: "rgba(167,139,250,0.14)",
+    border: "1px solid rgba(167,139,250,0.3)",
+    borderRadius: 999,
+    padding: "3px 8px",
   },
-  featureDesc: {
-    margin: 0,
-    fontSize: 14,
-    lineHeight: 1.65,
-  },
+  featureIcon: { fontSize: 28, lineHeight: 1 },
+  featureTitle: { margin: 0, fontSize: 17, fontWeight: 700, letterSpacing: "-0.02em" },
+  featureDesc: { margin: 0, fontSize: 14, lineHeight: 1.65 },
 
   /* Event type cards */
   cards: {
@@ -554,11 +855,7 @@ const styles: Record<string, React.CSSProperties> = {
     lineHeight: 1.02,
     letterSpacing: "-0.04em",
   },
-  cardText: {
-    margin: 0,
-    fontSize: 15,
-    lineHeight: 1.6,
-  },
+  cardText: { margin: 0, fontSize: 15, lineHeight: 1.6 },
 
   /* Pricing */
   pricingGrid: {
@@ -571,7 +868,7 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: 28,
     padding: "28px 26px",
     display: "flex",
-    flexDirection: "column",
+    flexDirection: "column" as const,
     gap: 16,
     background: "linear-gradient(180deg, rgba(255,255,255,0.94), rgba(255,255,255,0.78))",
   },
@@ -611,11 +908,7 @@ const styles: Record<string, React.CSSProperties> = {
     lineHeight: 1.1,
     letterSpacing: "-0.03em",
   },
-  pricingDesc: {
-    margin: 0,
-    fontSize: 15,
-    lineHeight: 1.65,
-  },
+  pricingDesc: { margin: 0, fontSize: 15, lineHeight: 1.65 },
   pricingList: {
     listStyle: "none",
     padding: 0,
@@ -663,16 +956,8 @@ const styles: Record<string, React.CSSProperties> = {
     borderBottom: "1px solid rgba(0,0,0,0.05)",
     gap: 10,
   },
-  creditAction: {
-    fontSize: 13,
-    color: "#374151",
-  },
-  creditLabel: {
-    fontSize: 12,
-    fontWeight: 700,
-    color: "#059669",
-    flexShrink: 0,
-  },
+  creditAction: { fontSize: 13, color: "#374151" },
+  creditLabel: { fontSize: 12, fontWeight: 700, color: "#059669", flexShrink: 0 },
   pricingNote: {
     marginTop: 32,
     fontSize: 14,
@@ -691,28 +976,14 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: 24,
     padding: "24px 22px",
     display: "flex",
-    flexDirection: "column",
+    flexDirection: "column" as const,
     gap: 10,
   },
-  faqQ: {
-    margin: 0,
-    fontSize: 17,
-    fontWeight: 700,
-    letterSpacing: "-0.02em",
-    lineHeight: 1.25,
-  },
-  faqA: {
-    margin: 0,
-    fontSize: 14,
-    lineHeight: 1.7,
-  },
+  faqQ: { margin: 0, fontSize: 17, fontWeight: 700, letterSpacing: "-0.02em", lineHeight: 1.25 },
+  faqA: { margin: 0, fontSize: 14, lineHeight: 1.7 },
 
-  /* Final CTA section */
-  ctaSection: {
-    background: "#0b0b0f",
-    paddingTop: 96,
-    paddingBottom: 96,
-  },
+  /* Final CTA */
+  ctaSection: { background: "#0b0b0f", paddingTop: 96, paddingBottom: 96 },
   ctaInner: {
     display: "flex",
     alignItems: "flex-start",
@@ -720,11 +991,7 @@ const styles: Record<string, React.CSSProperties> = {
     gap: 48,
     flexWrap: "wrap",
   },
-  ctaLeft: {
-    display: "grid",
-    gap: 20,
-    maxWidth: 720,
-  },
+  ctaLeft: { display: "grid", gap: 20, maxWidth: 720 },
   ctaTitle: {
     margin: 0,
     fontSize: "clamp(40px, 9vw, 112px)",
@@ -739,11 +1006,7 @@ const styles: Record<string, React.CSSProperties> = {
     color: "rgba(255,255,255,0.55)",
     maxWidth: 520,
   },
-  ctaPills: {
-    display: "flex",
-    gap: 8,
-    flexWrap: "wrap",
-  },
+  ctaPills: { display: "flex", gap: 8, flexWrap: "wrap" as const },
   ctaPill: {
     fontSize: 12,
     fontWeight: 700,
@@ -755,7 +1018,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   ctaActions: {
     display: "flex",
-    flexDirection: "column",
+    flexDirection: "column" as const,
     gap: 12,
     flexShrink: 0,
     minWidth: 220,

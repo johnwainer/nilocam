@@ -189,7 +189,9 @@ export default function DemoEventPage() {
             DEMO
           </span>
           <span style={{ color: "rgba(255,255,255,0.65)", fontSize: 13, lineHeight: 1.4 }}>
-            Así se ve la landing de un evento real · Las fotos de ejemplo son de demostración
+            Demo de evento real · Incluye{" "}
+            <span style={{ color: "#a78bfa", fontWeight: 600 }}>IA facial</span>
+            {" "}· Prueba &quot;Mis fotos&quot; para buscar con selfie
           </span>
         </div>
         <a
